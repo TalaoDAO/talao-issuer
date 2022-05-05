@@ -191,6 +191,16 @@ async def passbase_endpoint_over18(id,red,mode):
         return jsonify('not approved')
 
     identity = get_identity(passbase_key, mode)
+    if not identity :
+        logging.warning("Identity does not exist")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identity does not exist")
+                        })
+        red.publish('passbase', data)
+        return (jsonify('Identity does not exist'))
+        
     if identity['metadata']['did'] != request.form['subject_id'] :
         logging.warning("wrong wallet")
         data = json.dumps({
