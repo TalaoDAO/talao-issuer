@@ -1,16 +1,5 @@
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='Floating-Button.css') }}">
-{% if session['type'] == "company" or session['type'] == "person" %}
-<div class="float btn-group dropup" style="z-index:102000;">
-  <button type="button" class="btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style='outline: none;box-shadow: none;'>
-    <i class="fa fa-question my-float" style="color: rgb(255,255,255)"></i>
-  </button>
-  <div class="dropdown-menu mx-4 my-2" style="min-width:200px">
-    <a class="dropdown-item " title="" role="presentation" href="/user/tutorial">{{_('Video tutorial')}}</a>
-    <a class="dropdown-item " title="" role="presentation" href="https://talao.readthedocs.io/en/latest/contents/">{{_('What is Talao ?')}}</a>
-    <a class="dropdown-item " title="" role="presentation" href="/report">{{_('Report a bug')}}</a>
-  </div>
-</div>
-{% endif %}
+
 <div class="footer-clean" >
   <footer>
     <div class="container">
@@ -40,3 +29,4 @@
       </div>
     </div>
   </footer>
+  </div>

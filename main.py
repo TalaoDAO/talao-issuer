@@ -16,16 +16,19 @@ import markdown.extensions.fenced_code
 
 
 # local dependencies
-from routes import web_emailpass, web_phonepass, web_passbase
+from routes import web_emailpass, web_phonepass, web_passbase, web_tiar
 import environment
+
+import logging
+logging.basicConfig(level=logging.INFO)
 
 LANGUAGES = ['en', 'fr']
 
 # Redis est utilisé pour stocker les données de session
 red= redis.Redis(host='localhost', port=6379, db=0)
 
-print("python version : ", sys.version)
-print("didkit version = ", didkit.get_version())
+logging.info("python version : %s", sys.version)
+logging.info("didkit version = %s", didkit.get_version())
 
 # init
 myenv = os.getenv('MYENV')
@@ -40,7 +43,7 @@ app.config['SESSION_TYPE'] = 'redis' # Redis server side session
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=360) # cookie lifetime
 app.config['SESSION_FILE_THRESHOLD'] = 100
 app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "1.0"
+app.jinja_env.globals['Version'] = "1.2"
 
 babel = Babel(app)
 
@@ -57,6 +60,7 @@ sess.init_app(app)
 web_emailpass.init_app(app, red, mode)
 web_phonepass.init_app(app, red, mode)
 web_passbase.init_app(app, red, mode)
+web_tiar.init_app(app)
 
 
 @babel.localeselector
@@ -105,6 +109,7 @@ def company() :
 @app.route('/' , methods=['GET']) 
 def test() :
    return jsonify("Hello")
+
 
 # MAIN entry point. Flask test server
 if __name__ == '__main__':

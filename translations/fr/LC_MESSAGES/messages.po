@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  1.0\n"
 "Report-Msgid-Bugs-To: <contact@talao.io>\n"
-"POT-Creation-Date: 2022-05-04 12:53+0200\n"
+"POT-Creation-Date: 2022-05-05 15:38+0200\n"
 "PO-Revision-Date: 2022-05-04 10:46+0200\n"
 "Last-Translator: FULL NAME <contact@talao.io>\n"
 "Language: fr\n"
@@ -115,7 +115,7 @@ msgstr "Désolé ! , la session est expirée."
 msgid "Sorry, server problem, try again later."
 msgstr "Désolé ! , il y a une erreur système. Réessayez dans quelques minutes."
 
-#: templates/company.html:19 templates/footer.html:28
+#: templates/company.html:19 templates/footer.html:17
 msgid "Company"
 msgstr "Société"
 
@@ -124,47 +124,46 @@ msgid "Publisher Talao SAS"
 msgstr "Editeur Talao SAS"
 
 #: templates/company.html:25
-msgid ""
-"Société Anonyme Simplifiée<br>Au capital social de <span>10.000</span> "
-"euros<br>Immatriculée au RCS de Paris sous le numéro SIREN : 837 674 480 "
-"<br /> Dont le siège social est situé 12, rue de Wattignies 75012 "
-"Paris</p>\n"
-"                                                <p>Publishing manager"
+msgid "Société Anonyme Simplifiée"
 msgstr ""
 
-#: templates/company.html:28 templates/company.html:29
+#: templates/company.html:26
+msgid "Capital "
+msgstr "Capital social "
+
+#: templates/company.html:27
+msgid "Registered RCS de Paris  SIREN : 837 674 480 "
+msgstr "Immatriculée au RCS de Paris sous le SIREN 837 674 480 "
+
+#: templates/company.html:28
+msgid "Located 12, rue de Wattignies 75012 Paris"
+msgstr "Domiciliée 12, rue de Wattignies, 75012 Paris"
+
+#: templates/company.html:29
+msgid "Publishing manager"
+msgstr "Editeur"
+
+#: templates/company.html:31 templates/company.html:32
 msgid "Hosting company"
 msgstr "Hébergeur"
 
-#: templates/footer.html:8
-msgid "Video tutorial"
-msgstr ""
-
-#: templates/footer.html:9
-msgid "What is Talao ?"
-msgstr ""
-
 #: templates/footer.html:10
-msgid "Report a bug"
-msgstr ""
-
-#: templates/footer.html:21
 msgid "Consulting"
-msgstr ""
+msgstr "Conseil"
 
-#: templates/footer.html:22
+#: templates/footer.html:11
 msgid "Development"
-msgstr ""
+msgstr "Réalisation"
 
-#: templates/footer.html:26
+#: templates/footer.html:15
 msgid "About"
 msgstr "A propos"
 
-#: templates/footer.html:29
+#: templates/footer.html:18
 msgid "Privacy Policy"
 msgstr "Protection de la vie privée"
 
-#: templates/footer.html:30
+#: templates/footer.html:19
 msgid "Terms & Conditions"
 msgstr "CGU"
 
@@ -208,7 +207,10 @@ msgid "Back"
 msgstr "Retour"
 
 #: templates/emailpass/emailpass_qrcode.html:18
-msgid "Scan the QRCode below with your wallet to get an Email Proof"
+#: templates/passbase/decentralized_kyc.html:18
+#: templates/passbase/over18.html:18
+#: templates/phonepass/phonepass_qrcode.html:17
+msgid "Scan the QRCode below with your Talao wallet"
 msgstr "Scannez le QR code avec la caméra de votre wallet"
 
 #: templates/emailpass/emailpass_qrcode.html:34
@@ -216,11 +218,6 @@ msgstr "Scannez le QR code avec la caméra de votre wallet"
 #: templates/phonepass/phonepass_qrcode.html:34
 msgid "Clic on the credential to get it into your wallet"
 msgstr "Cliquez sur l'attestation pour la télécharger dans votre wallet"
-
-#: templates/passbase/decentralized_kyc.html:18
-#: templates/passbase/over18.html:18
-msgid "Scan the QRCode below with your Talao wallet"
-msgstr "Scannez le QR code avec la caméra de votre wallet"
 
 #: templates/passbase/over18.html:33
 msgid "Download the credential to your wallet"
@@ -237,10 +234,4 @@ msgid ""
 msgstr ""
 "Saisissez votre numéro de téléphone international, vous recevrez un code "
 "secret par SMS."
-
-#: templates/phonepass/phonepass_qrcode.html:17
-msgid "Scan the QRCode below with your wallet to get a proof or phone number"
-msgstr "Scannez le QR code avec la caméra de votre wallet"
-
-
 

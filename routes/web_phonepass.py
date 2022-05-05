@@ -82,7 +82,7 @@ def phonepass_qrcode(red, mode) :
                                 deeplink=deeplink)
    
 
-def phonepass_offer(id, red):
+async def phonepass_offer(id, red):
     """ Endpoint for wallet
     """
     credential = json.loads(open('./verifiable_credentials/PhonePass.jsonld', 'r').read())
@@ -110,7 +110,7 @@ def phonepass_offer(id, red):
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm_tz1
             }
-        signed_credential =  didkit.issue_credential(
+        signed_credential =  await didkit.issue_credential(
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 key_tz1)
