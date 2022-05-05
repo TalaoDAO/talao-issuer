@@ -1,0 +1,62 @@
+{
+    "@context": ["https://www.w3.org/2018/credentials/v1",
+        {"RevocationList2020Status": {
+            "@id":
+              "https://w3id.org/vc-revocation-list-2020#RevocationList2020Status",
+            "@context": {
+              "@protected": true,
+      
+              "id": "@id",
+              "type": "@type",
+      
+              "revocationListCredential": {
+                "@id":
+                  "https://w3id.org/vc-revocation-list-2020#revocationListCredential",
+                "@type": "@id"
+              },
+              "revocationListIndex":
+                "https://w3id.org/vc-revocation-list-2020#revocationListIndex"
+            }
+          }
+        },
+        {"CitizenVC" : {
+          "@id": "https://github.com/TalaoDAO/context#citizenvc",
+          "@context": {
+              "@version": 1.1,
+              "@protected": true,
+              "schema" : "https://schema.org/",
+              "id": "@id",
+              "type": "@type",
+              "author": {
+                "@id": "schema:author",
+                "@context": {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "schema" : "https://schema.org/",
+                    "name" :  "schema:name",
+                    "logo" : { "@id" : "schema:logo", "@type" : "@id"}
+                }
+              }
+          }
+        }
+        }
+    ],
+    "id": "",
+    "type": ["VerifiableCredential", "CitizenVC"],
+    "issuer": "",
+    "issuanceDate": "",
+    "credentialSubject" : {
+        "id" : "",
+        "type" : "CitizenVC",
+        "author" : {
+          "name" : "Ministère de la Digitalisation du Luxembourg",
+          "logo" : "https://talao.mypinata.cloud/ipfs/QmW2Ph9WixNSPKsQKJmniUEXBzhe2aXV93s88GYeX5FbZ9"
+            }
+    },
+    "credentialStatus": {
+        "id": "https://github.com/TalaoDAO/TrustMyData-proto/blob/main/credential/status/1#1234",
+        "type": "RevocationList2020Status",
+        "revocationListIndex": "1234",
+        "revocationListCredential": "https://github.com/TalaoDAO/TrustMyData-proto/blob/main/credential/status/1"
+      }
+}

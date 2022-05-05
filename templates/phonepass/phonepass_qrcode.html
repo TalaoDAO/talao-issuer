@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'head.html' %}
+  </head>
+  <body class="flex flex-col items-center justify-center h-screen w-screen">
+
+    <div id="wrapper">
+        <div class="d-flex flex-column" id="content-wrapper">
+            <div id="content">
+                 {% include 'nav_bar.html' %}
+     
+      
+      <div id="content_desktop" class="d-none d-sm-block">
+        <br><br><br>
+        <div class="text-center">       
+          <p>{{_('Scan the QRCode below with your wallet to get a proof or phone number')}}</p>
+          <div class="my-3"><img src="{{qrcode(url)}}" style="width: 250px;border-radius:0px;"></div>
+        </div>
+        <div class="col text-center mt-2">
+          <button class="btn btn-primary btn-sm" type="button" value="download" onclick="goBack()">{{_('Back')}}</button>
+        </div>
+      </div>
+    
+
+    <div id="content_smartphone" class="d-block d-sm-none"> 
+      <div class="card shadow mx-1">
+        <a href="{{deeplink}}" class="bg-transparent">
+        <img src="/static/img/phone_proof.png" class="card-img-top mt-3">
+        </a>
+        <div class="card-body">
+            <div class="text-center">
+                <p class="card-text">
+                  {{_('Clic on the credential to get it into your wallet')}}
+                </p>
+            </div>
+        </div>
+      </div>  
+    </div>
+
+
+</div>
+</div>
+</div>
+        {% include 'footer.html' %}
+
+<script>function goBack() {  window.history.back();}</script>
+<script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='bs-init.js') }}"></script>
+  <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+
+<script>
+var source = new EventSource('/phonepass/stream');
+source.onmessage = function (event) {
+     const result = JSON.parse(event.data)
+     if (result.url_id == '{{session["sid"]}}' ){
+       window.location.href="/phonepass/end?followup=" + result.check;
+     }
+};
+</script>
+</body>
+</html>

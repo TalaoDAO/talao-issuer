@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    {% include 'head.html' %}
+</head>
+
+<body id="page-top">
+    <div id="wrapper">
+        <div class="d-flex flex-column" id="content-wrapper">
+            <div id="content">
+                {% include 'nav_bar.html' %}
+
+                <div class="container-fluid">
+                    <div class="row mb-3">
+                        <div class="col-lg-6 offset-lg-3">
+                            <div class="card shadow mb-3">
+                                <div class="card-header py-3">
+                                    <p class="text-primary m-0 font-weight-bold">{{_('Company')}}</p>
+                                </div>
+                                <div class="card-body">
+                                    <form action="" method="post">
+                                        <div class="form-row">
+                                            <div class="col">
+                                                <p><br>{{_('Publisher Talao SAS')}}</br>{{_('Société Anonyme Simplifiée<br>Au capital social de <span>10.000</span> euros<br>Immatriculée au RCS de Paris sous le numéro SIREN : 837 674 480 <br /> Dont le siège social est situé 12, rue de Wattignies 75012 Paris</p>
+                                                <p>Publishing manager')}}<br>Nicolas Muller, Président</p>
+                                                <p>Email : <a href="mailto:contact@talao.io">contact@talao.io</a></p>
+                                                <p>{{_('Hosting company')}}<br> <a href="https://talao.io/">www.talao.io.</a><br>OVH</p>
+                                                <p>{{_('Hosting company')}}<br> <a href="https://talao.co/">talao.co</a><br>AWS</p>
+
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer-clean">
+        {% include 'footer.html' %}
+
+    </div>
+    <script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='bs-init.js') }}"></script>
+  <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+    
+</body>
+
+</html>

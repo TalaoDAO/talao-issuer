@@ -1,0 +1,95 @@
+{
+    "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://w3id.org/vc-revocation-list-2020/v1",
+        {
+            "name" : "https://schema.org/name",
+            "description" : "https://schema.org/description",
+            "IdentityPass" : {
+                "@id": "https://github.com/TalaoDAO/context/blob/main/README.mdidentitypass",
+                "@context": {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "schema" : "https://schema.org/",
+                    "id": "@id",
+                    "type": "@type",
+                    "recipient" : {
+                        "@id" : "schema:recipient",
+                        "@context" : {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "schema" : "https://schema.org/",
+                            "email" : "schema:email",
+                            "image": {"@id" : "schema:image", "@type" : "@id"},
+                            "telephone" : "schema:telephone",
+                            "givenName" : "schema:givenName",
+                            "familyName" : "schema:familyName",
+                            "gender" : "schema:gender",
+                            "address" : "schema:address",
+                            "birthDate" : "schema:birthDate",
+                            "jobTitle" : "schema:jobTitle"
+                        }
+                    },
+                    "issuedBy": {
+                        "@id": "schema:issuedBy",
+                        "@context": {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "schema" : "https://schema.org/",
+                            "name" :  "schema:name",
+                            "address" : "schema:address",
+                            "logo" : { "@id" : "schema:logo", "@type" : "@id"}
+                        }
+                    }
+                }
+              }
+        }
+    ],
+    "id": "",
+    "type": ["VerifiableCredential", "IdentityPass"],
+    "issuer": "",
+    "name" : [ 
+        {
+            "@value": "First identity pass",
+            "@language": "en"
+        },
+        {
+            "@value": "Firmenpass",
+            "@language": "de"
+        },
+        {
+            "@value": "Pass d'identité",
+            "@language": "fr"
+        }
+    ],
+    "description" : [
+        {
+            "@language": "en",
+            "@value": "It is a credential issued by a company or an organization. It can be used to authenticate with company services (access badge, information system) or with third parties who offer services for company employees."
+        },
+        {
+            "@language": "de",
+            "@value": "Es ist ein von einem Unternehmen oder einer Organisation ausgestellter Berechtigungsnachweis. Es kann zur Authentifizierung bei Firmendiensten (Zugangsausweis, Informationssystem) oder bei Dritten, die Dienstleistungen für Firmenmitarbeiter anbieten, verwendet werden."
+        },
+        {
+            "@language": "fr",
+            "@value": "Démonstration. Il s'agit d'un titre délivré par une entreprise ou une organisation. Il permet de s'authentifier pour accéder à des locaux ou à une application informatique."
+        }
+    ],
+    "issuanceDate": "",
+    "credentialSubject" : {
+        "id": "",
+        "type" : "IdentityPass",
+        "recipient" : {
+            "email" : "",
+            "image" : "",
+            "familyName" : "",
+            "givenName" : ""
+            },
+        "issuedBy" : {
+            "name" : "Talao SAS",
+            "address" : "16, rue de Wattignies, 75012 Paris, France",
+            "logo" : "https://talao.mypinata.cloud/ipfs/QmNwbEEupT7jR2zmrA87FsN4hUS8eXnCxM8DsL9RXc25cu"
+              }
+    }
+}

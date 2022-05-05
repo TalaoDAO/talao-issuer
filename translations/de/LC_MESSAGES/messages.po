@@ -1,0 +1,217 @@
+# German translations for PROJECT.
+# Copyright (C) 2022 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2022-05-04 10:36+0200\n"
+"PO-Revision-Date: 2022-05-04 10:45+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.10.1\n"
+
+#: components/Talao_message.py:73
+msgid ""
+"A new Talao workspace has been deployed\r\n"
+"Username : "
+msgstr ""
+
+#: routes/web_emailpass.py:63
+msgid "Secret code sent to your email."
+msgstr ""
+
+#: routes/web_emailpass.py:66
+msgid "Email failed."
+msgstr ""
+
+#: routes/web_emailpass.py:83 routes/web_phonepass.py:63
+msgid "Code expired."
+msgstr ""
+
+#: routes/web_emailpass.py:86 routes/web_phonepass.py:66
+msgid "Too many trials (3 max)."
+msgstr ""
+
+#: routes/web_emailpass.py:90 routes/web_phonepass.py:70
+msgid "This code is incorrect, 2 trials left."
+msgstr ""
+
+#: routes/web_emailpass.py:92 routes/web_phonepass.py:72
+msgid "This code is incorrect, 1 trial left."
+msgstr ""
+
+#: routes/web_emailpass.py:164
+msgid "Great ! you have now a proof of email."
+msgstr ""
+
+#: routes/web_emailpass.py:166
+msgid "Sorry ! session expired."
+msgstr ""
+
+#: routes/web_emailpass.py:168
+msgid "Sorry ! there is a server problem, try again later."
+msgstr ""
+
+#: routes/web_phonepass.py:44
+msgid "Secret code sent to your phone."
+msgstr ""
+
+#: routes/web_phonepass.py:47
+msgid "phone failed."
+msgstr ""
+
+#: routes/web_phonepass.py:130
+msgid "Great ! you have now a proof of phone number."
+msgstr ""
+
+#: routes/web_phonepass.py:132
+msgid "Sorry, session expired."
+msgstr ""
+
+#: routes/web_phonepass.py:134
+msgid "Sorry, server problem, try again later."
+msgstr ""
+
+#: templates/company.html:19 templates/footer.html:28
+msgid "Company"
+msgstr ""
+
+#: templates/company.html:25
+msgid "Editeur Talao SAS"
+msgstr ""
+
+#: templates/company.html:25
+msgid ""
+"Société Anonyme Simplifiée<br>Au capital social de <span>10.000</span> "
+"euros<br>Immatriculée au RCS de Paris sous le numéro SIREN : 837 674 480 "
+"<br /> Dont le siège social est situé 12, rue de Wattignies 75012 "
+"Paris</p>\n"
+"                                                <p>Publishing manager"
+msgstr ""
+
+#: templates/company.html:28 templates/company.html:29
+msgid "Hosting company"
+msgstr ""
+
+#: templates/footer.html:8
+msgid "Video tutorial"
+msgstr ""
+
+#: templates/footer.html:9
+msgid "What is Talao ?"
+msgstr ""
+
+#: templates/footer.html:10
+msgid "Report a bug"
+msgstr ""
+
+#: templates/footer.html:21
+msgid "Consulting"
+msgstr ""
+
+#: templates/footer.html:22
+msgid "Development"
+msgstr ""
+
+#: templates/footer.html:26
+msgid "About"
+msgstr ""
+
+#: templates/footer.html:29
+msgid "Privacy Policy"
+msgstr ""
+
+#: templates/footer.html:30
+msgid "Terms & Conditions"
+msgstr ""
+
+#: templates/nav_bar.html:30
+msgid "Get a proof of email"
+msgstr ""
+
+#: templates/nav_bar.html:31
+msgid "Get a proof of phone"
+msgstr ""
+
+#: templates/emailpass/emailpass.html:36
+msgid "Get an Email Proof"
+msgstr ""
+
+#: templates/emailpass/emailpass.html:38
+msgid ""
+"Verify your email to get one-click access to your services with your "
+"Talao smartphone wallet."
+msgstr ""
+
+#: templates/emailpass/emailpass.html:41
+msgid "Enter your email"
+msgstr ""
+
+#: templates/emailpass/emailpass.html:42
+#: templates/emailpass/emailpass_authentication.html:41
+#: templates/phonepass/phonepass.html:42
+#: templates/phonepass/phonepass_authentication.html:41
+msgid "Next"
+msgstr ""
+
+#: templates/emailpass/emailpass_authentication.html:37
+#: templates/phonepass/phonepass_authentication.html:37
+msgid "Enter your code"
+msgstr ""
+
+#: templates/emailpass/emailpass_authentication.html:43
+#: templates/emailpass/emailpass_end.html:22
+#: templates/emailpass/emailpass_qrcode.html:23
+#: templates/passbase/decentralized_kyc.html:23
+#: templates/passbase/over18.html:23
+#: templates/phonepass/phonepass_authentication.html:43
+#: templates/phonepass/phonepass_end.html:24
+#: templates/phonepass/phonepass_qrcode.html:21
+msgid "Back"
+msgstr ""
+
+#: templates/emailpass/emailpass_qrcode.html:18
+msgid "Scan the QRCode below with your wallet to get an Email Proof"
+msgstr ""
+
+#: templates/emailpass/emailpass_qrcode.html:34
+#: templates/passbase/decentralized_kyc.html:35
+#: templates/phonepass/phonepass_qrcode.html:34
+msgid "Clic on the credential to get it into your wallet"
+msgstr ""
+
+#: templates/passbase/decentralized_kyc.html:18
+#: templates/passbase/over18.html:18
+msgid "Scan the QRCode below with your Talao wallet"
+msgstr ""
+
+#: templates/passbase/over18.html:33
+msgid "Download the credential to your wallet"
+msgstr ""
+
+#: templates/passbase/over18.html:36
+msgid "Open the Talao wallet"
+msgstr ""
+
+#: templates/phonepass/phonepass.html:36
+msgid "Get a Phone Pass"
+msgstr ""
+
+#: templates/phonepass/phonepass.html:38
+msgid ""
+"Verify your international phone number to get one-click access to your "
+"services with your Talao smartphone wallet."
+msgstr ""
+
+#: templates/phonepass/phonepass_qrcode.html:17
+msgid "Scan the QRCode below with your wallet to get a proof or phone number"
+msgstr ""
+

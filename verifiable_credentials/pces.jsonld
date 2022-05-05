@@ -1,0 +1,68 @@
+{
+		"@context": [
+			"https://www.w3.org/2018/credentials/v1",
+			{
+				"description": "https://schema.org/description",
+				"name": "https://schema.org/name",
+				"PCDSAuditorCertificate": {
+					"@id": "https://vocabulary.vc.compell.io/credentials/PCDSAuditorCertificate",
+					"@context": {
+						"@version": 1.1,
+						"@protected": true,
+						"schema": "https://schema.org/",
+						"id": "@id",
+						"type": "@type",
+						"familyName": "schema:familyName",
+						"givenName": "schema:givenName",
+						"certificationDate": "schema:certificationDate",
+						"certifiedBy": {
+							"@context": {
+								"@protected": true,
+								"@version": 1.1,
+								"logo": {
+									"@id": "schema:logo",
+									"@type": "@id"
+								},
+								"name": "schema:name",
+								"address": "schema:address",
+								"certificationBodyId": "schema:certificationBodyId"
+							},
+							"@id": "schema:certifiedBy"
+						}
+					}
+				}
+			}
+		],
+		"id": "",
+		"type": [
+			"VerifiableCredential",
+			"PCDSAuditorCertificate"
+		],
+		"credentialSubject": {
+			"id": "",
+			"type" : "PCDSAuditorCertificate",
+			"certifiedBy": {
+				"logo": "",
+				"name": "",
+				"address": "",
+				"certificationBodyId": ""
+			},
+			"familyName": "",
+			"givenName": "",
+			"certificationDate": ""
+		},
+		"issuer": "did:...",
+		"issuanceDate": "2020-12-01T07:47:01Z",
+		"description": [
+			{
+				"@language": "en",
+				"@value": "A certificate that attests that the recipient is a certified PCDS Auditor."
+			}
+		],
+		"name": [
+			{
+				"@language": "en",
+				"@value": "PCDS Auditor Certificate"
+			}
+		]
+	}

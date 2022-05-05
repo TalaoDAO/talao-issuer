@@ -1,0 +1,69 @@
+{
+    "@context": ["https://www.w3.org/2018/credentials/v1",
+        {
+            "name" : "https://schema.org/name",
+            "description" : "https://schema.org/description",
+            "Over18" : {
+                "@id": "https://github.com/TalaoDAO/context/blob/main/README.md",
+                "@context": {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "schema" : "https://schema.org/",
+                    "id": "@id",
+                    "type": "@type",
+                    "issuedBy" : {
+                        "@id" : "schema:issuedBy",
+                        "@context" : {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "logo": {"@id" : "schema:image", "@type" : "@id"},
+                            "name" : "schema:name"
+                        }
+                    }
+                   
+                }
+            }
+        }
+    ],
+    "id": "",
+    "type": ["VerifiableCredential", "Over18"],
+    "name" : [ 
+        {
+            "@value": "Over 18 proof",
+            "@language": "en"
+        },
+        {
+            "@value": "Nachweis der gesetzlichen Mehrheit",
+            "@language": "de"
+        },
+        {
+            "@value": "Preuve de majorité légale",
+            "@language": "fr"
+        }
+    ],
+    "description" : [
+        {
+            "@language": "en",
+            "@value": "This signed electronic certificate proves the legal majority of its bearer."
+        },
+        {
+            "@language": "de",
+            "@value": "Dieses signierte elektronische Zertifikat weist die gesetzliche Mehrheit seines Inhabers nach."
+        },
+        {
+            "@language": "fr",
+            "@value": "Cette attestation électronique signée prouve la majorité légale de son porteur."
+        }
+    ],
+    "issuer": "",
+    "issuanceDate": "",
+    "credentialSubject" : {
+        "type" : "Over18",
+        "issuedBy": {
+            "logo": "https://talao.mypinata.cloud/ipfs/QmNwbEEupT7jR2zmrA87FsN4hUS8eXnCxM8DsL9RXc25cu",
+            "name": "Talao"
+        }
+    }
+}
+
+

@@ -1,0 +1,143 @@
+{
+    "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://w3id.org/vc-revocation-list-2020/v1",
+        {
+            "description": "https://schema.org/description",
+            "name": "https://schema.org/name",
+            "CediesGrantCertificate": {
+                "@context": {
+                    "@protected": true,
+                    "@version": 1.1,
+                    "id": "@id",
+                    "fileNumber": "https://github.com/TalaoDAO/TrustMyData-proto/blob/main/vocab#fileNumber",
+                    "identificationNumber": "https://github.com/TalaoDAO/TrustMyData-proto/blob/main/vocab#identificationNumber",
+                    "loanRequestDeadline" : "schema:endDate",
+                    "totalLoanAmount" : {
+                        "@context": {
+                            "@protected": true,
+                            "@version": 1.1,
+                            "type" : "schema:MonetaryAmount",
+                            "currency": "schema:currency",
+                            "value": "schema:value",
+                            "schema": "https://schema.org/"
+                        },
+                        "@id": "https://github.com/TalaoDAO/TrustMyData-proto/blob/main/vocab#totalLoanAmount"
+                    },
+                    "totalGrantAmount" : {
+                        "@context": {
+                            "@protected": true,
+                            "@version": 1.1,
+                            "type" : "schema:MonetaryAmount",
+                            "currency": "schema:currency",
+                            "value": "schema:value",
+                            "schema": "https://schema.org/"
+                        },
+                        "@id": "https://github.com/TalaoDAO/TrustMyData-proto/blob/main/vocab#totalGrantAmount"
+                    },
+                    "recipient": {
+                        "@context": {
+                            "@protected": true,
+                            "@version": 1.1,
+                            "type" : "schema:Person",
+                            "address": "schema:address",
+                            "familyName": "schema:familyName",
+                            "givenName": "schema:givenName",
+                            "schema": "https://schema.org/"
+                        },
+                        "@id": "schema:recipient"
+                    },
+                    "issuedBy": {
+                        "@context": {
+                            "@protected": true,
+                            "@version": 1.1,
+                            "logo": {
+                                "@id": "schema:logo",
+                                "@type": "@id"
+                            },
+                            "name": "schema:name",
+                            "schema": "https://schema.org/"
+                        },
+                        "@id": "schema:issuedBy"
+                    },
+                    "schema": "https://schema.org/",
+                    "type": "@type"
+                },
+                "@id": "https://github.com/TalaoDAO/TrustMyData-proto/blob/main/vocab#CediesGrantCertificate"
+            }
+        }
+    ],
+    "id": "urn:uuid:8930fe9c-0e22-11ec-9ef1-f37fc4c32c40",
+    "type": [
+        "VerifiableCredential",
+        "CediesGrantCertificate"
+    ],
+    "credentialSubject": {
+        "id": "",
+        "fileNumber": "566GFJHF67876",
+        "loanRequestDeadline" : "",
+        "totalGrantAmount" : {
+                "currency": "USD",
+                "value": "1000"
+        },
+        "totalLoanAmount" : {
+            "currency": "USD",
+            "value": "1000"
+        },
+        "identificationNumber": "8765765566GFJHF67876",
+        "recipient" : {
+            "familyName": "Doe",
+            "givenName": "John",
+            "address": "5 rue de Beaumont, 1219 Luxembourg"
+        },
+        "type": "CediesGrantCertificate",
+        "issuedBy": {
+            "logo": "https://talao.mypinata.cloud/ipfs/QmW2Ph9WixNSPKsQKJmniUEXBzhe2aXV93s88GYeX5FbZ9",
+            "name": "CTIE"
+        }
+    },
+    "evidence": [{
+        "id": "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231",
+        "type": ["DocumentVerification"]
+        }
+    ],
+    "issuer": "",
+    "credentialStatus": {
+        "id": "https://ctie.lu/TrustMyData-proto/blob/main/credential/status/1#1234",
+        "type": "RevocationList2020Status",
+        "revocationListIndex": "1234",
+        "revocationListCredential": "https://...../TrustMyData-proto/blob/main/credential/status/1"
+    },
+    "credentialSchema": {
+        "id": "https://...../tsr-vid/residentcard.jsonld",
+        "type": "JsonSchemaValidator2021"
+    },
+    "description": [
+        {
+            "@language": "en",
+            "@value": "to be described...."
+        },
+        {
+            "@language": "de",
+            "@value": "........"
+        },
+        {
+            "@language": "fr",
+            "@value": "mettre ici une description...."
+        }
+    ],
+    "name": [
+        {
+            "@language": "en",
+            "@value": "Cedies grant certificate"
+        },
+        {
+            "@language": "de",
+            "@value": "Cedies grant certificate"
+        },
+        {
+            "@language": "fr",
+            "@value": "Cedies grant certificate"
+        }
+    ]
+}

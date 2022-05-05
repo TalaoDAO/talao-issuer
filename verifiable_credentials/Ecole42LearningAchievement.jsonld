@@ -1,0 +1,104 @@
+{
+    "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://w3id.org/vc-revocation-list-2020/v1",
+        {
+            "name" : "https://schema.org/name",
+            "description" : "https://schema.org/description",
+            "Ecole42LearningAchievement" : {
+                "@id": "https://github.com/TalaoDAO/context/blob/main/README.md#learningachievement",
+                "@context": {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "schema" : "https://schema.org/",
+                    "id": "@id",
+                    "type": "@type",
+                    "familyName": "schema:familyName",
+                    "givenName": "schema:givenName",
+                    "birthDate": "schema:birthDate",
+                    "email": "schema:email",
+                    "signatureLines": {
+                        "@context": {
+                            "@protected": true,
+                            "@version": 1.1,
+                            "image": {
+                                "@id": "schema:image",
+                                "@type": "@id"
+                            },
+                            "jobTitle": "schema:jobTitle",
+                            "name": "schema:name",
+                            "schema": "https://schema.org/"
+                        },
+                        "@id": "https://github.com/blockchain-certificates/cert-schema/blob/master/docs/signatureLineExtension_schema.md"
+                    },
+                    "hasCredential": {
+                        "@id": "https://hnc-path-to-facilities-management-definition",
+                        "@context" : {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "title": "schema:title",
+                            "description": "schema:description",
+                            "inDefinedTermSet" : "schema:inDefinedTermSet"
+                        }
+                    },
+                    "issuedBy" : {
+                        "@id" : "schema:issuedBy",
+                        "@context" : {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "logo": {"@id" : "schema:image", "@type" : "@id"},
+                            "name" : "schema:name",
+                            "naf" : "schema:identifier",
+                            "siret" : "schema:identifier",
+                            "address" : "schema:address"
+                        }
+                    }                   
+                }
+            }
+        }
+    ],
+    "id": "",
+    "type": ["VerifiableCredential","Ecole42LearningAchievement"],
+    "issuer": "",
+    "issuanceDate": "2019-06-22T14:11:44Z",
+    "name" :[ 
+        {
+            "@language": "fr",
+            "@value": "Certificate of completion 42"
+        }
+    ],
+     "description" :[ 
+        {
+            "@language": "fr",
+            "@value": "Curriculum of architect in digital technologies"
+        }
+    ],
+    "credentialSubject": {
+        "type" : "Ecole42LearningAchievement",
+        "id": "",
+        "familyName": "Skywalker",
+        "givenName": "Lea",
+        "birthDate": "2000-02-15",
+        "signatureLines": {
+            "image": "https://gateway.pinata.cloud/ipfs/QmUgT4AudDdqWBMhWMBR9MDAiV25ZyLBHh973Pc5qKHnif",
+            "jobTitle": "Executive Director of 42",
+            "name": "Sophie Vigier"
+        },
+        "hasCredential": {
+            "title":  "Certificate of Completion 42",
+            "description" : "Curriculum of architect in digital technologies",
+            "inDefinedTermSet" : "https://talao.io/vocab_tobedefined"
+        },
+        "issuedBy" : {
+            "name": "Association 42",
+            "address" : "96 Boulevard Bessières, 75017 Paris",
+            "naf" : "85598",
+            "siret" : "791 199 193 000 16",
+            "logo" : "https://talao.mypinata.cloud/ipfs/QmRv2vD6AGiHPDhfqgLFcWYfy4Xy84yNq6wMGdgJTjZc3S"
+        }
+    },
+    "evidence": {
+        "id": "https://gateway.pinata.cloud/ipfs/QmUBrgmt37U57XTfQkmvamfQsNJm7sULuNzXCK7pxLtXRh",
+        "type": ["DocumentVerification"]
+    }
+}

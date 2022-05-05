@@ -1,0 +1,42 @@
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='Floating-Button.css') }}">
+{% if session['type'] == "company" or session['type'] == "person" %}
+<div class="float btn-group dropup" style="z-index:102000;">
+  <button type="button" class="btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style='outline: none;box-shadow: none;'>
+    <i class="fa fa-question my-float" style="color: rgb(255,255,255)"></i>
+  </button>
+  <div class="dropdown-menu mx-4 my-2" style="min-width:200px">
+    <a class="dropdown-item " title="" role="presentation" href="/user/tutorial">{{_('Video tutorial')}}</a>
+    <a class="dropdown-item " title="" role="presentation" href="https://talao.readthedocs.io/en/latest/contents/">{{_('What is Talao ?')}}</a>
+    <a class="dropdown-item " title="" role="presentation" href="/report">{{_('Report a bug')}}</a>
+  </div>
+</div>
+{% endif %}
+<div class="footer-clean" >
+  <footer>
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-sm-4 col-md-3 item">
+          <h3>Services</h3>
+          <ul>
+            <li><a href="https://talao.io">{{_('Consulting')}}</a></li>
+            <li><a href="https://talao.io">{{_('Development')}}</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-4 col-md-3 item">
+          <h3>{{_('About')}}</h3>
+          <ul>
+            <li><a href="/company">{{_('Company')}}</a></li>
+            <li><a href="/md_file?file=privacy">{{_('Privacy Policy')}}</a></li>
+            <li><a href="/md_file?file=terms_and_conditions">{{_('Terms & Conditions')}}</a></li>
+
+          </ul>
+        </div>
+   
+        <div class="col-lg-3 item social"><a href="https://wwww.facebook.com/TalaoDAO/"><i class="fab fa-facebook"></i></a><a href="https://twitter.com/Talao_io"><i class="fab fa-twitter"></i></a><a href="https://t.me/TalaoCommunity"><i
+              class="fab fa-telegram"></i></a><a href="mailto:relay@talao.io"><i class="fas fa-envelope"></i></a>
+          <p class="copyright">© Talao 2022 Version : {{Version}}</p>
+          <!--    <p class="copyright">Created : {{Created}}</p> -->
+        </div>
+      </div>
+    </div>
+  </footer>

@@ -1,0 +1,124 @@
+{
+    "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        {
+            "name" : "https://schema.org/name",
+            "description" : "https://schema.org/description",
+            "Reference" : {
+                "@id" : "https://github.com/TalaoDAO/context#reference",
+                "@context" : {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "schema" : "https://schema.org/",
+                    "issuedBy": {
+                        "@id": "schema:issuedBy",
+                        "@context": {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "name" :   "schema:name",
+                            "logo" : {"@id" : "schema:image", "@type" : "@id"}
+                        }
+                    },
+                    "provider" : {
+                        "@id": "schema:provider",
+                        "@context": {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "name" :  "schema:name",
+                            "logo" : {"@id" : "schema:logo","@type" : "@id"}
+                        }
+                    },
+                    "signatureLines": {
+                        "@id": "https://github.com/blockchain-certificates/cert-schema/blob/master/docs/signatureLineExtension_schema.md",
+                        "@context": {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "name" :  "schema:name",
+                            "jobTitle" :"schema:jobTitle",
+                            "image" : {"@id" : "schema:image", "@type" : "@id"}
+                        }
+                    },
+                    "offers" : {
+                        "@id": "schema:offers",
+                        "@context": {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "description": "schema:description",
+                            "startDate" : "schema:startDate",
+                            "title" : "schema:title",
+                            "endDate": "schema:endDate",
+                            "location": "schema:location",
+                            "price": "schema:price",
+                            "priceCurrency": "schema:priceCurrency",
+                            "skills" : {
+                                "@id": "schema:skills",
+                                "@context": {
+                                    "@version": 1.1,
+                                    "@protected": true,
+                                    "description" :  "schema:description"
+                                }
+                            }
+                        }                      
+                    },
+                    "review": {
+                        "@id": "schema:review",
+                        "@context": {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "author": "schema:author",
+                            "datePublished": "schema:datePublished",
+                            "reviewBody": "schema:reviewBody"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "type": ["VerifiableCredential", "Reference"],
+    "credentialSubject": {
+        "type": "Reference",
+        "issuedBy" : {
+            "logo": "https://talao.mypinata.cloud/ipfs/QmU8z1aDDpbgVjXwU8nMvgU3YD4VeUzHTkitsELZRFBBZa",
+            "name": "MyCompany"
+        },
+        "id": "un DID...",
+        "signatureLines" : {
+            "name" : "le nom du signataire",
+            "jobTitle" : "le titre du signataire",
+            "image" : "https://...../signature"
+        },
+        "offers": {
+            "description": "OpenID Connect (OIDC) spécifie une interface HTTP Restful d’authentification et se base sur le protocole OAuth2 pour faire de la délégation d’autorisation, c’est à dire que dans la grande majorité des cas, l’utilisateur final n’aura plus besoin de fournir directement ses informations d’identification à une application tierce. OIDC utilise également le formalisme d’échange JWT (JSON Web Token) pour transmettre l’identité des utilisateurs aux applications, ainsi que leurs rôles/habilitations.",
+            "endDate": "2021-02-15",
+            "location": "Bordeaux",
+            "price": "50000",
+            "priceCurrency": "EUR",
+            "skills": [
+                {
+                    "description": "JSON_LD"
+                },
+                {
+                    "description": " Blockchain"
+                },
+                {
+                    "description": " Tezos"
+                },
+                {
+                    "description": " did:ethr"
+                },
+                {
+                    "description": " Credible"
+                }
+            ],
+            "startDate": "2020-10-05",
+            "title": "Conception et réalisation d'un serveur OpenID COnnect"
+        },
+        "review": {
+            "author": "",
+            "datePublished": "",
+            "reviewBody": "Contrairement à nos expériences précédentes, nous avons rapidement réussi à créer une relation de confiance avec les équipes de Talao. Notre chef de projet, Raphaël, a été un des facteurs de la réussite du projet tant par sa réactivité, que par sa totale transparence. On attend pas un mois avant d’avoir une réponse ce qui est très agréable. Il nous aide au quotidien à trouver des solutions ou à contourner un obstacle quand cela est possible."
+        }
+    },
+    "id": "",
+    "issuer": ""
+}
