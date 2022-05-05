@@ -95,11 +95,12 @@ def emailpass_authentication(mode) :
 
 
 def emailpass_qrcode(red, mode) :
-    print('session = ', session.__dict__)
-    print(session.sid)
     qr_code = mode.server + "emailpass/offer/" + session.sid +'?' + urlencode({'issuer' : issuer_did})
     logging.info('qr code = %s', qr_code)
     universal_link = mode.deeplink + 'app/download?' + urlencode({'uri' : qr_code })
+    if not session.get('email') :
+        flash(_("Code expired."), "warning")
+        return render_template('emailpass/emailpass.html')
     red.setex(session.sid, QRCODE_DELAY, session['email']) # email is stored in redis with session_id as index
     return render_template('emailpass/emailpass_qrcode.html',
                                 url=qr_code,

@@ -76,6 +76,9 @@ def phonepass_authentication(mode) :
 def phonepass_qrcode(red, mode) :
     url = mode.server + "phonepass/offer/" + session.sid +'?' + urlencode({'issuer' : DID})
     deeplink = mode.deeplink + 'app/download?' + urlencode({'uri' : url })
+    if not session.get('phone') :
+        flash(_("Code expired."), "warning")
+        return render_template('phonepass/phonepass.html')
     red.setex(session.sid, QRCODE_DELAY, session['phone'])
     return render_template('phonepass/phonepass_qrcode.html',
                                 url=url,
