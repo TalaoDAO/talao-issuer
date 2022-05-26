@@ -12,16 +12,20 @@
       
       <div id="content_desktop" class="d-none d-sm-block">
 
-    <!--    <div id="content" style="background-attachment:local;background-size:cover;background-position:50%30% ;background-repeat:no-repeat;background-image: url('/static/img/tezotopia.png');">
-    --> 
         <br><br><br> <br><br><br>
         <div class="text-center">  
-          <h1>Tezotopia issuer page</h1>
+          <h1>Tezotopia landing page</h1>
           <br>
-         
-          <h3>Scan the QR code below with Altme</h2><br>
+          <h3>1/ Download ALtMe to your smartpĥone</h2><br>
+          <h3>2/ Associate your crypto wallet address with AltMe</h2><br>
+       
+            <form name="form" action="/voucher/{{voucher_id}}" method="POST">
+           
+                    <div class="form-group"><button class="btn btn-primary btn-sm" type="submit">Activate to get your voucher</button></div>
+          </form>                   
+            </div>
 
-          <div class="my-3"><img src="{{qrcode(url)}}" style="width: 250px;border-radius:0px;"></div>
+       
           
         </div>
        
@@ -50,19 +54,11 @@
 </div>
      
 
-<script>function goBack() {  window.history.back();}</script>
+
 <script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
   <script src="{{ url_for('static', filename='bs-init.js') }}"></script>
   <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 
-<script>
-var source = new EventSource('/voucher/stream');
-source.onmessage = function (event) {
-     const result = JSON.parse(event.data)
-     if (result.url_id == '{{session["sid"]}}' ){
-       window.location.href="/voucher/end?followup=" + result.check;
-     }
-};
-</script>
+
 </body>
 </html>

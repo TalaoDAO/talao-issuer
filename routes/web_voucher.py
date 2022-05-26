@@ -45,6 +45,9 @@ def add_voucher(my_voucher, mode) :
 
 
 def voucher_qrcode(voucher_id, mode) :
+    if request.method == 'GET' :
+        return render_template('voucher/landing_page.html', 
+                                voucher_id = voucher_id)
     try :
         json.loads(open('./verifiable_credentials/TezVoucher_' + voucher_id + '.jsonld', 'r').read())
     except :
