@@ -10,7 +10,7 @@
             
      
       
-      <div id="content_desktop" class="d-none d-sm-block">
+      <div>
 
         <br><br><br> <br><br><br>
         <div class="text-center">  
@@ -33,20 +33,6 @@
       </div>
     
 
-    <div id="content_smartphone" class="d-block d-sm-none"> 
-      {% include 'nav_bar.html' %}
-      <div class="card shadow mx-1">
-        <a href="{{deeplink}}" class="bg-transparent">
-        <img src="/static/img/tezotopia_voucher.png" class="card-img-top mt-3">
-        </a>
-        <div class="card-body">
-            <div class="text-center">
-                <p class="card-text">{{_('Clic on this card to get your voucher')}}</p>
-            </div>
-        </div>
-      </div>  
-      {% include 'footer.html' %}
-    </div>
 
    
 </div>
