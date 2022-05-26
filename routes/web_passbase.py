@@ -1,5 +1,5 @@
 import sqlite3
-from flask import jsonify, request, render_template, Response, render_template_string
+from flask import jsonify, request, render_template, Response, render_template_string, session
 import json
 from datetime import timedelta, datetime
 import didkit
@@ -82,15 +82,12 @@ def get_identity(passbase_key, mode) :
 
 
 def passbase(mode) :
-    id = str(uuid.uuid1())
-    url_over18 = mode.server + "passbase/endpoint/over18/" + id +'?issuer=' + issuer_did
-    url_idcard = mode.server + "passbase/endpoint/idcard/" + id +'?issuer=' + issuer_did
+    url_over18 = mode.server + "passbase/endpoint/over18/" + session.sid +'?issuer=' + issuer_did
+    url_idcard = mode.server + "passbase/endpoint/idcard/" + session.sid +'?issuer=' + issuer_did
     deeplink_over18 = mode.deeplink + 'app/download?' + urlencode({'uri' : url_over18 })
     deeplink_idcard = mode.deeplink + 'app/download?' + urlencode({'uri' : url_idcard })
-    #red.set(id, json.dumps(credentialOffer))
-    return render_template('/passbase/decentralized_kyc.html',
+    return render_template('/passbase/over18_kyc.html',
                                 url=url_over18,
-                                id=id,
                                 deeplink_over18=deeplink_over18,
                                 deeplink_idcard=deeplink_idcard
                                 )
@@ -150,7 +147,7 @@ def passbase_webhook(mode) :
 
 async def passbase_endpoint_over18(id,red,mode):
     if request.method == 'GET':
-        challenge = str(uuid.uuid1())[0:1]
+        #challenge = str(uuid.uuid1())[0:1]
         credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
@@ -160,9 +157,7 @@ async def passbase_endpoint_over18(id,red,mode):
         credentialOffer = {
             "type": "CredentialOffer",
             "credentialPreview": credential,
-            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
-            "display": {"backgroundColor": "ffffff"},
-            "challenge" : challenge
+            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z"
         }
         red.set(id, json.dumps(credentialOffer))
         return jsonify(credentialOffer)
@@ -200,7 +195,7 @@ async def passbase_endpoint_over18(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-        
+
     if identity['metadata']['did'] != request.form['subject_id'] :
         logging.warning("wrong wallet")
         data = json.dumps({

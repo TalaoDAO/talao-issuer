@@ -16,7 +16,7 @@ import markdown.extensions.fenced_code
 
 
 # local dependencies
-from routes import web_emailpass, web_phonepass, web_passbase, web_tiar
+from routes import web_emailpass, web_phonepass, web_passbase, web_tiar, web_voucher
 import environment
 
 import logging
@@ -59,6 +59,7 @@ sess.init_app(app)
 # init routes 
 web_emailpass.init_app(app, red, mode)
 web_phonepass.init_app(app, red, mode)
+web_voucher.init_app(app, red, mode)
 web_passbase.init_app(app, red, mode)
 web_tiar.init_app(app)
 
