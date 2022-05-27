@@ -18,14 +18,9 @@
         <div class="text-center">  
           <h1>Tezotopia issuer page</h1>
           <br>
-         
           <h3>Scan the QR code below with Altme</h2><br>
-
           <div class="my-3"><img src="{{qrcode(url)}}" style="width: 250px;border-radius:0px;"></div>
-          
         </div>
-       
-      
       </div>
     
 
@@ -59,7 +54,7 @@
 var source = new EventSource('/voucher/stream');
 source.onmessage = function (event) {
      const result = JSON.parse(event.data)
-     if (result.url_id == '{{session["sid"]}}' ){
+     if (result.url_id == '{{id}}' ){
        window.location.href="/voucher/end?followup=" + result.check;
      }
 };

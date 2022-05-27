@@ -12,6 +12,14 @@
                     "schema" : "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
+                    "associatedAddress" : {
+                        "@id": "https://schema.org/address",
+                        "@context" : {
+                            "@protected" : true,
+                            "blockchainTezos" : "https://schema.org/blockchain",
+                            "blockchainEthereum" : "https://schema.org/blockchain"
+                        }
+                    },
                     "affiliate" : {
                         "@id" : "https://github.com/TalaoDAO/context/blob/main/README.md",
                         "@context" : {
@@ -45,6 +53,7 @@
                             "@protected": true,
                             "startDate" : "schema:date",
                             "category" : "schema:category",
+                            "duration" : "schema:duration",
                             "endDate" : "schema:date",
                             "benefit" : {
                                 "@id" : "https://github.com/TalaoDAO/context/blob/main/README",
@@ -53,25 +62,25 @@
                                     "category" : "schema:category",
                                     "discount" : "schema:discount"
                                 }
-                            }
-                        }
-                    },
-                    "offeredBy" : {
-                        "@id" : "schema:offeredBy",
-                        "@context" : {
-                            "@version": 1.1,
-                            "@protected": true,
-                            "description" : "schema:description",
-                            "website" : "schema:website",
-                            "logo": {"@id" : "schema:image", "@type" : "@id"},
-                            "did" : "schema:identifier",
-                            "name" : "schema:name",
-                            "paymentMethod" : {
-                                "@id" : "schema:paymentMethod",
+                            },
+                            "offeredBy" : {
+                                "@id" : "schema:offeredBy",
                                 "@context" : {
-                                    "currency" : "schema:currency",
-                                    "blockchain" : "schema:name",
-                                    "blockchainAccount" : "schema:identifier"
+                                    "@version": 1.1,
+                                    "@protected": true,
+                                    "description" : "schema:description",
+                                    "website" : "schema:website",
+                                    "logo": {"@id" : "schema:image", "@type" : "@id"},
+                                    "did" : "schema:identifier",
+                                    "name" : "schema:name",
+                                    "paymentMethod" : {
+                                        "@id" : "schema:paymentMethod",
+                                        "@context" : {
+                                            "currency" : "schema:currency",
+                                            "blockchain" : "schema:name",
+                                            "blockchainAccount" : "schema:identifier"
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -107,9 +116,9 @@
             }
         }
     ],
-    "id": "urn:uuid:8930fe9c-0e22-11ec-9ef1-f37fc4c00c40",
+    "id": "urn:uuid:random",
     "type": ["VerifiableCredential", "TezVoucher_1"],
-    "issuer": "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du",
+    "issuer": "did:tz:issuer",
     "name" : [ 
         {
             "@value": "5% off Tezotopia NFTs",
@@ -139,30 +148,35 @@
         }
     ],
 
-    "issuanceDate": "2021-09-15T19:55:00Z",
-    "expirationDate" : "2023-09-15T19:55:00Z",
+    "issuanceDate": "2022-00-00T00:00:00Z",
+    "expirationDate" : "2023-00-00T00:00:00Z",
     "credentialSubject" : {
+        "id" : "did:wallet",
         "type" : "TezVoucher_1",
-        "offers" : {
+        "associatedAddress" : {
+                "blockchainTezos" : "tz1345765476547654",
+                "blockchainEthereum" : "0x1345765476547654"
+        },
+        "offers" : [{
             "startDate" : "2022-04-08T19:55:00Z",
             "endDate" : "2022-06-08T19:55:00Z",
             "category" : "discounted_coupon",
+            "duration" : "30",
             "benefit" : {
                 "category" : "discount",
                 "discount" : "5%"
-
-            }       
-        },
-        "offeredBy": {
-            "logo": "ipfs://QmZmdndUVRoxiVhUnjGrKnNPn8ah3jT8fxTCLMnAzRAFFZ",
-            "name": "GifGames",
-            "description" : "gaming platform Tezotopia",
-            "paymentMethod" : {
-                "blockchain" : "Tezos",
-                "currency" : "XTZ",
-                "blockchainAccount" : "tz1iyjrTUNxDpPaqNZ84ipGELAcTWYg66789"
+            },    
+            "offeredBy": {
+                "logo": "ipfs://QmZmdndUVRoxiVhUnjGrKnNPn8ah3jT8fxTCLMnAzRAFFZ",
+                "name": "GifGames",
+                "description" : "gaming platform Tezotopia",
+                "paymentMethod" : {
+                    "blockchain" : "Tezos",
+                    "currency" : "XTZ",
+                    "blockchainAccount" : "tz1iyjrTUNxDpPaqNZ84ipGELAcTWYg66789"
+                }
             }
-        },
+        }],
         "issuedBy": {
             "logo": "ipfs://QmZmdndUVRoxiVhUnjGrKnNPn8ah3jT8fxTCLMnAzRAFFZ",
             "name": "Talao",
