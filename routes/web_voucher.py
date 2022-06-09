@@ -1,4 +1,4 @@
-from flask import jsonify, request, render_template, session, Response
+from flask import jsonify, request, render_template, session, Response, render_template_string
 import json
 import uuid
 from datetime import timedelta, datetime
@@ -20,6 +20,7 @@ DID =  "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 
 
 def init_app(app,red, mode) :
+    app.add_url_rule('/voucher',  view_func=voucher, methods = ['GET', 'POST'])
     app.add_url_rule('/voucher/<voucher_id>',  view_func=voucher_qrcode, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/voucher/offer/<voucher_id>/<id>',  view_func=voucher_offer, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/voucher/stream',  view_func=voucher_stream, methods = ['GET', 'POST'], defaults={'red' : red})
@@ -28,32 +29,34 @@ def init_app(app,red, mode) :
 
 
 def add_voucher(my_voucher, mode) :
-    url = "https://talao.co/analytics/api/v1"
+    url = "https://talao.co/analytics/api/newvoucher"
     headers = {
         'accept' : 'application/json',
-        'ANALYTICS-KEY' : mode.analytics_key
+        'key' : mode.analytics_key
     }
-    data = {"voucher" : my_voucher}
-    r = requests.put(url, data =data, headers=headers)
+    data = my_voucher
+    r = requests.post(url, data=data, headers=headers)
     if not 199<r.status_code<300 :
         logging.error("API call rejected %s", r.status_code)
-        # TODO
-        return True
+        return False
     else :
         logging.info("API call accepted %s", r.status_code)
         return True
 
 
+def voucher() :
+    return render_template_string('<h1>No voucher id</h1>')
+
+
 def voucher_qrcode(voucher_id, red, mode) :
-    if request.method == 'GET' :
-        return render_template('voucher/landing_page.html', 
-                                voucher_id=voucher_id)
     try :
         voucher = json.loads(open('./verifiable_credentials/TezVoucher_' + voucher_id + '.jsonld', 'r').read())
     except :
-        return jsonify('Voucher not found')
+        return render_template_string('<h1> Voucher not found </h1>')
+    if request.method == 'GET' :
+        return render_template('voucher/landing_page.html', 
+                                voucher_id=voucher_id)
     id = str(uuid.uuid1())
-    voucher["credentialSubject"]["associatedAddress"]["blockchainTezos"] = request.form.get("address", "")
     red.setex(id, 180, json.dumps(voucher))
     url = mode.server + "voucher/offer/" + voucher_id +'/' + id +'?' + urlencode({'issuer' : DID})
     deeplink = mode.deeplink + 'app/download?' + urlencode({'uri' : url })
@@ -98,13 +101,8 @@ async def voucher_offer(voucher_id, id, red, mode):
         voucher['id'] = "urn:uuid:" + str(uuid.uuid1())
         voucher['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
         # TODO check DID and setup associated address from data received
-        """
-        try :
-            vp = request.form.get('verifiable_presentation')[0]
-            voucher["credentialSubject"]["associatedAddress"]["blockchainTezos"] = vp["verifiableCredential"]["id"]
-        except :
-            print("vp problem)
-        """
+        vp = json.loads(request.form.get('presentation'))
+        voucher["credentialSubject"]["associatedAddress"]["blockchainTezos"] = vp["verifiableCredential"]["credentialSubject"]["correlation"][0]
         didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm_tz1

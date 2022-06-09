@@ -113,7 +113,7 @@ def passbase_webhook(mode) :
     identity = get_identity(webhook['key'], mode)
     if not identity :
         logging.error("probleme d acces API")
-        return jsonify("probleme d acces API"),500
+        return jsonify("probleme d acces API")
 
     email = identity['owner']['email']
     try :
@@ -122,8 +122,8 @@ def passbase_webhook(mode) :
         logging.error("Metadata are not available")
         link_text = "Sorry ! \nThe authentication failed.\nProbably your proof of email has been rejected.\nLet's try again with a new proof of email."
         message.message(_("Talao wallet identity credential"), email, link_text, mode)
-        logging.info("email sent to %s", email)
-        return jsonify("No metadata"), 200
+        logging.warning("email sent to %s", email)
+        return jsonify("No metadata")
 
     add_passbase_db(email,
                 webhook['status'],

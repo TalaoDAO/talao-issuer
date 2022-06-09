@@ -147,15 +147,12 @@
             "@value": "Bénéficiez de 5% de réduction sur votre premier Bloc Tezotop ! "
         }
     ],
-
-    "issuanceDate": "2022-00-00T00:00:00Z",
-    "expirationDate" : "2023-00-00T00:00:00Z",
     "credentialSubject" : {
         "id" : "did:wallet",
         "type" : "TezVoucher_1",
         "associatedAddress" : {
-                "blockchainTezos" : "tz1345765476547654",
-                "blockchainEthereum" : "0x1345765476547654"
+                "blockchainTezos" : "",
+                "blockchainEthereum" : ""
         },
         "offers" : [{
             "startDate" : "2022-04-08T19:55:00Z",
