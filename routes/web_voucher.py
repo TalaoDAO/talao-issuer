@@ -29,20 +29,21 @@ def init_app(app,red, mode) :
 
 
 def add_voucher(my_voucher, mode) :
+    # my_voucher is a json string
     url = "https://talao.co/analytics/api/newvoucher"
+    url = "http://192.168.0.65:8000" 
     headers = {
-        'accept' : 'application/json',
-        'key' : mode.analytics_key
+        'key' : mode.analytics_key,
+        "Content-Type": "application/x-www-form-urlencoded"
     }
-    data = my_voucher
-    r = requests.post(url, data=data, headers=headers)
+    r = requests.post(url, data=my_voucher, headers=headers)
     if not 199<r.status_code<300 :
         logging.error("API call rejected %s", r.status_code)
         return False
     else :
         logging.info("API call accepted %s", r.status_code)
         return True
-
+   
 
 def voucher() :
     return render_template_string('<h1>No voucher id</h1>')
