@@ -29,9 +29,12 @@ def init_app(app,red, mode) :
 
 
 def add_voucher(my_voucher, mode) :
-    # my_voucher is a json string
+    # my_voucher is a json stringexi
+    my_voucher = json.loads(my_voucher)
+    my_voucher = json.dumps(my_voucher, ensure_ascii=True)
+
     url = "https://talao.co/analytics/api/newvoucher"
-    url = "http://192.168.0.65:8000" 
+    #url = "http://192.168.0.65:8000" pour api.server.py
     headers = {
         'key' : mode.analytics_key,
         "Content-Type": "application/x-www-form-urlencoded"
