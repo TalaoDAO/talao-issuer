@@ -20,26 +20,24 @@ DID =  "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 
 
 def init_app(app,red, mode) :
-    app.add_url_rule('/voucher',  view_func=voucher, methods = ['GET', 'POST'])
-    app.add_url_rule('/voucher/<voucher_id>',  view_func=voucher_qrcode, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
-    app.add_url_rule('/voucher/offer/<voucher_id>/<id>',  view_func=voucher_offer, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
-    app.add_url_rule('/voucher/stream',  view_func=voucher_stream, methods = ['GET', 'POST'], defaults={'red' : red})
-    app.add_url_rule('/voucher/end',  view_func=voucher_end, methods = ['GET', 'POST'])
+    app.add_url_rule('/talao_community',  view_func=talao_community_qrcode, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+    app.add_url_rule('/talao_community/offer/<talao_community_id>/<id>',  view_func=talao_community_offer, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+    app.add_url_rule('/talao_community/stream',  view_func=talao_community_stream, methods = ['GET', 'POST'], defaults={'red' : red})
+    app.add_url_rule('/talao_community/end',  view_func=talao_community_end, methods = ['GET', 'POST'])
     return
 
 
-def add_voucher(my_voucher, mode) :
-    # my_voucher is a json stringexi
-    my_voucher = json.loads(my_voucher)
-    my_voucher = json.dumps(my_voucher, ensure_ascii=True)
+def add_talao_community(my_talao_community, mode) :
+    # my_talao_community is a json stringexi
+    my_talao_community = json.loads(my_talao_community)
+    my_talao_community = json.dumps(my_talao_community, ensure_ascii=True)
 
     url = "https://talao.co/analytics/api/newvoucher"
-    #url = "http://192.168.0.65:8000" pour api.server.py
     headers = {
         'key' : mode.analytics_key,
         "Content-Type": "application/x-www-form-urlencoded"
     }
-    r = requests.post(url, data=my_voucher, headers=headers)
+    r = requests.post(url, data=my_talao_community, headers=headers)
     if not 199<r.status_code<300 :
         logging.error("API call rejected %s", r.status_code)
         return False
@@ -48,43 +46,28 @@ def add_voucher(my_voucher, mode) :
         return True
    
 
-def voucher() :
-    return render_template_string('<h1>No voucher id</h1>')
 
-
-def voucher_qrcode(voucher_id, red, mode) :
-    try :
-        voucher = json.loads(open('./verifiable_credentials/TezVoucher_' + voucher_id + '.jsonld', 'r').read())
-    except :
-        return render_template_string('<h1> Voucher not found </h1>')
+def talao_community_qrcode(red, mode) :
     if request.method == 'GET' :
-        return render_template('voucher/landing_page.html', 
-                                voucher_id=voucher_id)
+        return render_template('talao_community/landing_page.html', 
+                                )
     id = str(uuid.uuid1())
-    red.setex(id, 180, json.dumps(voucher))
-    url = mode.server + "voucher/offer/" + voucher_id +'/' + id +'?' + urlencode({'issuer' : DID})
+    url = mode.server + 'talao_community/offer/' + id +'?' + urlencode({'issuer' : DID})
     deeplink = mode.deeplink + 'app/download?' + urlencode({'uri' : url })
-    return render_template('voucher/voucher_qrcode.html',
+    return render_template('talao_community/talao_community_qrcode.html',
                                 url=url,
                                 id=id,
                                 deeplink=deeplink)
    
 
-async def voucher_offer(voucher_id, id, red, mode):
+async def talao_community_offer(id, red, mode):
     """ Endpoint for wallet
     """
-    try :
-        voucher = json.loads(red.get(id).decode())
-    except :
-        logging.error("voucher not found")
-        data = json.dumps({"url_id" : id, "check" : "failed"})
-        red.publish('voucher', data)
-        return jsonify('voucher not found')
-
-    voucher["issuer"] = DID
-    voucher['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-    voucher['expirationDate'] =  (datetime.now() + timedelta(days= 30)).isoformat() + "Z"
-    filename = "./credential_manifest/tezotopia_voucher_credential_manifest.json"
+    talao_community = json.loads(open('./verifiable_credentials/TalaoCommunity.jsonld', 'r').read())   
+    talao_community["issuer"] = DID
+    talao_community['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    talao_community['expirationDate'] =  (datetime.now() + timedelta(days= 30)).isoformat() + "Z"
+    filename = "./credential_manifest/talaocommunity_credential_manifest_1.json"
     with open(filename, "r") as f:
         credential_manifest = f.read()
     credential_manifest = json.loads(credential_manifest)
@@ -93,7 +76,7 @@ async def voucher_offer(voucher_id, id, red, mode):
         # make an offer  
         credential_offer = {
             "type": "CredentialOffer",
-            "credentialPreview": voucher,
+            "credentialPreview": talao_community,
             "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
             "challenge" : challenge,
             "domain" : "tezotopia.talao.co",
@@ -102,50 +85,54 @@ async def voucher_offer(voucher_id, id, red, mode):
         return jsonify(credential_offer)
     elif request.method == 'POST': 
         # sign credential
-        voucher['id'] = "urn:uuid:" + str(uuid.uuid1())
-        voucher['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
+        talao_community['id'] = "urn:uuid:" + str(uuid.uuid1())
+        talao_community['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
         # TODO check DID and setup associated address from data received
         vp = json.loads(request.form.get('presentation'))
-        voucher["credentialSubject"]["associatedAddress"]["blockchainTezos"] = vp["verifiableCredential"]["credentialSubject"]["correlation"]
+        talao_account = vp["verifiableCredential"]["credentialSubject"]["talaoAccount"]
+        # TODO calculer le nombre de token Talao
+        talao_community["credentialSubject"]["associatedAddress"]["blockchainTezos"] = vp["verifiableCredential"]["credentialSubject"]["blockchainTezos"]
+        talao_community["credentialSubject"]["associatedAddress"]["blockchainEthereum"] = vp["verifiableCredential"]["credentialSubject"]["blockchainEthereum"]
+        talao_community["credentialSubject"]["talaoAccount"] = talao_account
         didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm_tz1
             }
-        signed_voucher =  await didkit.issue_credential(
-                json.dumps(voucher),
+        signed_talao_community =  await didkit.issue_credential(
+                json.dumps(talao_community),
                 didkit_options.__str__().replace("'", '"'),
                 key_tz1)
-        if not signed_voucher :
+        if not signed_talao_community :
             logging.error('credential signature failed')
             data = json.dumps({"url_id" : id, "check" : "failed"})
-            red.publish('voucher', data)
+            red.publish('talao_community', data)
             return jsonify('server error')
-        # update the voucher data base
-        if not add_voucher(signed_voucher, mode) :
+        # update the talao_community data base
+        if not add_talao_community(signed_talao_community, mode) :
             data = json.dumps({"url_id" : id, "check" : "failed"})
-            red.publish('voucher', data)
+            red.publish('talao_community', data)
             return jsonify('server error')
         # send event to client agent to go forward
         data = json.dumps({"url_id" : id, "check" : "success"})
-        red.publish('voucher', data)
-        return jsonify(signed_voucher)
+        red.publish('talao_community', data)
+        return jsonify(signed_talao_community)
  
 
-def voucher_end() :
+def talao_community_end() :
     if request.args['followup'] == "success" :
-        message = _('Great ! you have now a Tezotopia voucher to get rewards.')
+        message = _('Great ! you have now a Tezotopia talao_community to get rewards.')
     elif request.args['followup'] == 'expired' :
         message = _('Sorry, session expired.')
     else :
         message = _('Sorry, server problem, try again later.')
-    return render_template('voucher/voucher_end.html', message=message)
+    return render_template('talao_community/talao_community_end.html', message=message)
 
 
 # server event push 
-def voucher_stream(red):
+def talao_community_stream(red):
     def event_stream(red):
         pubsub = red.pubsub()
-        pubsub.subscribe('voucher')
+        pubsub.subscribe('talao_community')
         for message in pubsub.listen():
             if message['type']=='message':
                 yield 'data: %s\n\n' % message['data'].decode()

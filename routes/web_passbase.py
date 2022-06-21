@@ -23,6 +23,7 @@ vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
 
  
 def init_app(app,red, mode) :
+    app.add_url_rule('/over18',  view_func=passbase, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/passbase',  view_func=passbase, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/passbase/webhook',  view_func=passbase_webhook, methods = ['POST'], defaults={ 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/over18/<id>',  view_func=passbase_endpoint_over18, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
@@ -174,7 +175,13 @@ async def passbase_endpoint_over18(id,red,mode):
         (status, passbase_key, c) = get_passbase_db(request.form['subject_id'])
     except :
         logging.error("Over18 check has not been done")
-        return jsonify ('request time out'),404
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not done")
+                        })
+        red.publish('passbase', data)
+        return jsonify ('Over18 check has not been done'),404
 
     if status != "approved" :
         data = json.dumps({
@@ -183,7 +190,7 @@ async def passbase_endpoint_over18(id,red,mode):
                     'message' : _("Identification not approved")
                         })
         red.publish('passbase', data)
-        return jsonify('not approved')
+        return jsonify('not approved'), 404
 
     identity = get_identity(passbase_key, mode)
     if not identity :

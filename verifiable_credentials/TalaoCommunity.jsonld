@@ -1,0 +1,129 @@
+{
+    "@context": ["https://www.w3.org/2018/credentials/v1",
+        {
+            "talaoAccount" : "https://schema.org/account",
+            "walletNotation" : "https://schema.org/notation",
+            "affiliate" : {
+                "@id" : "https://github.com/TalaoDAO/context/blob/main/README.md",
+                "@context" : {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "name" : "schema:name",
+                    "did" : "schema:identifier",
+                    "email" : "schema:email",
+                    "benefit" : {
+                        "@id" : "https://github.com/TalaoDAO/context/blob/main/README",
+                        "@context" : {
+                            "price" : "schema:value",
+                            "category" : "schema:category",
+                            "incentiveCompensation" : "schema:incentiveCompensation"
+                        }
+                    },
+                    "paymentAccepted" : {
+                        "@id" : "schema:paymentAccepted",
+                        "@context" : {
+                            "blockchainTezos" : "schema:blockchain",
+                            "blockchainEthereum" : "schema:blockchain",
+                            "blockchainPolygon" : "schema:blockchain"
+                        }
+                    }
+                }
+            },
+            "offers" : {
+                "@id" : "schema:offer",
+                "@context" : {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "startDate" : "schema:date",
+                    "category" : "schema:category",
+                    "endDate" : "schema:date",
+                    "benefit" : {
+                        "@id" : "https://github.com/TalaoDAO/context/blob/main/README",
+                        "@context" : {
+                            "price" : "schema:value",
+                            "category" : "schema:category",
+                            "discount" : "schema:discount"
+                        }
+                    },
+                    "offeredBy" : {
+                        "@id" : "schema:offeredBy",
+                        "@context" : {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "description" : "schema:description",
+                            "website" : "schema:website",
+                            "logo": {"@id" : "schema:image", "@type" : "@id"},
+                            "did" : "schema:identifier",
+                            "name" : "schema:name",
+                            "paymentMethod" : {
+                                "@id" : "schema:paymentMethod",
+                                "@context" : {
+                                    "currency" : "schema:currency",
+                                    "blockchain" : "schema:name",
+                                    "blockchainAccount" : "schema:identifier"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "associatedAddress" : {
+                "@id": "https://schema.org/address",
+                "@context" : {
+                    "@protected" : true,
+                    "blockchainTezos" : "https://schema.org/blockchain",
+                    "blockchainEthereum" : "https://schema.org/blockchain",
+                    "blockchainPolygon" : "https://schema.org/blockchain"
+                }
+            }
+        }
+    ],
+    "id": "did:tz2:....",
+    "type": ["VerifiableCredential", "TalaoCommunity"],
+    "issuer": "did:key:z6MkftN6LL5DRTG8u5LjhQuwUconSp3wremHoMjcH1LP7Hxd",
+    "issuanceDate": "2020-08-19T21:41:50Z",
+    "credentialSubject": 
+        {
+            "id": "did:key:z6MkftN6LL5DRTG8u5LjhQuwUconSp3wremHoMjcH1LP7Hxd",
+            "type": "TalaoCommunity",
+            "walletNotation" : "Gold",
+            "talaoAccount": "0x83E0481C1844Ed257efE1147218C125832F10236",
+            "offers" : [{
+                "startDate" : "2022-04-08T19:55:00Z",
+                "endDate" : "2022-06-08T19:55:00Z",
+                "category" : "discounted_coupon",
+                "benefit" : {
+                    "category" : "discount",
+                    "discount" : "15%"
+                },    
+                "offeredBy": {
+                    "logo": "ipfs://QmZmdndUVRoxiVhUnjGrKnNPn8ah3jT8fxTCLMnAzRAFFZ",
+                    "name": "GifGames",
+                    "description" : "gaming platform Tezotopia",
+                    "paymentMethod" : {
+                        "blockchain" : "Tezos",
+                        "currency" : "XTZ",
+                        "blockchainAccount" : "tz1iyjrTUNxDpPaqNZ84ipGELAcTWYg66789"
+                    }
+                }
+            }],
+            "affiliate": {
+                "name": "Talao",
+                "email" : "contact@talao.co",
+                "paymentAccepted" : {
+                    "blockchainTezos" : "tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg5555",
+                    "blockchainEthereum" : "0x3543543eacd65446544"
+                },
+                "benefit" : {
+                    "category" : "commission",
+                    "incentiveCompensation" : "5%"
+                }   
+            },
+            "associatedAddress" : {
+                    "blockchainTezos" : "tz1ReP6Pfzgmcwm9rTzivdJwnmQm4KzKS3im",
+                    "blockchainEthereum" : "0x461B99bCBdaD9697d299FDFe0879eC04De256DA1",
+                    "blockchainPolygon" : "0x461B99bCBdaD9697d299FDFe0879eC04De256DA1"
+            }
+         }
+ }
+ 

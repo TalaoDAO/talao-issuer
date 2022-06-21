@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+{% include 'head.html' %}
+</head>
+<body class="flex flex-col items-center justify-center h-screen w-screen">
+  <div id="wrapper">
+    <div class="d-flex flex-column" id="content-wrapper">
+      <div id="content">
+            
+     
+      
+      <div id="content_desktop" class="d-none d-sm-block">
+
+    <!--    <div id="content" style="background-attachment:local;background-size:cover;background-position:50%30% ;background-repeat:no-repeat;background-image: url('/static/img/tezotopia.png');">
+    --> 
+        <br><br><br> <br><br><br>
+        <div class="text-center">  
+          <h1>Talao community issuer page</h1>
+          <br>
+          <h3>Scan the QR code below with AltMe</h2><br>
+          <div class="my-3"><img src="{{qrcode(url)}}" style="width: 250px;border-radius:0px;"></div>
+        </div>
+      </div>
+    
+
+    <div id="content_smartphone" class="d-block d-sm-none"> 
+      {% include 'nav_bar.html' %}
+      <div class="card shadow mx-1">
+        <a href="{{deeplink}}" class="bg-transparent">
+        <img src="/static/img/talao_community_card.png" class="card-img-top mt-3">
+        </a>
+        <div class="card-body">
+            <div class="text-center">
+                <p class="card-text">{{_('Clic on this card to get your voucher')}}</p>
+            </div>
+        </div>
+      </div>  
+      {% include 'footer.html' %}
+    </div>
+
+   
+</div>
+</div>
+</div>
+     
+
+<script>function goBack() {  window.history.back();}</script>
+<script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='bs-init.js') }}"></script>
+  <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+
+<script>
+var source = new EventSource('/talao_community/stream');
+source.onmessage = function (event) {
+     const result = JSON.parse(event.data)
+     if (result.url_id == '{{id}}' ){
+       window.location.href="/talao_community/end?followup=" + result.check;
+     }
+};
+</script>
+</body>
+</html>
