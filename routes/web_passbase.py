@@ -84,13 +84,13 @@ def get_identity(passbase_key, mode) :
 
 def passbase(mode) :
     url_over18 = mode.server + "passbase/endpoint/over18/" + session.sid +'?issuer=' + issuer_did
-    url_idcard = mode.server + "passbase/endpoint/idcard/" + session.sid +'?issuer=' + issuer_did
-    deeplink_over18 = mode.deeplink + 'app/download?' + urlencode({'uri' : url_over18 })
-    deeplink_idcard = mode.deeplink + 'app/download?' + urlencode({'uri' : url_idcard })
+    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url_over18 })
+    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url_over18 })
+
     return render_template('/passbase/over18_kyc.html',
                                 url=url_over18,
-                                deeplink_over18=deeplink_over18,
-                                deeplink_idcard=deeplink_idcard
+                                deeplink_altme=deeplink_altme,
+                                deeplink_talao=deeplink_talao
                                 )
 
 
