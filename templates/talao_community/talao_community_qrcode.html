@@ -1,61 +1,77 @@
 <!DOCTYPE html>
 <html>
-<head>
-{% include 'head.html' %}
-</head>
-<body class="flex flex-col items-center justify-center h-screen w-screen">
-  <div id="wrapper">
-    <div class="d-flex flex-column" id="content-wrapper">
-      <div id="content">
-            
-     
+  <head>
+    {% include 'head.html' %}
+   
+  </head>
+  <body class="flex flex-col items-center justify-center h-screen w-screen">
+
+    <div id="wrapper">
+        <div class="d-flex flex-column" id="content-wrapper">
+            <div id="content">
+                 {% include 'nav_bar.html' %}
+      
       
       <div id="content_desktop" class="d-none d-sm-block">
-
-    <!--    <div id="content" style="background-attachment:local;background-size:cover;background-position:50%30% ;background-repeat:no-repeat;background-image: url('/static/img/tezotopia.png');">
-    --> 
-        <br><br><br> <br><br><br>
-        <div class="text-center">  
-          <h1>Talao community issuer page</h1>
-          <br>
-          <h3>Scan the QR code below with AltMe</h2><br>
+        <br><br><br><br>
+        <div class="text-center">       
+        <p>{{_('Scan the QRCode below with your wallet')}}</p>
           <div class="my-3"><img src="{{qrcode(url)}}" style="width: 250px;border-radius:0px;"></div>
         </div>
-      </div>
-    
-
-    <div id="content_smartphone" class="d-block d-sm-none"> 
-      {% include 'nav_bar.html' %}
-      <div class="card shadow mx-1">
-        <a href="{{deeplink}}" class="bg-transparent">
-        <img src="/static/img/talao_community_card.png" class="card-img-top mt-3">
-        </a>
-        <div class="card-body">
-            <div class="text-center">
-                <p class="card-text">{{_('Clic on this card to get your voucher')}}</p>
-            </div>
+        <div class="col text-center">
+          <br>
+          <button class="btn btn-primary btn-sm" type="button" value="download" onclick="goBack()">{{_('Back')}}</button>
         </div>
-      </div>  
-      {% include 'footer.html' %}
-    </div>
+      </div>
 
-   
+      <div id="content_smartphone" class="d-block d-sm-none"> 
+        <div class="card shadow mx-1">
+          
+            <img src="/static/img/talao_community_card.png" class="card-img-top mt-3">
+         
+          <div class="card-body">
+              <div class="text-center">
+
+                <div class="text-center my-1">
+                  <p>
+                    {{_('Clic below to get it into your wallet')}}
+                  </p>
+                
+                    <div class="col mb-3">
+                      <a href="{{deeplink_talao}}" class="bg-transparent shadow" style="text-decoration: none;">
+                      Talao wallet <img src="/static/img/talao.png"  style="width: 50px;">
+                      </a>
+                    <br><br>
+                        <a href="{{deeplink_altme}}" class="bg-transparent shadow" style="text-decoration: none;">
+                        AltMe wallet   <img src="/static/img/altme.png"  style="width: 25px;">
+                            </a>
+                            <br>
+                     
+              </div>
+              
+          </div> 
+                 
+              </div>
+          </div>
+        </div>  
+      </div>
+
+    </div>
+  </div>
 </div>
-</div>
-</div>
-     
+        {% include 'footer.html' %}
 
 <script>function goBack() {  window.history.back();}</script>
 <script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='bs-init.js') }}"></script>
-  <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='bs-init.js') }}"></script>
+<script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 
 <script>
-var source = new EventSource('/talao_community/stream');
+var source = new EventSource('/emailpass/stream');
 source.onmessage = function (event) {
      const result = JSON.parse(event.data)
-     if (result.url_id == '{{id}}' ){
-       window.location.href="/talao_community/end?followup=" + result.check;
+     if (result.session_id == "{{session['sid']}}" ){
+       window.location.href="/emailpass/end?followup=" + result.check;
      }
 };
 </script>

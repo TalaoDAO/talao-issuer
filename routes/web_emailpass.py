@@ -116,12 +116,17 @@ async def emailpass_enpoint(session_id, red):
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     credential['expirationDate'] =  (datetime.now() + timedelta(days= 365)).isoformat() + "Z"
     try :
-        credential['credentialSubject']['email'] = red.get(session_id).decode()
+        email = red.get(session_id).decode()
     except :
         logging.error('redis datat expired')
         data = json.dumps({"session_id" : session_id, "check" : "expired"})
         red.publish('emailpass', data)
         return jsonify('session expired'), 408
+    
+    credential['credentialSubject']['email'] = red.get(session_id).decode()
+    for i in range( len(credential['description'])) :
+        credential['description'][i]['@value'] += email
+
     if request.method == 'GET': 
         # make an offer  
         credential['id'] = "urn:uuid:random"

@@ -32,15 +32,12 @@
     "description": [
         {
             "@language": "en",
-            "@value": "This signed electronic credential is proof that you are the owner of this email address."
+            "@value": "This signed electronic credential is a proof of ownership of : "
         },
-        {
-            "@language": "de",
-            "@value": "Dieses signierte elektronische Zertifikat ist der Beweis dafür, dass Sie der Inhaber dieser E-Mail-Adresse sind."
-        },
+      
         {
             "@language": "fr",
-            "@value": "Cette attestation électronique signée est la preuve que vous êtes le propriétaire de cette adresse email."
+            "@value": "Cette attestation électronique signée est la preuve que vous êtes le propriétaire de : "
         }
     ],
     "name": [
