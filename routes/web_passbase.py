@@ -23,8 +23,9 @@ vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
 
  
 def init_app(app,red, mode) :
-    app.add_url_rule('/over18',  view_func=passbase, methods = ['GET'], defaults={'mode' : mode})
-    app.add_url_rule('/passbase',  view_func=passbase, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/over18',  view_func=over18, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/kyc',  view_func=kyc, methods = ['GET'], defaults={'mode' : mode})
+    #app.add_url_rule('/passbase',  view_func=passbase, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/passbase/webhook',  view_func=passbase_webhook, methods = ['POST'], defaults={ 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/over18/<id>',  view_func=passbase_endpoint_over18, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/idcard/<id>',  view_func=passbase_endpoint_idcard, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
@@ -82,17 +83,26 @@ def get_identity(passbase_key, mode) :
     return identity
 
 
-def passbase(mode) :
+def over18(mode) :
     url_over18 = mode.server + "passbase/endpoint/over18/" + session.sid +'?issuer=' + issuer_did
     deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url_over18 })
     deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url_over18 })
-
-    return render_template('/passbase/over18_kyc.html',
+    return render_template('/passbase/over18.html',
                                 url=url_over18,
                                 deeplink_altme=deeplink_altme,
                                 deeplink_talao=deeplink_talao
                                 )
 
+def kyc(mode) :
+    url_over18 = mode.server + "passbase/endpoint/kyc/" + session.sid +'?issuer=' + issuer_did
+    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url_over18 })
+    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url_over18 })
+
+    return render_template('/passbase/kyc.html',
+                                url=url_over18,
+                                deeplink_altme=deeplink_altme,
+                                deeplink_talao=deeplink_talao
+                                )
 
 """
 curl --location --request POST 'http://192.168.0.65:3000/passbase/webhook' \
