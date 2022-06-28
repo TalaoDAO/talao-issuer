@@ -25,7 +25,6 @@ vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
 def init_app(app,red, mode) :
     app.add_url_rule('/over18',  view_func=over18, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/kyc',  view_func=kyc, methods = ['GET'], defaults={'mode' : mode})
-    #app.add_url_rule('/passbase',  view_func=passbase, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/passbase/webhook',  view_func=passbase_webhook, methods = ['POST'], defaults={ 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/over18/<id>',  view_func=passbase_endpoint_over18, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/idcard/<id>',  view_func=passbase_endpoint_idcard, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
@@ -326,16 +325,15 @@ async def passbase_endpoint_idcard(id,red,mode):
         red.publish('passbase', data)
         return (jsonify('wrong wallet'))
 
-    credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints']['date_of_birth']
     credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints']['place_of_birth']
     credential['credentialSubject']['givenName'] = identity['owner']['first_name']
     credential['credentialSubject']['familyName'] = identity['owner']['last_name']
     credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
-    credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints']['authority']
-    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['nationality']
-    credential['credentialSubject']['addressCountry'] = identity['resources'][0]['datapoints']['mrtd_issuing_country']
-    credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints']['date_of_expiry']
-    credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints']['date_of_issue']
+    credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Unknown")
+    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('nationality', "Unkonwn")
+    credential['credentialSubject']['addressCountry'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
+    credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Unknown")
+    credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Unknown")
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm
