@@ -124,8 +124,9 @@ async def emailpass_enpoint(session_id, red):
         return jsonify('session expired'), 408
     
     credential['credentialSubject']['email'] = red.get(session_id).decode()
-    for i in range( len(credential['description'])) :
-        credential['description'][i]['@value'] += email
+    #for i in range( len(credential['description'])) :
+    #exit
+    #     credential['description'][i]['@value'] += email
 
     if request.method == 'GET': 
         # make an offer  
