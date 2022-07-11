@@ -32,26 +32,13 @@
     "description": [
         {
             "@language": "en",
-            "@value": "This signed electronic credential is a proof of ownership of : "
-        },
-      
-        {
-            "@language": "fr",
-            "@value": "Cette attestation électronique signée est la preuve que vous êtes le propriétaire de : "
+            "@value": "This credential is a proof of ownership of :"
         }
     ],
     "name": [
         {
             "@language": "en",
             "@value": "Email Proof"
-        },
-        {
-            "@language": "de",
-            "@value": "E-Mail-Beweis"
-        },
-        {
-            "@language": "fr",
-            "@value": "Preuve d'email"
         }
     ],
     "issuer": "",

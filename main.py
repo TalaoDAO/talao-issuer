@@ -67,18 +67,21 @@ web_tiar.init_app(app)
 
 @babel.localeselector
 def get_locale():
-    if not session.get('language') :
-        session['language'] = request.accept_languages.best_match(LANGUAGES)
-    else :
-        refresh()
-    return session['language']
+	if not session.get('language') :
+		session['language'] = request.accept_languages.best_match(LANGUAGES)
+	else :
+		refresh()
+	#return session['language']
+	return "en"
 
-
+																													
 @app.route('/language', methods=['GET'], defaults={'mode': mode})
 def user_language(mode) :
-    session['language'] = request.args['lang']
-    refresh()
-    return redirect (request.referrer)
+    #session['language'] = request.args['lang']
+	session['language'] = "en"
+	#refresh()
+	#return redirect (request.referrer)
+	return 'en'
 
 
 @app.route('/md_file', methods = ['GET', 'POST'])

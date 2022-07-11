@@ -26,6 +26,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/over18',  view_func=over18, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/kyc',  view_func=kyc, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/passbase/webhook',  view_func=passbase_webhook, methods = ['POST'], defaults={ 'mode' : mode})
+    app.add_url_rule('/passbase/check/<did>',  view_func=passbase_check, methods = ['GET'])
     app.add_url_rule('/passbase/endpoint/over18/<id>',  view_func=passbase_endpoint_over18, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/idcard/<id>',  view_func=passbase_endpoint_idcard, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/stream',  view_func=passbase_stream, methods = ['GET', 'POST'], defaults={'red' :red})
@@ -48,6 +49,10 @@ def add_passbase_db(email, check, did, key, created) :
 
 
 def get_passbase_db(did) :
+    """
+    take the last one
+    
+    """
     conn = sqlite3.connect('passbase_check.db')
     c = conn.cursor()
     data = { "did" : did}
@@ -61,6 +66,19 @@ def get_passbase_db(did) :
         return check[-1]
     except :
         return None
+
+
+def passbase_check(did) :
+    """
+    return approved, declined, notdone
+    last check
+    
+    """
+    check = get_passbase_db(did) 
+    if check :
+        return jsonify(check[0])
+    else :
+        return jsonify("notdone"), 404
 
 
 def get_identity(passbase_key, mode) :

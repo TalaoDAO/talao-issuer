@@ -22,6 +22,7 @@ issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 
 
 def init_app(app,red, mode) :
+    app.add_url_rule('/emailproof',  view_func=emailpass, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass',  view_func=emailpass, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass/qrcode',  view_func=emailpass_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode, 'red' : red})
     app.add_url_rule('/emailpass/offer/<session_id>',  view_func=emailpass_enpoint, methods = ['GET', 'POST'], defaults={'red' : red})
