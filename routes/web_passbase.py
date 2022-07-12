@@ -48,6 +48,8 @@ def add_passbase_db(email, check, did, key, created) :
     return
 
 
+# curl http://:3000/passbase/check/OOO  -H "Accept: application/json"   -H "Authorization: Bearer mytoken"
+
 def get_passbase_db(did) :
     """
     take the last one
@@ -74,11 +76,17 @@ def passbase_check(did) :
     last check
     
     """
+    print("ok")
     check = get_passbase_db(did) 
+    try :
+        access_token = request.headers["Authorization"].split()[1]
+        print("access token = ", access_token)
+    except :
+        pass
     if check :
         return jsonify(check[0])
     else :
-        return jsonify("notdone"), 404
+        return jsonify("notdone")
 
 
 def get_identity(passbase_key, mode) :
