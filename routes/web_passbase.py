@@ -76,11 +76,12 @@ def passbase_check(did) :
     last check
     
     """
-    print("ok")
     check = get_passbase_db(did) 
     try :
         access_token = request.headers["Authorization"].split()[1]
         print("access token = ", access_token)
+        if access_token != "mytoken" :
+            return jsonify("Bearer token wrong"), 404
     except :
         pass
     if check :
