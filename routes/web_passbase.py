@@ -50,7 +50,7 @@ def add_passbase_db(email, check, did, key, created) :
 
 
 
-def get_passbase_db(did) :
+def get_passbase_data_from_did(did) :
     """
     return the last one
     
@@ -69,15 +69,34 @@ def get_passbase_db(did) :
     except :
         return None
 
+def get_passbase_did_from_key(key) :
+    """
+    return the last one
+    
+    """
+    conn = sqlite3.connect('passbase_check.db')
+    c = conn.cursor()
+    data = { "key" : key}
+    c.execute("SELECT did FROM webhook WHERE key = :key", data)
+    check = c.fetchall()
+    logging.info("check = %s", check)
+    conn.close()
+    if len(check) == 1 :
+        return check[0]
+    try :
+        return check[-1]
+    except :
+        return None
+
 
 def passbase_check(did, mode) :
     """
     return approved, declined, notdone, pending
     last check
-    # curl http://:3000/passbase/check/OOO  -H "Accept: application/json"   -H "Authorization: Bearer mytoken"
+    # curl http://10.188.95.48:5000/passbase/check/did:key:z6Mkvu9HqJoNJsFPrfWEnTvy5tYh3uTgjPz3iqMPiUzzoWMb  -H "Accept: application/json"   -H "Authorization: Bearer mytoken"
 
     """
-    check = get_passbase_db(did) 
+    check = get_passbase_data_from_did(did) 
     try :
         access_token = request.headers["Authorization"].split()[1]
         if access_token != mode.altme_server_token :
@@ -143,7 +162,10 @@ curl --location --request POST 'https://issuer.talao.co/wallet/webhook' \
 --data-raw '{"event": "VERIFICATION_COMPLETED","key": "-.......", "status": "pending", "DID" : "did:key:...."}'
 --header "Authorization: Bearer mytoken"
 
-curl --location --request POST 'http://10.188.95.48:5000/wallet/webhook' --header 'Content-Type: application/json' --data-raw '{"identityAccessKey": "22a363e6-2f93-4dd3-9ac8-6cba5a046acd", "DID" : "did:key:...."}' --header "Authorization: Bearer mytoken"
+curl --location --request POST 'http://10.188.95.48:5000/wallet/webhook' --header 'Content-Type: application/json' --data-raw '{"identityAccessKey": "22a363e6-2f93-4dd3-9ac8-6cba5a046acd", "DID" : "did:key:2"}' --header "Authorization: Bearer mytoken"
+
+curl --location --request POST 'https://issuer.talao.co/wallet/webhook' --header 'Content-Type: application/json' --data-raw '{"identityAccessKey": "22a363e6-2f93-4dd3-9ac8-6cba5a046acd", "DID" : "did:key:...."}' --header "Authorization: Bearer mytoken"
+
 
 no email is sent
 """
@@ -170,9 +192,9 @@ def wallet_webhook(mode) :
 """
 For TALAO wallet and ALtME
 
-curl --location --request POST 'http://192.168.0.65:3000/passbase/webhook' \
---header 'Content-Type: application/json' \
---data-raw '{"event": "VERIFICATION_REVIEWED","key": "72be8407-a1df-47d7-af1b-e00f6ba4f96c", "status": "approved", "created" : 1582628712}'
+curl --location --request POST 'http://10.188.95.48:5000/passbase/webhook' --header 'Content-Type: application/json' --data-raw '{"event": "VERIFICATION_REVIEWED","key": "22a363e6-2f93-4dd3-9ac8-6cba5a046acd", "status": "approved", "created" : 1582628712}'
+
+
 """
 def passbase_webhook(mode) :
     # get email and id
@@ -190,35 +212,31 @@ def passbase_webhook(mode) :
     if not identity :
         logging.error("probleme d acces API")
         return jsonify("probleme d acces API")
-
-    email = identity['owner']['email']
-    try :
-        did = identity['metadata']['did']
-    except :
-        logging.error("Metadata are not available")
-        link_text = "Sorry ! \nThe authentication failed.\nProbably your proof of email has been rejected.\nLet's try again with a new proof of email."
-        message.message(_("Talao wallet identity credential"), email, link_text, mode)
-        logging.warning("email sent to %s", email)
-        return jsonify("No metadata")
-
+    
+    email = identity['owner'].get('email', "")
+    did = get_passbase_did_from_key(webhook['key'])[0]
     add_passbase_db(email,
                 webhook['status'],
                 did,
                 webhook['key'],
-                 datetime.utcnow().replace(microsecond=0).isoformat() + "Z" )
+                round(datetime.now().timestamp())
+                )
 
-    # send notification by email
-    if webhook['status' ] == "approved" :
-        link_text = "Great ! \n\nWe have now the proof your Identity.\nFollow the links in your wallet to get your credentials."
-        message.message(_("Talao wallet identity credential"), email, link_text, mode)
-        logging.info("email sent to %s", email)
-        return jsonify('ok, notification sent')
-    else :
-        link_text = "Sorry ! \nThe authentication failed.\nProbably the identity documents are not acceptable.\nLet's try again with another type of document."
-        message.message(_("Talao wallet identity credential"), email, link_text, mode)
-        logging.info("email sent to %s", email)
-        logging.warning('Identification not approved, no notification was sent')
-        return jsonify("not approved")
+    # send notification by email if email exists
+    if email :
+        if webhook['status' ] == "approved" :
+            link_text = "Great ! \n\nWe have now the proof your Identity.\nFollow the links in your wallet to get your credentials."
+            message.message(_("Talao wallet identity credential"), email, link_text, mode)
+            logging.info("email sent to %s", email)
+            return jsonify('ok, notification sent')
+        else :
+            link_text = "Sorry ! \nThe authentication failed.\nProbably the identity documents are not acceptable.\nLet's try again with another type of document."
+            message.message(_("Talao wallet identity credential"), email, link_text, mode)
+            logging.info("email sent to %s", email)
+            logging.warning('Identification not approved, no notification was sent')
+            return jsonify("not approved")
+
+    return("ok")
 
 
 async def passbase_endpoint_over18(id,red,mode):
@@ -248,7 +266,7 @@ async def passbase_endpoint_over18(id,red,mode):
     credential['credentialSubject']['id'] = request.form['subject_id']
     #on recupere la cle passbase depuis notre base locale
     try :
-        (status, passbase_key, created) = get_passbase_db(request.form['subject_id'])
+        (status, passbase_key, created) = get_passbase_data_from_did(request.form['subject_id'])
     except :
         logging.error("Over18 check has not been done")
         data = json.dumps({
@@ -339,7 +357,7 @@ async def passbase_endpoint_idcard(id,red,mode):
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
     try :
-        (status, passbase_key, c) = get_passbase_db(request.form['subject_id'])
+        (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
     except :
         logging.error("IDcard check has not been done")
         data = json.dumps({
