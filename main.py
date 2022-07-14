@@ -2,7 +2,7 @@
 Python 3.9 ++
 didkit 0.3.0 get_version
 """
-from flask import Flask, jsonify, session, request, render_template_string, render_template, redirect
+from flask import Flask, jsonify, session, request, render_template_string, render_template
 from flask_qrcode import QRcode
 from flask_session import Session
 import didkit
@@ -43,7 +43,7 @@ app.config['SESSION_TYPE'] = 'redis' # Redis server side session
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=360) # cookie lifetime
 app.config['SESSION_FILE_THRESHOLD'] = 100
 app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "2.6"
+app.jinja_env.globals['Version'] = "3.0"
 
 babel = Babel(app)
 

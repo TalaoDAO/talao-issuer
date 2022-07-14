@@ -26,8 +26,8 @@ def init_app(app,red, mode) :
     app.add_url_rule('/over18',  view_func=over18, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/kyc',  view_func=kyc, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/passbase/webhook',  view_func=passbase_webhook, methods = ['POST'], defaults={ 'mode' : mode})
-    app.add_url_rule('/wallet/webhook',  view_func=wallet_webhook, methods = ['POST'])
-    app.add_url_rule('/passbase/check/<did>',  view_func=passbase_check, methods = ['GET'])
+    app.add_url_rule('/wallet/webhook',  view_func=wallet_webhook, methods = ['POST'],  defaults={ 'mode' : mode})
+    app.add_url_rule('/passbase/check/<did>',  view_func=passbase_check, methods = ['GET'],  defaults={ 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/over18/<id>',  view_func=passbase_endpoint_over18, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/idcard/<id>',  view_func=passbase_endpoint_idcard, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/stream',  view_func=passbase_stream, methods = ['GET', 'POST'], defaults={'red' :red})
@@ -49,7 +49,6 @@ def add_passbase_db(email, check, did, key, created) :
     return
 
 
-# curl http://:3000/passbase/check/OOO  -H "Accept: application/json"   -H "Authorization: Bearer mytoken"
 
 def get_passbase_db(did) :
     """
@@ -71,16 +70,17 @@ def get_passbase_db(did) :
         return None
 
 
-def passbase_check(did) :
+def passbase_check(did, mode) :
     """
     return approved, declined, notdone, pending
     last check
-    
+    # curl http://:3000/passbase/check/OOO  -H "Accept: application/json"   -H "Authorization: Bearer mytoken"
+
     """
     check = get_passbase_db(did) 
     try :
         access_token = request.headers["Authorization"].split()[1]
-        if access_token != "mytoken" :
+        if access_token != mode.altme_server_token :
             return jsonify("Unauthorized"), 401
     except :
         logging.error("access token mal formaté")
@@ -147,26 +147,23 @@ curl --location --request POST 'http://10.188.95.48:5000/wallet/webhook' --heade
 
 no email is sent
 """
-def wallet_webhook() :
+def wallet_webhook(mode) :
     try :
         access_token = request.headers["Authorization"].split()[1]
-        logging.info("access token = ", access_token)
-        if access_token != "mytoken" :
+        logging.info("access token = %s", access_token)
+        if access_token != mode.altme_server_token :
             return jsonify("Unauthorized"), 401
     except :
         logging.error("access token mal formaté")
         return jsonify("Bad Request"), 400
     webhook = request.get_json()
-    logging.info("webhook has received an event = %s", webhook)
-    print("wallet webhook = ", webhook)
-    current_time = datetime.now()
-    time_stamp = round(current_time.timestamp())
+    logging.info("wallet webhook has received an event = %s", webhook)
     add_passbase_db("",
                 "pending",
                 webhook['DID'],
                 webhook['identityAccessKey'],
-                time_stamp )
-    return jsonify("ok", 200)
+                round(datetime.now().timestamp()) )
+    return jsonify("ok"), 200
 
 
 

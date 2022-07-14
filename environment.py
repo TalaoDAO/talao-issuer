@@ -16,6 +16,7 @@ class currentMode() :
 			passwords = json.load(read_content)
 		self.analytics_key = passwords['analytics']
 		self.password = passwords['password']
+		self.altme_server_token = passwords['altme_server_token']
 		self.passbase = passwords['passbase']
 		self.smtp_password = passwords['smtp_password'] # used in smtp.py
 		self.sms_token = passwords['sms_token'] # used in sms.py		
