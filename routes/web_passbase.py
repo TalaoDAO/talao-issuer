@@ -5,7 +5,7 @@ from datetime import timedelta, datetime
 import didkit
 import uuid
 from urllib.parse import urlencode
-
+from datetime import datetime
 import logging
 from flask_babel import Babel, _
 import sqlite3
@@ -26,6 +26,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/over18',  view_func=over18, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/kyc',  view_func=kyc, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/passbase/webhook',  view_func=passbase_webhook, methods = ['POST'], defaults={ 'mode' : mode})
+    app.add_url_rule('/wallet/webhook',  view_func=wallet_webhook, methods = ['POST'])
     app.add_url_rule('/passbase/check/<did>',  view_func=passbase_check, methods = ['GET'])
     app.add_url_rule('/passbase/endpoint/over18/<id>',  view_func=passbase_endpoint_over18, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/idcard/<id>',  view_func=passbase_endpoint_idcard, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
@@ -52,7 +53,7 @@ def add_passbase_db(email, check, did, key, created) :
 
 def get_passbase_db(did) :
     """
-    take the last one
+    return the last one
     
     """
     conn = sqlite3.connect('passbase_check.db')
@@ -72,18 +73,18 @@ def get_passbase_db(did) :
 
 def passbase_check(did) :
     """
-    return approved, declined, notdone
+    return approved, declined, notdone, pending
     last check
     
     """
     check = get_passbase_db(did) 
     try :
         access_token = request.headers["Authorization"].split()[1]
-        print("access token = ", access_token)
         if access_token != "mytoken" :
-            return jsonify("Bearer token wrong"), 404
+            return jsonify("Unauthorized"), 401
     except :
-        pass
+        logging.error("access token mal formaté")
+        return jsonify("Bad Request"), 400
     if check :
         return jsonify(check[0])
     else :
@@ -132,7 +133,46 @@ def kyc(mode) :
                                 id=id
                                 )
 
+
+
 """
+For ALTME
+
+curl --location --request POST 'https://issuer.talao.co/wallet/webhook' \
+--header 'Content-Type: application/json' \
+--data-raw '{"event": "VERIFICATION_COMPLETED","key": "-.......", "status": "pending", "DID" : "did:key:...."}'
+--header "Authorization: Bearer mytoken"
+
+curl --location --request POST 'http://10.188.95.48:5000/wallet/webhook' --header 'Content-Type: application/json' --data-raw '{"identityAccessKey": "22a363e6-2f93-4dd3-9ac8-6cba5a046acd", "DID" : "did:key:...."}' --header "Authorization: Bearer mytoken"
+
+no email is sent
+"""
+def wallet_webhook() :
+    try :
+        access_token = request.headers["Authorization"].split()[1]
+        logging.info("access token = ", access_token)
+        if access_token != "mytoken" :
+            return jsonify("Unauthorized"), 401
+    except :
+        logging.error("access token mal formaté")
+        return jsonify("Bad Request"), 400
+    webhook = request.get_json()
+    logging.info("webhook has received an event = %s", webhook)
+    print("wallet webhook = ", webhook)
+    current_time = datetime.now()
+    time_stamp = round(current_time.timestamp())
+    add_passbase_db("",
+                "pending",
+                webhook['DID'],
+                webhook['identityAccessKey'],
+                time_stamp )
+    return jsonify("ok", 200)
+
+
+
+"""
+For TALAO wallet and ALtME
+
 curl --location --request POST 'http://192.168.0.65:3000/passbase/webhook' \
 --header 'Content-Type: application/json' \
 --data-raw '{"event": "VERIFICATION_REVIEWED","key": "72be8407-a1df-47d7-af1b-e00f6ba4f96c", "status": "approved", "created" : 1582628712}'
@@ -168,7 +208,7 @@ def passbase_webhook(mode) :
                 webhook['status'],
                 did,
                 webhook['key'],
-                webhook['created'] )
+                 datetime.utcnow().replace(microsecond=0).isoformat() + "Z" )
 
     # send notification by email
     if webhook['status' ] == "approved" :
@@ -209,8 +249,9 @@ async def passbase_endpoint_over18(id,red,mode):
     red.delete(id)
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
+    #on recupere la cle passbase depuis notre base locale
     try :
-        (status, passbase_key, c) = get_passbase_db(request.form['subject_id'])
+        (status, passbase_key, created) = get_passbase_db(request.form['subject_id'])
     except :
         logging.error("Over18 check has not been done")
         data = json.dumps({
@@ -240,16 +281,6 @@ async def passbase_endpoint_over18(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-
-    if identity['metadata']['did'] != request.form['subject_id'] :
-        logging.warning("wrong wallet")
-        data = json.dumps({
-                    'id' : id,
-                    'check' : 'failed',
-                    'message' : _("Wrong wallet")
-                        })
-        red.publish('passbase', data)
-        return (jsonify('wrong wallet'))
 
     birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
     current_date = datetime.now()
@@ -341,16 +372,6 @@ async def passbase_endpoint_idcard(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-
-    if identity['metadata']['did'] != request.form['subject_id'] :
-        logging.warning("wrong wallet")
-        data = json.dumps({
-                    'id' : id,
-                    'check' : 'failed',
-                    'message' : _("Wrong wallet")
-                        })
-        red.publish('passbase', data)
-        return (jsonify('wrong wallet'))
 
     credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints']['place_of_birth']
     credential['credentialSubject']['givenName'] = identity['owner']['first_name']
