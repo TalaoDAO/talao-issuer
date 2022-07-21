@@ -333,17 +333,20 @@ async def passbase_endpoint_over18(id,red,mode):
 
 async def passbase_endpoint_idcard(id,red,mode):
     if request.method == 'GET':
-        credential = json.loads(open("./verifiable_credentials/Kyc.jsonld", 'r').read())
+        credential = json.loads(open("./verifiable_credentials/IdCard.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential_manifest = json.loads(open("./credential_manifest/idcard_credential_manifest.json", 'r').read())
         credential['credentialSubject']['id'] = "did:..."
         credentialOffer = {
             "type": "CredentialOffer",
             "credentialPreview": credential,
-            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z"
+            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
+            "credential_manifest" : credential_manifest
         }
+        print(credentialOffer)
         red.set(id, json.dumps(credentialOffer))
         return jsonify(credentialOffer)
 
@@ -389,6 +392,7 @@ async def passbase_endpoint_idcard(id,red,mode):
         return (jsonify('Identity does not exist'))
 
     credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints']['place_of_birth']
+    credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints']['date_of_birth']
     credential['credentialSubject']['givenName'] = identity['owner']['first_name']
     credential['credentialSubject']['familyName'] = identity['owner']['last_name']
     credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
