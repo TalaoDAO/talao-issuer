@@ -8,7 +8,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-signature = '\r\n\r\n\r\nThe Talao team.\r\nhttps://talao.io/'
+signature = '\r\n\r\n\r\nThe AltMe team.\r\nhttps://altme.io/'
 
 
 # dict of HTML templates with commented formating needed
@@ -22,7 +22,7 @@ def messageHTML(subject, to, HTML_key, format_dict, mode)  :
 	toaddr = [to]
 
 	msg = MIMEMultipart()
-	msg['From'] = formataddr((str(Header('Talao', 'utf-8')), fromaddr))
+	msg['From'] = formataddr((str(Header('AltMe', 'utf-8')), fromaddr))
 	msg['To'] = ", ".join(toaddr)
 	msg['Subject'] = subject
 	# string to store the body of the mail

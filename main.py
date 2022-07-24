@@ -16,7 +16,7 @@ import markdown.extensions.fenced_code
 
 
 # local dependencies
-from routes import web_emailpass, web_phonepass, web_passbase, web_tiar, web_voucher, web_talao_community
+from routes import web_emailpass, web_phonepass, web_passbase, web_tiar, web_talao_community
 import environment
 
 import logging
@@ -38,12 +38,12 @@ mode = environment.currentMode(myenv)
 app = Flask(__name__)
 qrcode = QRcode(app)
 app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_COOKIE_NAME'] = 'talao'
+app.config['SESSION_COOKIE_NAME'] = 'altme_issuer'
 app.config['SESSION_TYPE'] = 'redis' # Redis server side session
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=360) # cookie lifetime
 app.config['SESSION_FILE_THRESHOLD'] = 100
 app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "3.0"
+app.jinja_env.globals['Version'] = "3.2"
 
 babel = Babel(app)
 
@@ -59,7 +59,6 @@ sess.init_app(app)
 # init routes 
 web_emailpass.init_app(app, red, mode)
 web_phonepass.init_app(app, red, mode)
-#web_voucher.init_app(app, red, mode)
 web_talao_community.init_app(app, red, mode)
 web_passbase.init_app(app, red, mode)
 web_tiar.init_app(app)

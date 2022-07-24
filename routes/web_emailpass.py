@@ -53,13 +53,12 @@ def emailpass(mode) :
     if request.method == 'GET' :
         return render_template('emailpass/emailpass.html')
     if request.method == 'POST' :
-        session['email'] = request.form['email']
+        session['email'] = request.form['email'].lower()
         logging.info('email = %s', session['email'])
         session['code'] = str(secrets.randbelow(99999))
         session['code_delay'] = (datetime.now() + CODE_DELAY).timestamp()
-        print('session language = ', session['language'])
         try : 
-            subject = _('Talao : Email authentication  ')
+            subject = _('Email authentication  ')
             message.messageHTML(subject, session['email'], 'code_auth_' + session['language'], {'code' : session['code']}, mode)
             logging.info('secret code sent = %s', session['code'])
             flash(_("Secret code sent to your email."), 'success')
@@ -117,18 +116,13 @@ async def emailpass_enpoint(session_id, red):
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     credential['expirationDate'] =  (datetime.now() + timedelta(days= 365)).isoformat() + "Z"
     try :
-        email = red.get(session_id).decode()
+        credential['credentialSubject']['email'] = red.get(session_id).decode()
     except :
         logging.error('redis datat expired')
         data = json.dumps({"session_id" : session_id, "check" : "expired"})
         red.publish('emailpass', data)
         return jsonify('session expired'), 408
     
-    credential['credentialSubject']['email'] = red.get(session_id).decode()
-    #for i in range( len(credential['description'])) :
-    #exit
-    #     credential['description'][i]['@value'] += email
-
     if request.method == 'GET': 
         # make an offer  
         credential['id'] = "urn:uuid:random"
