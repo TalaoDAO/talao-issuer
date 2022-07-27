@@ -125,12 +125,14 @@ async def emailpass_enpoint(session_id, red):
     
     if request.method == 'GET': 
         # make an offer  
+        credential_manifest = json.load(open('./credential_manifest/email_credential_manifest.json', 'r'))
         credential['id'] = "urn:uuid:random"
         credential['credentialSubject']['id'] = "did:wallet"
         credential_offer = {
             "type": "CredentialOffer",
             "credentialPreview": credential,
             "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat(),
+            "credential_manifest" : credential_manifest
         }
         return jsonify(credential_offer)
 

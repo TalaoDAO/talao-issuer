@@ -244,13 +244,15 @@ async def passbase_endpoint_over18(id,red,mode):
         credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential_manifest = json.loads(open("./credential_manifest/over18_credential_manifest.json", 'r').read())
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = "did:..."
         credentialOffer = {
             "type": "CredentialOffer",
             "credentialPreview": credential,
-            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z"
+            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
+            "credential_manifest" : credential_manifest
         }
         red.set(id, json.dumps(credentialOffer))
         return jsonify(credentialOffer)
