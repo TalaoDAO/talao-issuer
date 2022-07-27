@@ -67,7 +67,7 @@ def message(subject, to, messagetext, mode) :
 	toaddr = [to]
 
 	msg = MIMEMultipart()
-	msg['From'] = formataddr((str(Header('Talao', 'utf-8')), fromaddr))
+	msg['From'] = formataddr((str(Header('AltMe', 'utf-8')), fromaddr))
 	msg['To'] = ", ".join(toaddr)
 	msg['Subject'] =  subject
 	body = messagetext + signature

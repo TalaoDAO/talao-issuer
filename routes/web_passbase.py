@@ -226,14 +226,14 @@ def passbase_webhook(mode) :
     if email :
         if webhook['status' ] == "approved" :
             link_text = "Great ! \n\nWe have now the proof your Identity.\nFollow the links in your wallet to get your credentials."
-            message.message(_("Talao wallet identity credential"), email, link_text, mode)
-            logging.info("email sent to %s", email)
+            message.message(_("AltMe wallet identity credential"), email, link_text, mode)
+            logging.info("Approved, email sent to %s", email)
             return jsonify('ok, notification sent')
         else :
             link_text = "Sorry ! \nThe authentication failed.\nProbably the identity documents are not acceptable.\nLet's try again with another type of document."
-            message.message(_("Talao wallet identity credential"), email, link_text, mode)
+            message.message(_("AltMe wallet identity credential"), email, link_text, mode)
             logging.info("email sent to %s", email)
-            logging.warning('Identification not approved, no notification was sent')
+            logging.warning('Identification not approved')
             return jsonify("not approved")
 
     return("ok")
@@ -346,7 +346,6 @@ async def passbase_endpoint_idcard(id,red,mode):
             "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
             "credential_manifest" : credential_manifest
         }
-        print(credentialOffer)
         red.set(id, json.dumps(credentialOffer))
         return jsonify(credentialOffer)
 
