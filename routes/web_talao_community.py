@@ -1,30 +1,21 @@
-from flask import jsonify, request, render_template, session, Response, render_template_string
+from flask import jsonify, request, render_template, Response, redirect
 import json
-import uuid
-from datetime import timedelta, datetime
 import logging
 logging.basicConfig(level=logging.INFO)
 from flask_babel import _
-from urllib.parse import urlencode
-import didkit
 import requests
-
-OFFER_DELAY = timedelta(seconds= 30)
-CODE_DELAY = timedelta(seconds= 180)
-QRCODE_DELAY = 30
-
-
-key_tz1 = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-vm_tz1 = vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
-DID =  "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
-
+from jwcrypto import jwt, jwk
+import sys
+from datetime import datetime, timedelta
 
 def init_app(app,red, mode) :
-    app.add_url_rule('/talao_community',  view_func=talao_community_qrcode, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
-    app.add_url_rule('/talao_community/offer/<id>',  view_func=talao_community_offer, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
-    app.add_url_rule('/talao_community/stream',  view_func=talao_community_stream, methods = ['GET', 'POST'], defaults={'red' : red})
-    app.add_url_rule('/talao_community/end',  view_func=talao_community_end, methods = ['GET', 'POST'])
+    app.add_url_rule('/tc',  view_func=talao_community, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/talao_community',  view_func=talao_community, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/tc/webhook',  view_func=webhook, methods = ['POST'])
+    app.add_url_rule('/tc/callback',  view_func=callback, methods = ['GET', 'POST'])
     return
+
+public_key =  {'kty': 'RSA', 'kid': '123', 'n': 'pPocyKreTAn3YrmGyPYXHklYqUiSSQirGACwJSYYs-ksfw4brtA3SZCmA2sdAO8a2DXfqADwFgVSxJFtJ3GkHLV2ZvOIOnZCX6MF6NIWHB9c64ydrYNJbEy72oyG_-v-sE6rb0x-D-uJe9DFYIURzisyBlNA7imsiZPQniOjPLv0BUgED0vdO5HijFe7XbpVhoU-2oTkHHQ4CadmBZhelCczACkXpOU7mwcImGj9h1__PsyT5VBLi_92-93NimZjechPaaTYEU2u0rfnfVW5eGDYNAynO4Q2bhpFPRTXWZ5Lhnhnq7M76T6DGA3GeAu_MOzB0l4dxpFMJ6wHnekdkQ', 'e': 'AQAB'}
 
 
 def add_talao_community(my_talao_community, mode) :
@@ -46,95 +37,60 @@ def add_talao_community(my_talao_community, mode) :
         return True
    
 
-
-def talao_community_qrcode(red, mode) :
-    id = str(uuid.uuid1())
-    url = mode.server + 'talao_community/offer/' + id +'?' + urlencode({'issuer' : DID})
-    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url })
-    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url })
-    return render_template('talao_community/talao_community_qrcode.html',
-                                url=url,
-                                id=id,
-                                deeplink_talao=deeplink_talao,
-                                deeplink_altme=deeplink_altme)
+def talao_community(mode) :
+    if mode.myenv != 'aws':
+        link = "http://192.168.0.123:3000/sandbox/op/issuer/shftylibxa"
+    else :
+        link = 'https://talao.co/sandbox/op/issuer/fwkpatoulq'
+    return redirect (link)
    
 
-async def talao_community_offer(id, red, mode):
-    """ Endpoint for wallet
-    """
-    talao_community = json.loads(open('./verifiable_credentials/TalaoCommunity.jsonld', 'r').read())   
-    talao_community["issuer"] = DID
-    talao_community['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-    talao_community['expirationDate'] =  (datetime.now() + timedelta(days= 30)).isoformat() + "Z"
-    filename = "./credential_manifest/talaocommunity_credential_manifest_1.json"
-    with open(filename, "r") as f:
-        credential_manifest = f.read()
-    credential_manifest = json.loads(credential_manifest)
-    challenge = str(uuid.uuid1())
-    if request.method == 'GET': 
-        # make an offer  
-        credential_offer = {
-            "type": "CredentialOffer",
-            "credentialPreview": talao_community,
-            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
-            "challenge" : challenge,
-            "domain" : "tezotopia.altme.io",
-            "credential_manifest" : credential_manifest
-        }
-        return jsonify(credential_offer)
-    elif request.method == 'POST': 
-        # sign credential
-        talao_community['id'] = "urn:uuid:" + str(uuid.uuid1())
-        talao_community['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
-        # TODO check DID and setup associated address from data received
-        vp = json.loads(request.form.get('presentation'))
-        # TODO calculer le nombre de token Talao
-        #talao_community["credentialSubject"]["associatedAddress"]["blockchainTezos"] = vp["verifiableCredential"]["credentialSubject"]["blockchainTezos"]
-        #talao_community["credentialSubject"]["associatedAddress"]["blockchainEthereum"] = vp["verifiableCredential"]["credentialSubject"]["blockchainEthereum"]
-        talao_community["credentialSubject"]["talaoAccount"] = vp["verifiableCredential"]["credentialSubject"]["associatedAddress"]
-        didkit_options = {
-            "proofPurpose": "assertionMethod",
-            "verificationMethod": vm_tz1
+def webhook() :
+    # Get user data from access_token received (optional)
+    access_token = request.headers["Authorization"].split()[1]
+    key = jwk.JWK(**public_key)
+    try :
+        ET = jwt.JWT(key=key, jwt=access_token)
+    except :
+        logging.error("signature error")
+        sys.exit()
+    user_data = json.loads(ET.claims)
+    logging.info('user data received from platform = %s', user_data)
+    credential = {
+    "expirationDate" : (datetime.now() + timedelta(days= 30)).isoformat() + "Z",
+    "credentialSubject": 
+        {
+            "id": "",
+            "type": "TalaoCommunity",
+            "walletNotation" : "Gold",
+            "talaoAccount": "0x83E0481C1844Ed257efE1147218C125832F10236",
+            "offers" : [{
+                "startDate" : "2022-08-01T19:55:00Z",
+                "endDate" : "2022-12-31T19:55:00Z",
+                "duration" : "30",
+                "category" : "discounted_coupon",
+                "analytics" : "",
+                "userGuide" : "",
+                "benefit" : {
+                    "discount" : "25%"
+                },    
+                "offeredBy": {
+                    "logo": "ipfs://QmZmdndUVRoxiVhUnjGrKnNPn8ah3jT8fxTCLMnAzRAFFZ",
+                    "name": "Gif Games",
+                    "description" : "Gaming platform of Tezotopia",
+                    "website" : "https://tezotopia.com"
+                }
+            }],
+            "associatedAddress" : {
+                    "blockchainTezos" : user_data['vp']['verifiableCredential']['credentialSubject']['associatedAddress'],
+                    "blockchainEthereum" : "",
+                    "blockchainPolygon" : ""
             }
-        signed_talao_community =  await didkit.issue_credential(
-                json.dumps(talao_community),
-                didkit_options.__str__().replace("'", '"'),
-                key_tz1)
-        if not signed_talao_community :
-            logging.error('credential signature failed')
-            data = json.dumps({"url_id" : id, "check" : "failed"})
-            red.publish('talao_community', data)
-            return jsonify('server error')
-        # update the talao_community data base
-        if not add_talao_community(signed_talao_community, mode) :
-            data = json.dumps({"url_id" : id, "check" : "failed"})
-            red.publish('talao_community', data)
-            
-        # send event to client agent to go forward
-        data = json.dumps({"url_id" : id, "check" : "success"})
-        red.publish('talao_community', data)
-        return jsonify(signed_talao_community)
- 
+         }
+    }
+    return(jsonify(credential))
 
-def talao_community_end() :
-    if request.args['followup'] == "success" :
-        message = _('Great ! you have now a Tezotopia talao_community to get rewards.')
-    elif request.args['followup'] == 'expired' :
-        message = _('Sorry, session expired.')
-    else :
-        message = _('Sorry, server problem, try again later.')
+
+def callback() :
+    message = _('Great ! you have now Talao community card to get rewards.')
     return render_template('talao_community/talao_community_end.html', message=message)
-
-
-# server event push 
-def talao_community_stream(red):
-    def event_stream(red):
-        pubsub = red.pubsub()
-        pubsub.subscribe('talao_community')
-        for message in pubsub.listen():
-            if message['type']=='message':
-                yield 'data: %s\n\n' % message['data'].decode()
-    headers = { "Content-Type" : "text/event-stream",
-                "Cache-Control" : "no-cache",
-                "X-Accel-Buffering" : "no"}
-    return Response(event_stream(red), headers=headers)
