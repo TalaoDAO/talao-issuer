@@ -5,24 +5,22 @@ logging.basicConfig(level=logging.INFO)
 from flask_babel import _
 import requests
 from jwcrypto import jwt, jwk
-import sys
 from datetime import datetime, timedelta
 import constante
 from web3 import Web3
 
-
 w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/f2be8a3bf04d4a528eb416566f7b5ad6"))
-
 Talao_token_contract = '0x1D4cCC31dAB6EA20f461d329a0562C1c58412515'
+public_key =  {'kty': 'RSA', 'kid': '123', 'n': 'pPocyKreTAn3YrmGyPYXHklYqUiSSQirGACwJSYYs-ksfw4brtA3SZCmA2sdAO8a2DXfqADwFgVSxJFtJ3GkHLV2ZvOIOnZCX6MF6NIWHB9c64ydrYNJbEy72oyG_-v-sE6rb0x-D-uJe9DFYIURzisyBlNA7imsiZPQniOjPLv0BUgED0vdO5HijFe7XbpVhoU-2oTkHHQ4CadmBZhelCczACkXpOU7mwcImGj9h1__PsyT5VBLi_92-93NimZjechPaaTYEU2u0rfnfVW5eGDYNAynO4Q2bhpFPRTXWZ5Lhnhnq7M76T6DGA3GeAu_MOzB0l4dxpFMJ6wHnekdkQ', 'e': 'AQAB'}
 
-test_address = Web3.toChecksumAddress("0x5afa04fb1108ad9705526cf980a2d5122a5817fa")
+#test_address = Web3.toChecksumAddress("0x5afa04fb1108ad9705526cf980a2d5122a5817fa")
 
 def token_balance(address) :
-	contract=w3.eth.contract(Talao_token_contract,abi=constante.Talao_Token_ABI)
-	raw_balance = contract.functions.balanceOf(address).call()
-	balance=raw_balance//10**18
-	return balance
-
+    address = Web3.toChecksumAddress(address)
+    contract = w3.eth.contract(Talao_token_contract,abi=constante.Talao_Token_ABI)
+    raw_balance = contract.functions.balanceOf(address).call()
+    balance=raw_balance//10**18
+    return balance
 
 
 def init_app(app,red, mode) :
@@ -31,8 +29,6 @@ def init_app(app,red, mode) :
     app.add_url_rule('/tc/webhook',  view_func=webhook, methods = ['POST'])
     app.add_url_rule('/tc/callback',  view_func=callback, methods = ['GET', 'POST'])
     return
-
-public_key =  {'kty': 'RSA', 'kid': '123', 'n': 'pPocyKreTAn3YrmGyPYXHklYqUiSSQirGACwJSYYs-ksfw4brtA3SZCmA2sdAO8a2DXfqADwFgVSxJFtJ3GkHLV2ZvOIOnZCX6MF6NIWHB9c64ydrYNJbEy72oyG_-v-sE6rb0x-D-uJe9DFYIURzisyBlNA7imsiZPQniOjPLv0BUgED0vdO5HijFe7XbpVhoU-2oTkHHQ4CadmBZhelCczACkXpOU7mwcImGj9h1__PsyT5VBLi_92-93NimZjechPaaTYEU2u0rfnfVW5eGDYNAynO4Q2bhpFPRTXWZ5Lhnhnq7M76T6DGA3GeAu_MOzB0l4dxpFMJ6wHnekdkQ', 'e': 'AQAB'}
 
 
 def add_talao_community(my_talao_community, mode) :
@@ -72,25 +68,41 @@ def webhook() :
         logging.error("signature error")
         return(jsonify("signature error")), 500
 
-   
-
     user_data = json.loads(ET.claims)
     logging.info('user data received from platform = %s', user_data)
+    for vp in user_data['vp'] :
+        presentation = json.loads(vp)
+        if presentation['verifiableCredential']['credentialSubject']['type'] == "TezosAssociatedAddress" :
+            tezos_associated_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
+        if presentation['verifiableCredential']['credentialSubject']['type'] == "TalaoAssociatedAddress" :
+            talao_associated_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
+
+    balance =  token_balance(talao_associated_address)
+    print("balance = ", balance)
+    if balance > 100 :
+        notation = "Iron"
+    if balance > 500 :
+        notation = "Gold"
+    if balance > 2000 :
+        notation = "Silver"
+    if balance > 5000 :
+        notation = "Platinium"
+
     credential = {
-    "expirationDate" : (datetime.now().replace(microsecond=0) + timedelta(days= 30)).isoformat() + "Z",
+    "expirationDate" : (datetime.now().replace(microsecond=0) + timedelta(days= 180)).isoformat() + "Z",
     "credentialSubject": 
         {
             "id": "",
             "type": "TalaoCommunity",
-            "walletNotation" : "Gold",
-            "talaoAccount": "0x83E0481C1844Ed257efE1147218C125832F10236",
+            "walletNotation" : notation,
+            "talaoAccount": talao_associated_address,
             "offers" : [{
                 "startDate" : "2022-08-01T19:55:00Z",
                 "endDate" : "2022-12-31T19:55:00Z",
-                "duration" : "30",
+                "duration" : "180",
                 "category" : "discounted_coupon",
-                "analytics" : "",
-                "userGuide" : "",
+                "analytics" : "https://talao.co/analytics/" + tezos_associated_address,
+                "userGuide" : "https://altme.io",
                 "benefit" : {
                     "discount" : "25%"
                 },    
@@ -102,9 +114,7 @@ def webhook() :
                 }
             }],
             "associatedAddress" : {
-                    "blockchainTezos" : user_data['vp']['verifiableCredential']['credentialSubject']['associatedAddress'],
-                    "blockchainEthereum" : "",
-                    "blockchainPolygon" : ""
+                    "blockchainTezos" : tezos_associated_address
             }
          }
     }
