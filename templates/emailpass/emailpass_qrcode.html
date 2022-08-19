@@ -65,7 +65,7 @@
 var source = new EventSource('/emailpass/stream');
 source.onmessage = function (event) {
      const result = JSON.parse(event.data)
-     if (result.session_id == "{{session['sid']}}" ){
+     if (result.id == "{{id}}" ){
        window.location.href="/emailpass/end?followup=" + result.check;
      }
 };

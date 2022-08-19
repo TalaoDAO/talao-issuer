@@ -23,20 +23,26 @@
       </div>
     
 
-    <div id="content_smartphone" class="d-block d-sm-none"> 
-      <div class="card shadow mx-1">
-        <a href="{{deeplink}}" class="bg-transparent">
-        <img src="/static/img/phone_proof.png" class="card-img-top mt-3">
-        </a>
-        <div class="card-body">
+      <div id="content_smartphone" class="d-block d-sm-none mt-5"> 
+        <div class="card shadow mx-1">
+        <img src="/static/img/phone_proof.jpg" class="card-img-top mt-3"> 
+          <div class="card-body">
             <div class="text-center">
-                <p class="card-text">
-                  {{_('Clic on the credential to get it into your wallet')}}
-                </p>
+              <div class="text-center my-1 p-3">
+              <p>{{_('Clic below to get your proof of phone number into your wallet')}} </p>
+                <div class="col mb-3">
+                      <a href="{{deeplink_talao}}" class="bg-transparent" style="text-decoration: none;">
+                      Talao wallet <img src="/static/img/talao.png"  style="width: 50px;">
+                      </a><br><br>
+                      <a href="{{deeplink_altme}}" class="bg-transparent" style="text-decoration: none;">
+                      AltMe wallet   <img src="/static/img/altme.png"  style="width: 25px;">
+                      </a><br>                   
+                </div>
+              </div>      
             </div>
-        </div>
-      </div>  
-    </div>
+          </div>
+        </div>  
+      </div>
 
 
 </div>
@@ -53,7 +59,7 @@
 var source = new EventSource('/phonepass/stream');
 source.onmessage = function (event) {
      const result = JSON.parse(event.data)
-     if (result.url_id == '{{session["sid"]}}' ){
+     if (result.url_id == '{{id}}' ){
        window.location.href="/phonepass/end?followup=" + result.check;
      }
 };

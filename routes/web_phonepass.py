@@ -16,14 +16,14 @@ QRCODE_DELAY = 30
 
 
 key_tz1 = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-vm_tz1 = vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
-DID =  "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
+vm_tz1 = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
+issuer_did =  "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 
 
 def init_app(app,red, mode) :
     app.add_url_rule('/phonepass',  view_func=phonepass, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/phonepass/qrcode',  view_func=phonepass_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode, 'red' : red})
-    app.add_url_rule('/phonepass/offer/<id>',  view_func=phonepass_offer, methods = ['GET', 'POST'], defaults={'red' : red})
+    app.add_url_rule('/phonepass/offer/<id>',  view_func=phonepass_offer_endpoint, methods = ['GET', 'POST'], defaults={'red' : red})
     app.add_url_rule('/phonepass/authentication',  view_func=phonepass_authentication, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/phonepass/stream',  view_func=phonepass_stream, methods = ['GET', 'POST'], defaults={'red' : red})
     app.add_url_rule('/phonepass/end',  view_func=phonepass_end, methods = ['GET', 'POST'])
@@ -74,41 +74,49 @@ def phonepass_authentication(mode) :
 
 
 def phonepass_qrcode(red, mode) :
-    url = mode.server + "phonepass/offer/" + session.sid +'?' + urlencode({'issuer' : DID})
-    deeplink = mode.deeplink + 'app/download?' + urlencode({'uri' : url })
+    id = str(uuid.uuid1())
+    qr_code = mode.server + "phonepass/offer/" + id +'?' + urlencode({'issuer' : issuer_did})
+    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : qr_code })
+    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : qr_code })
     if not session.get('phone') :
         flash(_("Code expired."), "warning")
         return render_template('phonepass/phonepass.html')
-    red.setex(session.sid, QRCODE_DELAY, session['phone'])
+    red.setex(id, QRCODE_DELAY, session['phone'])
     return render_template('phonepass/phonepass_qrcode.html',
-                                url=url,
-                                deeplink=deeplink)
+                                url=qr_code,
+                                id=id,
+                                deeplink_talao=deeplink_talao,
+                                deeplink_altme=deeplink_altme)
    
 
-async def phonepass_offer(id, red):
-    """ Endpoint for wallet
-    """
+async def phonepass_offer_endpoint(id, red):
     credential = json.loads(open('./verifiable_credentials/PhonePass.jsonld', 'r').read())
-    credential["issuer"] = DID
-    credential['id'] = "urn:uuid:random"
-    credential['credentialSubject']['id'] = "did:wallet"
+    credential["issuer"] = issuer_did
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     credential['credentialSubject']['phone'] = red.get(id).decode()
-    credential['expirationDate'] =  (datetime.now() + timedelta(days= 365)).isoformat() + "Z"
+    credential['expirationDate'] =  (datetime.utcnow().replace(microsecond=0) + timedelta(days= 365)).isoformat() + "Z"
+
     if request.method == 'GET': 
+        credential['id'] = "urn:uuid:random"
+        credential['credentialSubject']['id'] = "did:wallet"
+        credential_manifest = json.load(open('./credential_manifest/phone_credential_manifest.json', 'r'))
+        credential_manifest['id'] = str(uuid.uuid1())
+        credential_manifest['issuer']['id'] = issuer_did
+        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
+    
         # make an offer  
         credential_offer = {
             "type": "CredentialOffer",
             "credentialPreview": credential,
             "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
-            "display" : {"backgroundColor" : "ffffff"}
+            "credential_manifest" : credential_manifest
         }
         return jsonify(credential_offer)
-    elif request.method == 'POST': 
+    if request.method == 'POST': 
         red.delete(id)   
         # sign credential
         credential['id'] = "urn:uuid:" + str(uuid.uuid1())
-        credential['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
+        credential['credentialSubject']['id'] = request.form['subject_id']
         didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm_tz1
@@ -121,7 +129,7 @@ async def phonepass_offer(id, red):
             logging.error('credential signature failed')
             data = json.dumps({"url_id" : id, "check" : "failed"})
             red.publish('phonepass', data)
-            return jsonify('server error')
+            return jsonify('server error'), 500
         # send event to client agent to go forward
         data = json.dumps({"url_id" : id, "check" : "success"})
         red.publish('phonepass', data)

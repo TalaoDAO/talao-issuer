@@ -25,7 +25,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/emailproof',  view_func=emailpass, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass',  view_func=emailpass, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass/qrcode',  view_func=emailpass_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode, 'red' : red})
-    app.add_url_rule('/emailpass/offer/<session_id>',  view_func=emailpass_enpoint, methods = ['GET', 'POST'], defaults={'red' : red})
+    app.add_url_rule('/emailpass/offer/<id>',  view_func=emailpass_enpoint, methods = ['GET', 'POST'], defaults={'red' : red})
     app.add_url_rule('/emailpass/authentication',  view_func=emailpass_authentication, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass/stream',  view_func=emailpass_stream, methods = ['GET', 'POST'], defaults={'red' : red})
     app.add_url_rule('/emailpass/end',  view_func=emailpass_end, methods = ['GET', 'POST'])
@@ -95,7 +95,8 @@ def emailpass_authentication(mode) :
 
 
 def emailpass_qrcode(red, mode) :
-    qr_code = mode.server + "emailpass/offer/" + session.sid +'?' + urlencode({'issuer' : issuer_did})
+    id = str(uuid.uuid1())
+    qr_code = mode.server + "emailpass/offer/" + id +'?' + urlencode({'issuer' : issuer_did})
     logging.info('qr code = %s', qr_code)
     deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : qr_code })
     deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : qr_code })
@@ -103,29 +104,34 @@ def emailpass_qrcode(red, mode) :
     if not session.get('email') :
         flash(_("Code expired."), "warning")
         return render_template('emailpass/emailpass.html')
-    red.setex(session.sid, QRCODE_DELAY, session['email']) # email is stored in redis with session_id as index
+    red.setex(id, QRCODE_DELAY, session['email']) # email is stored in redis with id as index
     return render_template('emailpass/emailpass_qrcode.html',
                                 url=qr_code,
+                                id=id,
                                 deeplinktalao=deeplink_talao,
                                 deeplink_altme=deeplink_altme)
 
    
-async def emailpass_enpoint(session_id, red):
+async def emailpass_enpoint(id, red):
     credential = json.load(open('./verifiable_credentials/EmailPass.jsonld', 'r'))
     credential["issuer"] = issuer_did 
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     credential['expirationDate'] =  (datetime.now() + timedelta(days= 365)).isoformat() + "Z"
     try :
-        credential['credentialSubject']['email'] = red.get(session_id).decode()
+        credential['credentialSubject']['email'] = red.get(id).decode()
     except :
-        logging.error('redis datat expired')
-        data = json.dumps({"session_id" : session_id, "check" : "expired"})
+        logging.error('redis data expired')
+        data = json.dumps({"id" : id, "check" : "expired"})
         red.publish('emailpass', data)
         return jsonify('session expired'), 408
     
     if request.method == 'GET': 
         # make an offer  
         credential_manifest = json.load(open('./credential_manifest/email_credential_manifest.json', 'r'))
+        credential_manifest['id'] = str(uuid.uuid1())
+        credential_manifest['issuer']['id'] = issuer_did
+        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
+        
         credential['id'] = "urn:uuid:random"
         credential['credentialSubject']['id'] = "did:wallet"
         credential_offer = {
@@ -137,7 +143,7 @@ async def emailpass_enpoint(session_id, red):
         return jsonify(credential_offer)
 
     else :  #POST
-        #red.delete(session_id)   #TODO remove but remplace with set time = expiration delay
+        #red.delete(id)   #TODO remove but remplace with set time = expiration delay
         # init credential
         credential['id'] = "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
@@ -157,11 +163,11 @@ async def emailpass_enpoint(session_id, red):
                 issuer_key)
         if not signed_credential :         # send event to client agent to go forward
             logging.error('credential signature failed')
-            data = json.dumps({"session_id" : session_id, "check" : "failed"})
+            data = json.dumps({"id" : id, "check" : "failed"})
             red.publish('emailpass', data)
             return jsonify('Server failed'), 500
         # Success : send event to client agent to go forward
-        data = json.dumps({"session_id" : session_id, "check" : "success"})
+        data = json.dumps({"id" : id, "check" : "success"})
         red.publish('emailpass', data)
         return jsonify(signed_credential)
  

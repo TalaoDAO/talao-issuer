@@ -63,12 +63,10 @@ source.onmessage = function (event) {
      const result = JSON.parse(event.data)
      console.log(result);
      if (result.check == 'success' & result.id == '{{id}}' ){
-       console.log('success');
        window.location.href="/passbase/back?followup=success";
      } 
      if (result.check == 'failed' & result.id == '{{id}}' ){
-       console.log('failed');
-       window.location.href="/passbase/back?followup=failed&message=" + result.message;
+       window.location.href="/passbase/back?followup=failed";
      }
 };
 

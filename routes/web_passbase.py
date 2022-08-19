@@ -245,9 +245,12 @@ async def passbase_endpoint_over18(id,red,mode):
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
         credential_manifest = json.loads(open("./credential_manifest/over18_credential_manifest.json", 'r').read())
+        credential_manifest['id'] = str(uuid.uuid1())
+        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
+        credential_manifest['issuer']['id'] = issuer_did
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
-        credential['credentialSubject']['id'] = "did:..."
+        credential['credentialSubject']['id'] = "did:wallet"
         credentialOffer = {
             "type": "CredentialOffer",
             "credentialPreview": credential,
@@ -339,9 +342,12 @@ async def passbase_endpoint_idcard(id,red,mode):
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
         credential['issuer'] = issuer_did
+        credential['credentialSubject']['id'] = "did:wallet"
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential_manifest = json.loads(open("./credential_manifest/idcard_credential_manifest.json", 'r').read())
-        credential['credentialSubject']['id'] = "did:..."
+        credential_manifest['id'] = str(uuid.uuid1())
+        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
+        credential_manifest['issuer']['id'] = issuer_did
         credentialOffer = {
             "type": "CredentialOffer",
             "credentialPreview": credential,
@@ -421,27 +427,15 @@ async def passbase_endpoint_idcard(id,red,mode):
     return jsonify(signed_credential)
 
 
-def passbase_back():
-    result = request.args['followup']
-    logging.info('back result = %s', result)
-    logging.info('back message = %s', request.args.get('message', 'No message'))
-    if result == 'failed' :
-        message = """ <h2>""" + _("Sorry !") + """<br><br>""" + request.args['message'] + """</h2>"""  
+
+def passbase_back() :
+    if request.args['followup'] == "success" :
+        message = _('Great ! you have now your credential.')
     else :
-        message  = """ <h2>""" + _("Congrats !") + """<br><br>""" + _("Your credential has been signed and transfered to your wallet") + """</h2>"""
-    html_string = """
-        <!DOCTYPE html>
-        <html>
-        <body class="h-screen w-screen flex">
-        <center>
-        """ + message + """
-        <br><br><br>
-        <form action="https://playground.talao.co" method="GET" >
-        <button  type"submit" >Playground</button></form>
-        </center>
-        </body>
-        </html>"""
-    return render_template_string(html_string)
+        message = _('Sorry ! there is a server problem, try again later.')
+    return render_template('passbase/passbase_end.html', message=message)
+
+
 
 
 # server event push for user agent EventSource

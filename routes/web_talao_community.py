@@ -1,4 +1,4 @@
-from flask import jsonify, request, render_template, Response, redirect
+from flask import jsonify, request, render_template, redirect
 import json
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -7,6 +7,23 @@ import requests
 from jwcrypto import jwt, jwk
 import sys
 from datetime import datetime, timedelta
+import constante
+from web3 import Web3
+
+
+w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/f2be8a3bf04d4a528eb416566f7b5ad6"))
+
+Talao_token_contract = '0x1D4cCC31dAB6EA20f461d329a0562C1c58412515'
+
+test_address = Web3.toChecksumAddress("0x5afa04fb1108ad9705526cf980a2d5122a5817fa")
+
+def token_balance(address) :
+	contract=w3.eth.contract(Talao_token_contract,abi=constante.Talao_Token_ABI)
+	raw_balance = contract.functions.balanceOf(address).call()
+	balance=raw_balance//10**18
+	return balance
+
+
 
 def init_app(app,red, mode) :
     app.add_url_rule('/tc',  view_func=talao_community, methods = ['GET'], defaults={'mode' : mode})
@@ -19,7 +36,7 @@ public_key =  {'kty': 'RSA', 'kid': '123', 'n': 'pPocyKreTAn3YrmGyPYXHklYqUiSSQi
 
 
 def add_talao_community(my_talao_community, mode) :
-    # my_talao_community is a json stringexi
+    # my_talao_community is a json string
     my_talao_community = json.loads(my_talao_community)
     my_talao_community = json.dumps(my_talao_community, ensure_ascii=True)
 
@@ -53,11 +70,14 @@ def webhook() :
         ET = jwt.JWT(key=key, jwt=access_token)
     except :
         logging.error("signature error")
-        sys.exit()
+        return(jsonify("signature error")), 500
+
+   
+
     user_data = json.loads(ET.claims)
     logging.info('user data received from platform = %s', user_data)
     credential = {
-    "expirationDate" : (datetime.now() + timedelta(days= 30)).isoformat() + "Z",
+    "expirationDate" : (datetime.now().replace(microsecond=0) + timedelta(days= 30)).isoformat() + "Z",
     "credentialSubject": 
         {
             "id": "",
