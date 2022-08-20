@@ -28,7 +28,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/tc',  view_func=talao_community, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/talao_community',  view_func=talao_community, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/tc/webhook',  view_func=webhook, methods = ['POST'])
-    app.add_url_rule('/tc/callback',  view_func=callback, methods = ['GET', 'POST'])
+    app.add_url_rule('/tc/callback',  view_func=callback, methods = ['GET'])
     return
 
 
@@ -66,15 +66,17 @@ def webhook() :
     except :
         logging.error("Authorization key rejected")
         return(jsonify("Authorization key rejected")), 400
-    logging.info("access token = %s", access_token)
+    logging.info("access token received")
     try :    
         key = jwk.JWK(**public_key)
         ET = jwt.JWT(key=key, jwt=access_token)
     except :
-        logging.error("JWT signature error")
-        return(jsonify("JWT signature error")), 500
+        logging.error("access token signature error")
+        return(jsonify("access token signature error")), 500
+    logging.info("access token signature ok")
+
     user_data = json.loads(ET.claims)
-    logging.info('user data received from platform = %s', user_data)
+    #logging.info('user data received from platform = %s', user_data)
     for vp in user_data['vp'] :
         presentation = json.loads(vp)
         if presentation['verifiableCredential']['credentialSubject']['type'] == "TezosAssociatedAddress" :
