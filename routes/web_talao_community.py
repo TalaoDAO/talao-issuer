@@ -62,11 +62,9 @@ def talao_community(mode) :
 
 def webhook() :
     # Get user data from access_token received (optional)
-    try : 
-        client_secret = request.headers["client_secret"]
-    except :
-        logging.error("No client_secret")
-        return(jsonify("No client_secret")), 404
+    
+    client_secret = request.headers["client_secret"]
+    print("client secret = ", client_secret)
     """
     if client_secret != 
         logging.error("access token signature error")
