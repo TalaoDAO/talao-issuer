@@ -61,11 +61,12 @@ def talao_community(mode) :
 
 def webhook() :
     # Get user data from access_token received (optional)
+    logging.info("webhook call")
     try : 
         access_token = request.headers["Authorization"].split()[1]
     except :
         logging.error("Authorization key rejected")
-        return(jsonify("Authorization key rejected")), 400
+        return(jsonify("Authorization key rejected")), 404
     logging.info("access token received")
     try :    
         key = jwk.JWK(**public_key)
