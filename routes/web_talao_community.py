@@ -63,7 +63,7 @@ def webhook() :
     
     client_secret = request.headers.get("WEBHOOK_KEY")
     print("client secret = ", client_secret)
-   
+    print("request headers = ", request.headers)
     webhook = request.get_json()
     vp_list = webhook['vp']
     #logging.info('user data received from platform = %s', user_data)
