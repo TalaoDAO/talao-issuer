@@ -4,14 +4,12 @@ import logging
 logging.basicConfig(level=logging.INFO)
 from flask_babel import _
 import requests
-from jwcrypto import jwt, jwk
 from datetime import datetime, timedelta
 import constante
 from web3 import Web3
 
 w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/f2be8a3bf04d4a528eb416566f7b5ad6"))
 Talao_token_contract = '0x1D4cCC31dAB6EA20f461d329a0562C1c58412515'
-public_key =  {'kty': 'RSA', 'kid': '123', 'n': 'pPocyKreTAn3YrmGyPYXHklYqUiSSQirGACwJSYYs-ksfw4brtA3SZCmA2sdAO8a2DXfqADwFgVSxJFtJ3GkHLV2ZvOIOnZCX6MF6NIWHB9c64ydrYNJbEy72oyG_-v-sE6rb0x-D-uJe9DFYIURzisyBlNA7imsiZPQniOjPLv0BUgED0vdO5HijFe7XbpVhoU-2oTkHHQ4CadmBZhelCczACkXpOU7mwcImGj9h1__PsyT5VBLi_92-93NimZjechPaaTYEU2u0rfnfVW5eGDYNAynO4Q2bhpFPRTXWZ5Lhnhnq7M76T6DGA3GeAu_MOzB0l4dxpFMJ6wHnekdkQ', 'e': 'AQAB'}
 
 
 #test_address = Web3.toChecksumAddress("0x5afa04fb1108ad9705526cf980a2d5122a5817fa")
@@ -63,13 +61,9 @@ def talao_community(mode) :
 def webhook() :
     # Get user data from access_token received (optional)
     
-    client_secret = request.headers["client_secret"]
+    client_secret = request.headers.get("WEBHOOK_KEY")
     print("client secret = ", client_secret)
-    """
-    if client_secret != 
-        logging.error("access token signature error")
-        return(jsonify("access token signature error")), 500
-    """
+   
     webhook = request.get_json()
     vp_list = webhook['vp']
     #logging.info('user data received from platform = %s', user_data)
