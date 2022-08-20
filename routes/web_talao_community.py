@@ -22,6 +22,7 @@ def token_balance(address) :
     balance=raw_balance//10**18
     return balance
 
+#https://issuer.talao.co/emailproof
 
 def init_app(app,red, mode) :
     app.add_url_rule('/tc',  view_func=talao_community, methods = ['GET'], defaults={'mode' : mode})
@@ -60,14 +61,18 @@ def talao_community(mode) :
 
 def webhook() :
     # Get user data from access_token received (optional)
-    access_token = request.headers["Authorization"].split()[1]
-    key = jwk.JWK(**public_key)
-    try :
+    try : 
+        access_token = request.headers["Authorization"].split()[1]
+    except :
+        logging.error("Authorization key rejected")
+        return(jsonify("Authorization key rejected")), 400
+    logging.info("access token = %s", access_token)
+    try :    
+        key = jwk.JWK(**public_key)
         ET = jwt.JWT(key=key, jwt=access_token)
     except :
-        logging.error("signature error")
-        return(jsonify("signature error")), 500
-
+        logging.error("JWT signature error")
+        return(jsonify("JWT signature error")), 500
     user_data = json.loads(ET.claims)
     logging.info('user data received from platform = %s', user_data)
     for vp in user_data['vp'] :
