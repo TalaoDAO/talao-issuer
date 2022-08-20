@@ -13,6 +13,7 @@ w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/f2be8a3bf04d4a528eb416
 Talao_token_contract = '0x1D4cCC31dAB6EA20f461d329a0562C1c58412515'
 public_key =  {'kty': 'RSA', 'kid': '123', 'n': 'pPocyKreTAn3YrmGyPYXHklYqUiSSQirGACwJSYYs-ksfw4brtA3SZCmA2sdAO8a2DXfqADwFgVSxJFtJ3GkHLV2ZvOIOnZCX6MF6NIWHB9c64ydrYNJbEy72oyG_-v-sE6rb0x-D-uJe9DFYIURzisyBlNA7imsiZPQniOjPLv0BUgED0vdO5HijFe7XbpVhoU-2oTkHHQ4CadmBZhelCczACkXpOU7mwcImGj9h1__PsyT5VBLi_92-93NimZjechPaaTYEU2u0rfnfVW5eGDYNAynO4Q2bhpFPRTXWZ5Lhnhnq7M76T6DGA3GeAu_MOzB0l4dxpFMJ6wHnekdkQ', 'e': 'AQAB'}
 
+
 #test_address = Web3.toChecksumAddress("0x5afa04fb1108ad9705526cf980a2d5122a5817fa")
 
 def token_balance(address) :
@@ -61,24 +62,20 @@ def talao_community(mode) :
 
 def webhook() :
     # Get user data from access_token received (optional)
-    logging.info("webhook call")
     try : 
-        access_token = request.headers["Authorization"].split()[1]
+        client_secret = request.headers["client_secret"]
     except :
-        logging.error("Authorization key rejected")
-        return(jsonify("Authorization key rejected")), 404
-    logging.info("access token received")
-    try :    
-        key = jwk.JWK(**public_key)
-        ET = jwt.JWT(key=key, jwt=access_token)
-    except :
+        logging.error("No client_secret")
+        return(jsonify("No client_secret")), 404
+    """
+    if client_secret != 
         logging.error("access token signature error")
         return(jsonify("access token signature error")), 500
-    logging.info("access token signature ok")
-
-    user_data = json.loads(ET.claims)
+    """
+    webhook = request.get_json()
+    vp_list = webhook['vp']
     #logging.info('user data received from platform = %s', user_data)
-    for vp in user_data['vp'] :
+    for vp in vp_list :
         presentation = json.loads(vp)
         if presentation['verifiableCredential']['credentialSubject']['type'] == "TezosAssociatedAddress" :
             tezos_associated_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
