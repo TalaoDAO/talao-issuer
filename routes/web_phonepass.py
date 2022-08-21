@@ -22,11 +22,10 @@ issuer_did =  "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 
 def init_app(app,red, mode) :
     app.add_url_rule('/phonepass',  view_func=phonepass, methods = ['GET', 'POST'], defaults={'mode' : mode})
-    app.add_url_rule('/phonepass/qrcode',  view_func=phonepass_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode, 'red' : red})
-    app.add_url_rule('/phonepass/offer/<id>',  view_func=phonepass_offer_endpoint, methods = ['GET', 'POST'], defaults={'red' : red})
-    app.add_url_rule('/phonepass/authentication',  view_func=phonepass_authentication, methods = ['GET', 'POST'], defaults={'mode' : mode})
-    app.add_url_rule('/phonepass/stream',  view_func=phonepass_stream, methods = ['GET', 'POST'], defaults={'red' : red})
-    app.add_url_rule('/phonepass/end',  view_func=phonepass_end, methods = ['GET', 'POST'])
+    app.add_url_rule('/phonepass/redirect',  view_func=phonepass_redirect, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/phonepass/webhook',  view_func=phonepass_webhook, methods = ['POST'], defaults={'red' : red})
+    app.add_url_rule('/phonepass/callback',  view_func=phonepass_callback, methods = ['GET', 'POST'])
+    app.add_url_rule('/phonepass/authentication',  view_func=phonepass_authentication, methods = ['GET', 'POST'], defaults={'red' : red})
     return
 
 
@@ -49,7 +48,7 @@ def phonepass(mode) :
         return redirect ('phonepass/authentication')
 
 
-def phonepass_authentication(mode) :
+def phonepass_authentication(red) :
     if request.method == 'GET' :
         return render_template('phonepass/phonepass_authentication.html')
     if request.method == 'POST' :
@@ -57,8 +56,10 @@ def phonepass_authentication(mode) :
         session['try_number'] +=1
         logging.info('code received = %s', code)
         if code == session['code'] and datetime.now().timestamp() < session['code_delay'] :
+            id = str(uuid.uuid1())
+            red.set(id, session['phone'])
     	    # success exit
-            return redirect(mode.server + 'phonepass/qrcode')
+            return redirect('/phonepass/redirect?id=' + id)
         elif session['code_delay'] < datetime.now().timestamp() :
             flash(_("Code expired."), "warning")
             return render_template('phonepass/phonepass.html')
@@ -73,88 +74,37 @@ def phonepass_authentication(mode) :
             return render_template("phonepass/phonepass_authentication.html")
 
 
-def phonepass_qrcode(red, mode) :
-    id = str(uuid.uuid1())
-    qr_code = mode.server + "phonepass/offer/" + id +'?' + urlencode({'issuer' : issuer_did})
-    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : qr_code })
-    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : qr_code })
-    if not session.get('phone') :
-        flash(_("Code expired."), "warning")
-        return render_template('phonepass/phonepass.html')
-    red.setex(id, QRCODE_DELAY, session['phone'])
-    return render_template('phonepass/phonepass_qrcode.html',
-                                url=qr_code,
-                                id=id,
-                                deeplink_talao=deeplink_talao,
-                                deeplink_altme=deeplink_altme)
-   
+def phonepass_redirect(mode) :
+    global client_secret
+    if mode.myenv != 'aws':
+        link = "http://192.168.0.123:3000/sandbox/op/issuer/lrggujxcee?id=" + request.args.get('id')
+        client_secret = "2678134c-1c97-11ed-9222-d9af830f0c58"
+    else :
+        link = 'https://talao.co/sandbox/op/issuer/iagetctadx'
+        client_secret = ""
+    return redirect (link)
 
-async def phonepass_offer_endpoint(id, red):
-    credential = json.loads(open('./verifiable_credentials/PhonePass.jsonld', 'r').read())
-    credential["issuer"] = issuer_did
-    credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-    credential['credentialSubject']['phone'] = red.get(id).decode()
-    credential['expirationDate'] =  (datetime.utcnow().replace(microsecond=0) + timedelta(days= 365)).isoformat() + "Z"
 
-    if request.method == 'GET': 
-        credential['id'] = "urn:uuid:random"
-        credential['credentialSubject']['id'] = "did:wallet"
-        credential_manifest = json.load(open('./credential_manifest/phone_credential_manifest.json', 'r'))
-        credential_manifest['id'] = str(uuid.uuid1())
-        credential_manifest['issuer']['id'] = issuer_did
-        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
-    
-        # make an offer  
-        credential_offer = {
-            "type": "CredentialOffer",
-            "credentialPreview": credential,
-            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
-            "credential_manifest" : credential_manifest
+def phonepass_webhook(red):
+    key = request.headers.get("key")
+    # TODO test against client_secret
+    data = request.get_json()
+    phone = red.get(data["id"]).decode()
+    credential = {
+        "credentialSubject" : {
+            "type" : "PhonePass",
+            "phone" : phone,
+            "issuedBy" : {
+                "name" : "Talao",
+                "logo" : "https://talao.mypinata.cloud/ipfs/QmNwbEEupT7jR2zmrA87FsN4hUS8eXnCxM8DsL9RXc25cu"
+            } 
         }
-        return jsonify(credential_offer)
-    if request.method == 'POST': 
-        red.delete(id)   
-        # sign credential
-        credential['id'] = "urn:uuid:" + str(uuid.uuid1())
-        credential['credentialSubject']['id'] = request.form['subject_id']
-        didkit_options = {
-            "proofPurpose": "assertionMethod",
-            "verificationMethod": vm_tz1
-            }
-        signed_credential =  await didkit.issue_credential(
-                json.dumps(credential),
-                didkit_options.__str__().replace("'", '"'),
-                key_tz1)
-        if not signed_credential :
-            logging.error('credential signature failed')
-            data = json.dumps({"url_id" : id, "check" : "failed"})
-            red.publish('phonepass', data)
-            return jsonify('server error'), 500
-        # send event to client agent to go forward
-        data = json.dumps({"url_id" : id, "check" : "success"})
-        red.publish('phonepass', data)
-        return jsonify(signed_credential)
+    }
+    return jsonify(credential)
  
 
-def phonepass_end() :
-    if request.args['followup'] == "success" :
-        message = _('Great ! you have now a proof of phone number.')
-    elif request.args['followup'] == 'expired' :
-        message = _('Sorry, session expired.')
-    else :
-        message = _('Sorry, server problem, try again later.')
+def phonepass_callback() :
+    message = _('Great ! you have now a proof of phone number.')
+    session.clear()
     return render_template('phonepass/phonepass_end.html', message=message)
 
-
-# server event push 
-def phonepass_stream(red):
-    def event_stream(red):
-        pubsub = red.pubsub()
-        pubsub.subscribe('phonepass')
-        for message in pubsub.listen():
-            if message['type']=='message':
-                yield 'data: %s\n\n' % message['data'].decode()
-    headers = { "Content-Type" : "text/event-stream",
-                "Cache-Control" : "no-cache",
-                "X-Accel-Buffering" : "no"}
-    return Response(event_stream(red), headers=headers)

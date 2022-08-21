@@ -10,8 +10,6 @@ from web3 import Web3
 
 w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/f2be8a3bf04d4a528eb416566f7b5ad6"))
 Talao_token_contract = '0x1D4cCC31dAB6EA20f461d329a0562C1c58412515'
-
-
 #test_address = Web3.toChecksumAddress("0x5afa04fb1108ad9705526cf980a2d5122a5817fa")
 
 def token_balance(address) :
@@ -21,7 +19,6 @@ def token_balance(address) :
     balance=raw_balance//10**18
     return balance
 
-#https://issuer.talao.co/emailproof
 
 def init_app(app,red, mode) :
     app.add_url_rule('/tc',  view_func=talao_community, methods = ['GET'], defaults={'mode' : mode})
@@ -51,21 +48,22 @@ def add_talao_community(my_talao_community, mode) :
    
 
 def talao_community(mode) :
+    global client_secret
     if mode.myenv != 'aws':
         link = "http://192.168.0.123:3000/sandbox/op/issuer/shftylibxa"
+        client_secret = "2652f832-1bbb-11ed-9222-d9af830f0c58"
     else :
         link = 'https://talao.co/sandbox/op/issuer/fwkpatoulq'
+        client_secret = ""
     return redirect (link)
    
 
 def webhook() :
-    # Get user data from access_token received (optional)
-    
-    client_secret = request.headers.get("key")
-    print("client secret = ", client_secret)
-    webhook = request.get_json()
-    vp_list = webhook['vp']
-    #logging.info('user data received from platform = %s', user_data)
+    # Get user data from access_token received (optional) 
+    key = request.headers.get("key")
+    # TODO test against client_secret
+    vp = request.get_json()
+    vp_list = vp['vp']
     for vp in vp_list :
         presentation = json.loads(vp)
         if presentation['verifiableCredential']['credentialSubject']['type'] == "TezosAssociatedAddress" :
@@ -74,7 +72,7 @@ def webhook() :
             talao_associated_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
 
     balance =  token_balance(talao_associated_address)
-    print("balance = ", balance)
+    logging.info("balance = %s", balance)
     if balance > 100 :
         notation = "Iron"
     if balance > 500 :
