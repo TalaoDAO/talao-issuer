@@ -77,18 +77,21 @@ def phonepass_authentication(red) :
 def phonepass_redirect(mode) :
     global client_secret
     if mode.myenv != 'aws':
-        link = "http://192.168.0.123:3000/sandbox/op/issuer/lrggujxcee?id=" + request.args.get('id')
+        link = 'http://192.168.0.123:3000/sandbox/op/issuer/lrggujxcee?id=' + request.args.get('id')
         client_secret = "2678134c-1c97-11ed-9222-d9af830f0c58"
     else :
-        link = 'https://talao.co/sandbox/op/issuer/iagetctadx'
-        client_secret = ""
+        link = 'https://talao.co/sandbox/op/issuer/iagetctadx?id=' + request.args.get('id')
+        client_secret = "1c6f9c32-1941-11ed-915c-0a1628958560"
     return redirect (link)
 
 
 def phonepass_webhook(red):
     key = request.headers.get("key")
+    logging.info("key = %s", key)
     # TODO test against client_secret
     data = request.get_json()
+    logging.info("data = %s", data)
+
     phone = red.get(data["id"]).decode()
     credential = {
         "credentialSubject" : {
