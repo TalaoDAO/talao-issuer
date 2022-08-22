@@ -22,10 +22,17 @@ issuer_did =  "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 
 def init_app(app,red, mode) :
     app.add_url_rule('/phonepass',  view_func=phonepass, methods = ['GET', 'POST'], defaults={'mode' : mode})
-    app.add_url_rule('/phonepass/redirect',  view_func=phonepass_redirect, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/phonepass/redirect',  view_func=phonepass_redirect, methods = ['GET'])
     app.add_url_rule('/phonepass/webhook',  view_func=phonepass_webhook, methods = ['POST'], defaults={'red' : red})
     app.add_url_rule('/phonepass/callback',  view_func=phonepass_callback, methods = ['GET', 'POST'])
     app.add_url_rule('/phonepass/authentication',  view_func=phonepass_authentication, methods = ['GET', 'POST'], defaults={'red' : red})
+    global link, client_secret
+    if mode.myenv != 'aws':
+        link = "http://192.168.0.123:3000/sandbox/op/issuer/shftylibxa"
+        client_secret = "2652f832-1bbb-11ed-9222-d9af830f0c58"
+    else :
+        link = 'https://talao.co/sandbox/op/issuer/fwkpatoulq'
+        client_secret = "7dca6002-1c77-11ed-9407-0a1628958560"
     return
 
 
@@ -74,36 +81,34 @@ def phonepass_authentication(red) :
             return render_template("phonepass/phonepass_authentication.html")
 
 
-def phonepass_redirect(mode) :
-    global client_secret
-    if mode.myenv != 'aws':
-        link = 'http://192.168.0.123:3000/sandbox/op/issuer/lrggujxcee?id=' + request.args.get('id')
-        client_secret = "2678134c-1c97-11ed-9222-d9af830f0c58"
-    else :
-        link = 'https://talao.co/sandbox/op/issuer/iagetctadx?id=' + request.args.get('id')
-        client_secret = "1c6f9c32-1941-11ed-915c-0a1628958560"
+def phonepass_redirect() :
     return redirect (link)
 
 
 def phonepass_webhook(red):
-    key = request.headers.get("key")
-    logging.info("key = %s", key)
-    # TODO test against client_secret
+    if request.headers.get("key") != client_secret :
+        return jsonify("Forbidden"), 403
+
     data = request.get_json()
     logging.info("data = %s", data)
-
-    phone = red.get(data["id"]).decode()
-    credential = {
-        "credentialSubject" : {
-            "type" : "PhonePass",
-            "phone" : phone,
-            "issuedBy" : {
-                "name" : "Talao",
-                "logo" : "https://talao.mypinata.cloud/ipfs/QmNwbEEupT7jR2zmrA87FsN4hUS8eXnCxM8DsL9RXc25cu"
-            } 
+    
+    if data['event'] == 'ISSUANCE' :
+        phone = red.get(data["id"]).decode()
+        credential = {
+            "credentialSubject" : {
+                "type" : "PhonePass",
+                "phone" : phone,
+                "issuedBy" : {
+                    "name" : "Talao",
+                    "logo" : "https://talao.mypinata.cloud/ipfs/QmNwbEEupT7jR2zmrA87FsN4hUS8eXnCxM8DsL9RXc25cu"
+                    } 
+            }
         }
-    }
-    return jsonify(credential)
+        return jsonify(credential)
+    
+    if data['event'] == 'RECEIPT' :
+        logging.info("credential issued = %s", data['vc'])
+        return jsonify('ok')
  
 
 def phonepass_callback() :

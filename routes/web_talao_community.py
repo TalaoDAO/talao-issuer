@@ -21,10 +21,17 @@ def token_balance(address) :
 
 
 def init_app(app,red, mode) :
-    app.add_url_rule('/tc',  view_func=talao_community, methods = ['GET'], defaults={'mode' : mode})
-    app.add_url_rule('/talao_community',  view_func=talao_community, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/tc',  view_func=talao_community, methods = ['GET'])
+    app.add_url_rule('/talao_community',  view_func=talao_community, methods = ['GET'])
     app.add_url_rule('/tc/webhook',  view_func=webhook, methods = ['POST'])
     app.add_url_rule('/tc/callback',  view_func=callback, methods = ['GET'])
+    global link, client_secret
+    if mode.myenv != 'aws':
+        link = "http://192.168.0.123:3000/sandbox/op/issuer/shftylibxa"
+        client_secret = "2652f832-1bbb-11ed-9222-d9af830f0c58"
+    else :
+        link = 'https://talao.co/sandbox/op/issuer/fwkpatoulq'
+        client_secret = "7dca6002-1c77-11ed-9407-0a1628958560"
     return
 
 
@@ -47,72 +54,72 @@ def add_talao_community(my_talao_community, mode) :
         return True
    
 
-def talao_community(mode) :
+def talao_community() :
     global client_secret
-    if mode.myenv != 'aws':
-        link = "http://192.168.0.123:3000/sandbox/op/issuer/shftylibxa"
-        client_secret = "2652f832-1bbb-11ed-9222-d9af830f0c58"
-    else :
-        link = 'https://talao.co/sandbox/op/issuer/fwkpatoulq'
-        client_secret = ""
     return redirect (link)
    
 
 def webhook() :
-    # Get user data from access_token received (optional) 
-    key = request.headers.get("key")
-    # TODO test against client_secret
-    vp = request.get_json()
-    vp_list = vp['vp']
-    for vp in vp_list :
-        presentation = json.loads(vp)
-        if presentation['verifiableCredential']['credentialSubject']['type'] == "TezosAssociatedAddress" :
-            tezos_associated_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
-        if presentation['verifiableCredential']['credentialSubject']['type'] == "TalaoAssociatedAddress" :
-            talao_associated_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
+    if request.headers.get("key") != client_secret :
+        return jsonify("Forbidden"), 403
+   
+    data = request.get_json()
+    if data['event'] == 'ISSUANCE' :   
+        vp_list = data['vp']
+        for vp in vp_list :
+            presentation = json.loads(vp)
+            if presentation['verifiableCredential']['credentialSubject']['type'] == "TezosAssociatedAddress" :
+                tezos_associated_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
+            if presentation['verifiableCredential']['credentialSubject']['type'] == "TalaoAssociatedAddress" :
+                talao_associated_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
 
-    balance =  token_balance(talao_associated_address)
-    logging.info("balance = %s", balance)
-    if balance > 100 :
-        notation = "Iron"
-    if balance > 500 :
-        notation = "Gold"
-    if balance > 2000 :
-        notation = "Silver"
-    if balance > 5000 :
-        notation = "Platinium"
+        balance =  token_balance(talao_associated_address)
+        logging.info("balance = %s", balance)
+        if balance > 100 :
+            notation = "Iron"
+        if balance > 500 :
+            notation = "Gold"
+        if balance > 2000 :
+            notation = "Silver"
+        if balance > 5000 :
+            notation = "Platinium"
 
-    credential = {
-    "expirationDate" : (datetime.now().replace(microsecond=0) + timedelta(days= 180)).isoformat() + "Z",
-    "credentialSubject": 
-        {
-            "id": "",
-            "type": "TalaoCommunity",
-            "walletNotation" : notation,
-            "talaoAccount": talao_associated_address,
-            "offers" : [{
-                "startDate" : "2022-08-01T19:55:00Z",
-                "endDate" : "2022-12-31T19:55:00Z",
-                "duration" : "180",
-                "category" : "discounted_coupon",
-                "analytics" : "https://talao.co/analytics/" + tezos_associated_address,
-                "userGuide" : "https://altme.io",
-                "benefit" : {
-                    "discount" : "25%"
-                },    
-                "offeredBy": {
-                    "logo": "ipfs://QmZmdndUVRoxiVhUnjGrKnNPn8ah3jT8fxTCLMnAzRAFFZ",
-                    "name": "Gif Games",
-                    "description" : "Gaming platform of Tezotopia",
-                    "website" : "https://tezotopia.com"
-                }
-            }],
-            "associatedAddress" : {
+        credential = {
+            "expirationDate" : (datetime.now().replace(microsecond=0) + timedelta(days= 180)).isoformat() + "Z",
+            "credentialSubject": 
+            {
+                "id": "",
+                "type": "TalaoCommunity",
+                "walletNotation" : notation,
+                "talaoAccount": talao_associated_address,
+                "offers" : [{
+                    "startDate" : "2022-08-01T19:55:00Z",
+                    "endDate" : "2022-12-31T19:55:00Z",
+                    "duration" : "180",
+                    "category" : "discounted_coupon",
+                    "analytics" : "https://talao.co/analytics/" + tezos_associated_address,
+                    "userGuide" : "https://altme.io",
+                    "benefit" : {
+                        "discount" : "25%"
+                    },    
+                    "offeredBy": {
+                        "logo": "ipfs://QmZmdndUVRoxiVhUnjGrKnNPn8ah3jT8fxTCLMnAzRAFFZ",
+                        "name": "Gif Games",
+                        "description" : "Gaming platform of Tezotopia",
+                        "website" : "https://tezotopia.com"
+                    }
+                }],
+                "associatedAddress" : {
                     "blockchainTezos" : tezos_associated_address
+                }
             }
-         }
-    }
-    return(jsonify(credential))
+        }
+        return(jsonify(credential))
+    
+    if data['event'] == 'RECEIPT' :
+        logging.info("credential issued = %s", data['vc'])
+        return jsonify('ok')
+ 
 
 
 def callback() :
