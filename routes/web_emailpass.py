@@ -58,7 +58,7 @@ def emailpass(mode) :
         session['code'] = str(secrets.randbelow(99999))
         session['code_delay'] = (datetime.now() + CODE_DELAY).timestamp()
         try : 
-            subject = _('Email authentication  ')
+            subject = _('Altme pending email verification  ')
             message.messageHTML(subject, session['email'], 'code_auth_' + session['language'], {'code' : session['code']}, mode)
             logging.info('secret code sent = %s', session['code'])
             flash(_("Secret code sent to your email."), 'success')
@@ -70,6 +70,8 @@ def emailpass(mode) :
 
 
 def emailpass_authentication(mode) :
+    if not session.get('email') :
+        return redirect ('/emailpass')
     # check secret code response
     if request.method == 'GET' :
         return render_template('emailpass/emailpass_authentication.html')
@@ -95,6 +97,8 @@ def emailpass_authentication(mode) :
 
 
 def emailpass_qrcode(red, mode) :
+    if not session.get('email') :
+        return redirect ('/emailpass')
     id = str(uuid.uuid1())
     qr_code = mode.server + "emailpass/offer/" + id +'?' + urlencode({'issuer' : issuer_did})
     logging.info('qr code = %s', qr_code)
@@ -173,12 +177,15 @@ async def emailpass_enpoint(id, red):
  
 
 def emailpass_end() :
+    if not session.get('email') :
+        return redirect ('/emailpass')
     if request.args['followup'] == "success" :
         message = _('Great ! you have now a proof of email.')
     elif request.args['followup'] == 'expired' :
         message = _('Sorry ! session expired.')
     else :
         message = _('Sorry ! there is a server problem, try again later.')
+    session.clear()
     return render_template('emailpass/emailpass_end.html', message=message)
 
 

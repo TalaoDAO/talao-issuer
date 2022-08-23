@@ -106,7 +106,7 @@ def phonepass_webhook(red):
         }
         return jsonify(credential)
     
-    if data['event'] == 'RECEIPT' :
+    if data['event'] == 'SIGNED_CREDENTIAL' :
         logging.info("credential issued = %s", data['vc'])
         return jsonify('ok')
  
