@@ -21,6 +21,7 @@ import logging
 from datetime import datetime
 import didkit
 from datetime import datetime, timedelta
+import sqlite3
 
 EXPIRATION_DELAY = timedelta(weeks=52)
 
@@ -52,11 +53,30 @@ credential_manifest["output_descriptors"].append(od_gender)
 credential_manifest["output_descriptors"].append(od_email)
 
 
+def get_passbase_did_from_key(key) :
+    """
+    return the last one    
+    """
+    conn = sqlite3.connect('passbase_check.db')
+    c = conn.cursor()
+    data = { "key" : key}
+    c.execute("SELECT did FROM webhook WHERE key = :key", data)
+    check = c.fetchall()
+    conn.close()
+    if len(check) == 1 :
+        return check[0]
+    try :
+        return check[-1]
+    except :
+        logging.warning("no DID found")
+      
+      
 def init_app(app,red, mode) :
     app.add_url_rule('/token',  view_func=wallet_token, methods = ['GET', 'POST'], defaults={"red" : red, 'mode' : mode})
     app.add_url_rule('/credential',  view_func=credential, methods = ['GET', 'POST'], defaults={"red" : red})
     app.add_url_rule('/.well-known/openid-configuration', view_func=openid_configuration, methods=['GET'], defaults={'mode' : mode})
-    # http://192.168.0.220:5000/.well-known/openid-configuration
+    # https://issuer.talao.co/.well-known/openid-configuration
+    # https://server.com/.well-known/openid-configuration
     return   
 
 
@@ -127,7 +147,8 @@ async def wallet_token(red, mode) :
             180,
             json.dumps({"identity" : identity,
                 "c_nonce" : c_nonce,
-                "c_nonce_expires_in" : 180}))
+                "c_nonce_expires_in" : 180,
+                "passbase_key" : pre_authorized_code}))
 
     headers = {
         "Cache-Control" : "no-store",
@@ -150,18 +171,26 @@ async def credential(red) :
 
     try :
         data = json.loads(red.get(access_token).decode())
+        identity = data['identity']
     except :
         logging.warning("Invalid access token")
         headers = {'WWW-Authenticate' : 'Bearer realm="credential request", error="invalid_access_token", error_description = "Acces token not found or expired"'}
         return Response(status=401,headers=headers)
      
+    passbase_key =  get_passbase_did_from_key(data['passbase_key'])[0]
+    if passbase_key != wallet_did :
+        logging.info("passbase key = %s", passbase_key)
+        logging.info("wallet DID = %s", wallet_did)
+        logging.warning("wallet key does not match passbase ID key")
+        headers = {'WWW-Authenticate' : 'Bearer realm="credential request", error="invalid_wallet_key", error_description = "The wallet DID does not match the check"'}
+        return Response(status=401,headers=headers)
+
     result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
     if result :
         logging.warning("Proof of key errorn %s", result)
         headers = {'WWW-Authenticate' : 'Bearer realm="credential request", error="invalid_proof", error_description = "The proof of key failed (did authn)"'}
         return Response(status=401,headers=headers)
-
-    identity = data['identity']
+   
     if wallet_request['type'] == "Over18" :
         credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
