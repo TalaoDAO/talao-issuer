@@ -46,10 +46,9 @@
     "credentialSubject" : {
         "type" : "EmailPass",
         "email" : "",
-        "passbaseMetadata" : "xxx",
+        "passbaseMetadata" : "",
         "issuedBy" : {
-            "name" : "Altme",
-            "logo" : ""
+            "name" : "Altme"
         }
     }
 }

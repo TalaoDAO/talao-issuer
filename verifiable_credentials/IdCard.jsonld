@@ -18,7 +18,7 @@
                     "birthDate" : "schema:birthDate",
                     "birthPlace" : "schema:birthPlace",
                     "authority" : "schema:authority",
-                    "addressCountry" : "scheam:addressCountry",
+                    "addressCountry" : "schema:addressCountry",
                     "expiryDate" : "schema:expiryDate",
                     "issueDate" : "schema:issuedate",
                     "issuedBy" : {

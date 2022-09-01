@@ -1,5 +1,5 @@
 import sqlite3
-from flask import jsonify, request, render_template, Response
+from flask import jsonify, request, render_template, Response, redirect
 import json
 from datetime import timedelta, datetime
 import didkit
@@ -26,8 +26,9 @@ def init_app(app,red, mode) :
     app.add_url_rule('/over18',  view_func=over18, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/kyc',  view_func=kyc, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/nationality',  view_func=nationality, methods = ['GET'], defaults={'mode' : mode})
-    app.add_url_rule('/agerange',  view_func=age_range, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/agerange',  view_func=agerange, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/gender',  view_func=gender, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/vc',  view_func=vc, methods = ['GET'], defaults={'mode' : mode})
 
 
     app.add_url_rule('/passbase/webhook',  view_func=passbase_webhook, methods = ['POST'], defaults={ 'mode' : mode})
@@ -35,12 +36,10 @@ def init_app(app,red, mode) :
     app.add_url_rule('/passbase/check/<did>',  view_func=passbase_check, methods = ['GET'],  defaults={ 'mode' : mode})
 
     app.add_url_rule('/passbase/endpoint/over18/<id>',  view_func=passbase_endpoint_over18, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
-    app.add_url_rule('/passbase/endpoint/idcard/<id>',  view_func=passbase_endpoint_idcard, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+    app.add_url_rule('/passbase/endpoint/kyc/<id>',  view_func=passbase_endpoint_kyc, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/agerange/<id>',  view_func=passbase_endpoint_age_range, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/nationality/<id>',  view_func=passbase_endpoint_nationality, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/gender/<id>',  view_func=passbase_endpoint_gender, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
-    
-    
     
     app.add_url_rule('/passbase/stream',  view_func=passbase_stream, methods = ['GET', 'POST'], defaults={'red' :red})
     app.add_url_rule('/passbase/back',  view_func=passbase_back, methods = ['GET', 'POST'])
@@ -134,71 +133,34 @@ def get_identity(passbase_key, mode) :
     if not 199<r.status_code<300 :
         logging.error("API call rejected %s", r.status_code)
         return None
-        
     # treatment of API data
     identity = r.json()
     return identity
 
-
 def over18(mode) :
-    id = str(uuid.uuid1())
-    url_over18 = mode.server + "passbase/endpoint/over18/" + id +'?issuer=' + issuer_did
-    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url_over18 })
-    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url_over18 })
-    return render_template('/passbase/over18.html',
-                                url=url_over18,
-                                deeplink_altme=deeplink_altme,
-                                deeplink_talao=deeplink_talao,
-                                id=id
-                                )
-
+    return redirect ('/vc?credential=over18')
 def kyc(mode) :
-    id = str(uuid.uuid1())
-    url_idcard = mode.server + "passbase/endpoint/idcard/" + id +'?issuer=' + issuer_did
-    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url_idcard })
-    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url_idcard })
-    return render_template('/passbase/kyc.html',
-                                url=url_idcard,
-                                deeplink_altme=deeplink_altme,
-                                deeplink_talao=deeplink_talao,
-                                id=id
-                                )
-
-def age_range(mode) :
-    id = str(uuid.uuid1())
-    url_age_range = mode.server + "passbase/endpoint/agerange/" + id +'?issuer=' + issuer_did
-    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url_age_range })
-    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url_age_range })
-    return render_template('/passbase/age_range.html',
-                                url=url_age_range,
-                                deeplink_altme=deeplink_altme,
-                                deeplink_talao=deeplink_talao,
-                                id=id
-                                )
-
-def gender(mode) :
-    id = str(uuid.uuid1())
-    url_gender = mode.server + "passbase/endpoint/gender/" + id +'?issuer=' + issuer_did
-    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url_gender })
-    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url_gender })
-    return render_template('/passbase/gender.html',
-                                url=url_gender,
-                                deeplink_altme=deeplink_altme,
-                                deeplink_talao=deeplink_talao,
-                                id=id
-                                )
-
+    return redirect ('/vc?credential=kyc')
+def agerange(mode) :
+    print("agerange func")
+    return redirect ('/vc?credential=agerange')
 def nationality(mode) :
+    return redirect ('/vc?credential=nationality')
+def gender(mode) :
+    return redirect ('/vc?credential=gender')
+
+def vc(mode) :
     id = str(uuid.uuid1())
-    url_nationality = mode.server + "passbase/endpoint/nationality/" + id +'?issuer=' + issuer_did
-    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url_nationality })
-    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url_nationality })
-    return render_template('/passbase/nationality.html',
-                                url=url_nationality,
+    credential = request.args['credential']
+    url = mode.server + "passbase/endpoint/" + credential + '/' + id +'?issuer=' + issuer_did
+    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url })
+    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url })
+    return render_template('/passbase/' + credential + '.html',
+                                url=url,
                                 deeplink_altme=deeplink_altme,
                                 deeplink_talao=deeplink_talao,
                                 id=id
-                                )                                                        
+                                )
 
 """
 For ALTME
@@ -382,7 +344,7 @@ async def passbase_endpoint_over18(id,red,mode):
     return jsonify(signed_credential)
 
 
-async def passbase_endpoint_idcard(id,red,mode):
+async def passbase_endpoint_kyc(id,red,mode):
     if request.method == 'GET':
         credential = json.loads(open("./verifiable_credentials/IdCard.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
@@ -535,56 +497,42 @@ async def passbase_endpoint_age_range(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-    #TODO age range calculation
     
     #age range : “-18” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
-
     birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
     year = birthDate.split('-')[0]
     month = birthDate.split('-')[1]
     day = birthDate.split('-')[2]
-
-    current_date = datetime.now()
     date18 = datetime(int(year) + 18, int(month), int(day))
     date24 = datetime(int(year) + 24, int(month), int(day))
-    #date24 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=24*52)
-    #date34 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=34*52)
     date34 = datetime(int(year) + 34, int(month), int(day))
-
-    #date44 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=44*52)
     date44 = datetime(int(year) + 44, int(month), int(day))
-
-    #date54 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=54*52)
     date54 = datetime(int(year) + 54, int(month), int(day))
-
-    #date64 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=64*52)
     date64 = datetime(int(year) + 64, int(month), int(day))
 
-
-    if current_date < date18 :
+    if datetime.now() < date18 :
         credential['credentialSubject']['ageRange'] = "-18"
         expiration = date18
-    elif  current_date < date24 :
+    elif datetime.now() < date24 :
         credential['credentialSubject']['ageRange'] = "18-24"
         expiration = date24
-    elif  current_date < date24 :
+    elif datetime.now() < date34 :
         credential['credentialSubject']['ageRange'] = "25-34"
         expiration = date34
-    elif  current_date < date44 :
+    elif datetime.now() < date44 :
         credential['credentialSubject']['ageRange'] = "35-44"
         expiration = date44
-    elif  current_date < date54 :
+    elif datetime.now() < date54 :
         credential['credentialSubject']['ageRange'] = "45-54"
         expiration = date54
-    elif  current_date < date64 :
+    elif datetime.now() < date64 :
         credential['credentialSubject']['ageRange'] = "55-64"
         expiration = date64
     else :
         credential['credentialSubject']['ageRange'] = "65+"
-        expiration = timedelta(weeks=5*52)
+        expiration = datetime.now() + timedelta(weeks=5*52)
     
     credential['expirationDate'] = expiration.replace(microsecond=0).isoformat() + "Z"
-
 
     didkit_options = {
             "proofPurpose": "assertionMethod",
