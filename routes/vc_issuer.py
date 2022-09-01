@@ -48,7 +48,7 @@ credential_manifest =  {
 credential_manifest["output_descriptors"].append(od_over18)
 credential_manifest["output_descriptors"].append(od_agerange)
 credential_manifest["output_descriptors"].append(od_idcard)
-credential_manifest["output_descriptors"].append(od_phone)
+#credential_manifest["output_descriptors"].append(od_phone)
 credential_manifest["output_descriptors"].append(od_gender)
 credential_manifest["output_descriptors"].append(od_email)
 
@@ -117,20 +117,20 @@ async def wallet_token(red, mode) :
     except :
         logging.warning('invalid request')
         endpoint_response= {"error": "invalid_request"}
-        headers = {'Content-Type': 'application/json'}
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     if grant_type != 'urn:ietf:params:oauth:grant-type:pre-authorized_code' or x_api_key != '99999-99999-99999':
         logging.warning('grant type  or api key is incorrect')
         endpoint_response= {"error": "unauthorized_client"}
-        headers = {'Content-Type': 'application/json'}
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     identity = get_identity(pre_authorized_code, mode)
     if not identity :
         logging.warning('KYC not completed or ID key error' )
         endpoint_response= {"error": "unauthorized_client"}
-        headers = {'Content-Type': 'application/json'}
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     # token response
@@ -166,30 +166,34 @@ async def credential(red) :
         did_authn = wallet_request['proof']["vp"]
     except :
         logging.warning("Invalid request")
-        headers = {'WWW-Authenticate' : 'Bearer realm="credential request", error="invalid_request", error_description = "The request is not cotrectly formated"'}
-        return Response(status=401,headers=headers)
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error" : "invalid_request", "error_description" : "The request is not correctly formated"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     try :
         data = json.loads(red.get(access_token).decode())
         identity = data['identity']
     except :
         logging.warning("Invalid access token")
-        headers = {'WWW-Authenticate' : 'Bearer realm="credential request", error="invalid_access_token", error_description = "Acces token not found or expired"'}
-        return Response(status=401,headers=headers)
-     
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error" : "invalid_access_token", "error_description" : "Access token invalid or expired"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+
     passbase_key =  get_passbase_did_from_key(data['passbase_key'])[0]
     if passbase_key != wallet_did :
         logging.info("passbase key = %s", passbase_key)
         logging.info("wallet DID = %s", wallet_did)
         logging.warning("wallet key does not match passbase ID key")
-        headers = {'WWW-Authenticate' : 'Bearer realm="credential request", error="invalid_wallet_key", error_description = "The wallet DID does not match the check"'}
-        return Response(status=401,headers=headers)
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error" : "key_does_not_match", "error_description" : "The wallet key is not the oen used for the KYC"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
     if result :
         logging.warning("Proof of key errorn %s", result)
-        headers = {'WWW-Authenticate' : 'Bearer realm="credential request", error="invalid_proof", error_description = "The proof of key failed (did authn)"'}
-        return Response(status=401,headers=headers)
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error" : "invalid_proof", "error_description" : "The proof check fails"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
    
     if wallet_request['type'] == "Over18" :
         credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
@@ -203,8 +207,9 @@ async def credential(red) :
         date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=18*52)
         if not (current_date > date1) :
             logging.warning("Under 18")
-            headers = {'WWW-Authenticate' : 'Bearer realm="credential request", error="invalid_check", error_description = "The user is under 18"'}
-            return Response(status=401,headers=headers)
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_over18", "error_description" : "User is under 18 age old"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
            
     elif wallet_request['type'] == "Nationality" :
         credential = json.loads(open("./verifiable_credentials/Nationality.jsonld", 'r').read())
@@ -284,9 +289,10 @@ async def credential(red) :
     
     else :
         logging.warning("credential requested not found")
-        headers = {'WWW-Authenticate' : 'Bearer realm="credential request", error="invalid_credential", error_description = "The credential requested does not exist"'}
-        return Response(status=401,headers=headers)
-
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error" : "invalid_request", "error_description" : "The credential requested is not supported"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+       
     didkit_options = {
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
