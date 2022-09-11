@@ -149,10 +149,9 @@ async def wallet_token(red, mode) :
                         "c_nonce_expires_in" : ACCESS_TOKEN_LIFE
                         }
     red.setex(access_token, 
-            180,
+            ACCESS_TOKEN_LIFE,
             json.dumps({"identity" : identity,
                 "c_nonce" : c_nonce,
-                "expires_at":  (datetime.now() + timedelta(seconds = ACCESS_TOKEN_LIFE)).timestamp(),
                 "passbase_key" : pre_authorized_code}))
 
     headers = {
@@ -180,17 +179,10 @@ async def credential(red) :
         data = json.loads(red.get(access_token).decode())
         identity = data['identity']
         c_nonce = data['c_nonce']
-        expires_at = data['expires_at']
     except :
         logging.warning("Invalid access token")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error" : "invalid_access_token", "error_description" : "Access token invalid or expired"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    if  datetime.now().timestamp()> expires_at :
-        logging.warning("Access token expired")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Access token expired"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     if  c_nonce != json.loads(did_authn)['proof']['challenge'] :
