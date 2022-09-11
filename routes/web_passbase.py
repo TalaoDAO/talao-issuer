@@ -30,7 +30,6 @@ def init_app(app,red, mode) :
     app.add_url_rule('/gender',  view_func=gender, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/vc',  view_func=vc, methods = ['GET'], defaults={'mode' : mode})
 
-
     app.add_url_rule('/passbase/webhook',  view_func=passbase_webhook, methods = ['POST'], defaults={ 'mode' : mode})
     app.add_url_rule('/wallet/webhook',  view_func=wallet_webhook, methods = ['POST'],  defaults={ 'mode' : mode})
     app.add_url_rule('/passbase/check/<did>',  view_func=passbase_check, methods = ['GET'],  defaults={ 'mode' : mode})
@@ -64,7 +63,6 @@ def add_passbase_db(email, check, did, key, created) :
 def get_passbase_data_from_did(did) :
     """
     return the last one
-    
     """
     conn = sqlite3.connect('passbase_check.db')
     c = conn.cursor()
@@ -142,7 +140,6 @@ def over18(mode) :
 def kyc(mode) :
     return redirect ('/vc?credential=kyc')
 def agerange(mode) :
-    print("agerange func")
     return redirect ('/vc?credential=agerange')
 def nationality(mode) :
     return redirect ('/vc?credential=nationality')

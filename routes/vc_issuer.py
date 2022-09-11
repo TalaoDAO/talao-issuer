@@ -24,6 +24,7 @@ from datetime import datetime, timedelta
 import sqlite3
 
 EXPIRATION_DELAY = timedelta(weeks=52)
+ACCESS_TOKEN_LIFE = 360
 
 logging.basicConfig(level=logging.INFO)
 
@@ -87,7 +88,11 @@ def get_identity(passbase_key, mode) :
         'accept' : 'application/json',
         'X-API-KEY' : mode.passbase
     }
-    r = requests.get(url, headers=headers)
+    try :
+        r = requests.get(url, headers=headers)
+    except :
+        logging.error("Passbase connexion problem")
+        return None
     logging.info("status code = %s", r.status_code)
     if not 199<r.status_code<300 :
         logging.error("API call rejected %s", r.status_code)
@@ -139,15 +144,15 @@ async def wallet_token(red, mode) :
     endpoint_response = {
                         "access_token" : access_token,
                         "token_type" : "Bearer",
-                        "expires_in": 180,
+                        "expires_in": ACCESS_TOKEN_LIFE,
                         "c_nonce" : c_nonce,
-                        "c_nonce_expires_in" : 180
+                        "c_nonce_expires_in" : ACCESS_TOKEN_LIFE
                         }
     red.setex(access_token, 
             180,
             json.dumps({"identity" : identity,
                 "c_nonce" : c_nonce,
-                "c_nonce_expires_in" : 180,
+                "expires_at":  (datetime.now() + timedelta(seconds = ACCESS_TOKEN_LIFE)).timestamp(),
                 "passbase_key" : pre_authorized_code}))
 
     headers = {
@@ -159,6 +164,7 @@ async def wallet_token(red, mode) :
 
 # credential endpoint
 async def credential(red) :
+
     try : 
         access_token = request.headers["Authorization"].split()[1] 
         wallet_request = request.get_json()
@@ -173,10 +179,24 @@ async def credential(red) :
     try :
         data = json.loads(red.get(access_token).decode())
         identity = data['identity']
+        c_nonce = data['c_nonce']
+        expires_at = data['expires_at']
     except :
         logging.warning("Invalid access token")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error" : "invalid_access_token", "error_description" : "Access token invalid or expired"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+
+    if  datetime.now().timestamp()> expires_at :
+        logging.warning("Access token expired")
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error" : "invalid_request", "error_description" : "Access token expired"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+
+    if  c_nonce != json.loads(did_authn)['proof']['challenge'] :
+        logging.warning("Proof challenge does not match")
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error" : "invalid_request", "error_description" : "Challeng does not match"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     passbase_key =  get_passbase_did_from_key(data['passbase_key'])[0]
@@ -185,15 +205,15 @@ async def credential(red) :
         logging.info("wallet DID = %s", wallet_did)
         logging.warning("wallet key does not match passbase ID key")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "key_does_not_match", "error_description" : "The wallet key is not the oen used for the KYC"}
+        endpoint_response = {"error" : "key_does_not_match", "error_description" : "The wallet key does not match the KYC"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
     if result :
         logging.warning("Proof of key errorn %s", result)
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_proof", "error_description" : "The proof check fails"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+        #headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        #endpoint_response = {"error" : "invalid_proof", "error_description" : "The proof check fails"}
+        # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
    
     if wallet_request['type'] == "Over18" :
         credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
@@ -257,13 +277,13 @@ async def credential(red) :
         year = birthDate.split('-')[0]
         month = birthDate.split('-')[1]
         day = birthDate.split('-')[2]
+        """
         date18 = datetime(int(year) + 18, int(month), int(day))
         date24 = datetime(int(year) + 24, int(month), int(day))
         date34 = datetime(int(year) + 34, int(month), int(day))
         date44 = datetime(int(year) + 44, int(month), int(day))
         date54 = datetime(int(year) + 54, int(month), int(day))
         date64 = datetime(int(year) + 64, int(month), int(day))
-
         if datetime.now() < date18 :
             credential['credentialSubject']['ageRange'] = "-18"
             expiration = date18
@@ -285,14 +305,15 @@ async def credential(red) :
         else :
             credential['credentialSubject']['ageRange'] = "65+"
             expiration = datetime.now() + timedelta(weeks=5*52)
+        """
+        expiration = datetime.now() + timedelta(weeks=5*52)
         credential['expirationDate'] = expiration.replace(microsecond=0).isoformat() + "Z"
-    
     else :
         logging.warning("credential requested not found")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error" : "invalid_request", "error_description" : "The credential requested is not supported"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-       
+
     didkit_options = {
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
