@@ -223,6 +223,15 @@ async def credential(red) :
             endpoint_response = {"error" : "invalid_over18", "error_description" : "User is under 18 age old"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
            
+    elif wallet_request['type'] == "Gender" :
+        credential = json.loads(open("./verifiable_credentials/Gender.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential['issuer'] = issuer_did
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential['credentialSubject']['id'] = wallet_did
+        credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Unknown")
+
     elif wallet_request['type'] == "Nationality" :
         credential = json.loads(open("./verifiable_credentials/Nationality.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
