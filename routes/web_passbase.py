@@ -24,6 +24,7 @@ vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
  
 def init_app(app,red, mode) :
     app.add_url_rule('/over18',  view_func=over18, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/liveness',  view_func=liveness, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/kyc',  view_func=kyc, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/nationality',  view_func=nationality, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/agerange',  view_func=agerange, methods = ['GET'], defaults={'mode' : mode})
@@ -59,7 +60,6 @@ def add_passbase_db(email, check, did, key, created) :
     return
 
 
-
 def get_passbase_data_from_did(did) :
     """
     return the last one
@@ -77,6 +77,7 @@ def get_passbase_data_from_did(did) :
         return check[-1]
     except :
         return None
+
 
 def get_passbase_did_from_key(key) :
     """
@@ -100,6 +101,7 @@ def get_passbase_did_from_key(key) :
 
 def passbase_check(did, mode) :
     """
+    API for wallet
     return approved, declined, notdone, pending
     last check
     # curl http://10.188.95.48:5000/passbase/check/did:key:z6Mkvu9HqJoNJsFPrfWEnTvy5tYh3uTgjPz3iqMPiUzzoWMb  -H "Accept: application/json"   -H "Authorization: Bearer mytoken"
@@ -111,7 +113,7 @@ def passbase_check(did, mode) :
         if access_token != mode.altme_server_token :
             return jsonify("Unauthorized"), 401
     except :
-        logging.error("access token mal formaté")
+        logging.error("invalid access token")
         return jsonify("Bad Request"), 400
     if check :
         return jsonify(check[0])
@@ -137,6 +139,8 @@ def get_identity(passbase_key, mode) :
 
 def over18(mode) :
     return redirect ('/vc?credential=over18')
+def liveness(mode) :
+    return redirect ('/vc?credential=')
 def kyc(mode) :
     return redirect ('/vc?credential=kyc')
 def agerange(mode) :
@@ -720,8 +724,6 @@ def passbase_back() :
     else :
         message = _('Sorry ! there is a server problem, try again later.')
     return render_template('passbase/passbase_end.html', message=message)
-
-
 
 
 # server event push for user agent EventSource

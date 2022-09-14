@@ -24,6 +24,7 @@ from datetime import datetime, timedelta
 import sqlite3
 
 EXPIRATION_DELAY = timedelta(weeks=52)
+LIVENESS_DELAY = timedelta(weeks=2)
 ACCESS_TOKEN_LIFE = 360
 
 logging.basicConfig(level=logging.INFO)
@@ -32,6 +33,7 @@ key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
 
+od_liveness = json.loads(open("./credential_manifest/liveness_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_over18 = json.loads(open("./credential_manifest/over18_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_agerange = json.loads(open("./credential_manifest/agerange_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_idcard = json.loads(open("./credential_manifest/idcard_credential_manifest.json", 'r').read())['output_descriptors'][0]
@@ -49,7 +51,7 @@ credential_manifest =  {
 credential_manifest["output_descriptors"].append(od_over18)
 credential_manifest["output_descriptors"].append(od_agerange)
 credential_manifest["output_descriptors"].append(od_idcard)
-#credential_manifest["output_descriptors"].append(od_phone)
+credential_manifest["output_descriptors"].append(od_liveness)
 credential_manifest["output_descriptors"].append(od_gender)
 credential_manifest["output_descriptors"].append(od_email)
 
@@ -222,6 +224,14 @@ async def credential(red) :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_over18", "error_description" : "User is under 18 age old"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    
+    elif wallet_request['type'] == "Liveness" :
+        credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + LIVENESS_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential['issuer'] = issuer_did
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential['credentialSubject']['id'] = wallet_did
            
     elif wallet_request['type'] == "Gender" :
         credential = json.loads(open("./verifiable_credentials/Gender.jsonld", 'r').read())
