@@ -16,6 +16,8 @@ logging.basicConfig(level=logging.INFO)
 
 OFFER_DELAY = timedelta(seconds= 10*60)
 EXPIRATION_DELAY = timedelta(weeks=52)
+LIVENESS_DELAY = timedelta(weeks=2)
+
 
 key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
@@ -36,6 +38,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/passbase/check/<did>',  view_func=passbase_check, methods = ['GET'],  defaults={ 'mode' : mode})
 
     app.add_url_rule('/passbase/endpoint/over18/<id>',  view_func=passbase_endpoint_over18, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+    app.add_url_rule('/passbase/endpoint/liveness/<id>',  view_func=passbase_endpoint_liveness, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/kyc/<id>',  view_func=passbase_endpoint_kyc, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/agerange/<id>',  view_func=passbase_endpoint_age_range, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/nationality/<id>',  view_func=passbase_endpoint_nationality, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
@@ -140,7 +143,7 @@ def get_identity(passbase_key, mode) :
 def over18(mode) :
     return redirect ('/vc?credential=over18')
 def liveness(mode) :
-    return redirect ('/vc?credential=')
+    return redirect ('/vc?credential=liveness')
 def kyc(mode) :
     return redirect ('/vc?credential=kyc')
 def agerange(mode) :
@@ -699,6 +702,86 @@ async def passbase_endpoint_gender(id,red,mode):
         return (jsonify('Identity does not exist'))
 
     credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
+    didkit_options = {
+            "proofPurpose": "assertionMethod",
+            "verificationMethod": vm
+        }
+    signed_credential =  await didkit.issue_credential(
+            json.dumps(credential),
+            didkit_options.__str__().replace("'", '"'),
+            key
+    )
+        
+    # send event to client agent to go forward
+    data = json.dumps({
+                    'id' : id,
+                    'check' : 'success',
+                        })
+    red.publish('passbase', data)
+    return jsonify(signed_credential)
+
+async def passbase_endpoint_liveness(id,red,mode):
+    if request.method == 'GET':
+        credential = json.loads(open("./verifiable_credentials/Liveness.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + LIVENESS_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential['issuer'] = issuer_did
+        credential['credentialSubject']['id'] = "did:wallet"
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential_manifest = json.loads(open("./credential_manifest/liveness_credential_manifest.json", 'r').read())
+        credential_manifest['id'] = str(uuid.uuid1())
+        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
+        credential_manifest['issuer']['id'] = issuer_did
+        credentialOffer = {
+            "type": "CredentialOffer",
+            "credentialPreview": credential,
+            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
+            "credential_manifest" : credential_manifest
+        }
+        red.set(id, json.dumps(credentialOffer))
+        return jsonify(credentialOffer)
+
+    try : 
+        credentialOffer = json.loads(red.get(id).decode())
+    except :
+        logging.error("red get id error, or request time out ")
+        return jsonify ('request time out'),408
+    credential =  credentialOffer['credentialPreview']
+    red.delete(id)
+    logging.info("subject_id = %s", request.form['subject_id'])
+    credential['credentialSubject']['id'] = request.form['subject_id']
+    try :
+        (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
+    except :
+        logging.error("IDcard check has not been done")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not done")
+                        })
+        red.publish('passbase_idcard', data)
+        return jsonify ('KYC has not been done'),404
+
+    if status != "approved" :
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not approved")
+                        })
+        red.publish('passbase', data)
+        return jsonify('not approved'), 404
+
+    identity = get_identity(passbase_key, mode)
+    if not identity :
+        logging.warning("Identity does not exist")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identity does not exist")
+                        })
+        red.publish('passbase', data)
+        return (jsonify('Identity does not exist'))
+
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm
