@@ -513,7 +513,7 @@ async def passbase_endpoint_age_range(id,red,mode):
     date44 = datetime(int(year) + 44, int(month), int(day))
     date54 = datetime(int(year) + 54, int(month), int(day))
     date64 = datetime(int(year) + 64, int(month), int(day))
-
+    """
     if datetime.now() < date18 :
         credential['credentialSubject']['ageRange'] = "-18"
         expiration = date18
@@ -534,8 +534,8 @@ async def passbase_endpoint_age_range(id,red,mode):
         expiration = date64
     else :
         credential['credentialSubject']['ageRange'] = "65+"
-        expiration = datetime.now() + timedelta(weeks=5*52)
-    
+    """
+    expiration = datetime.now() + timedelta(weeks=52)
     credential['expirationDate'] = expiration.replace(microsecond=0).isoformat() + "Z"
 
     didkit_options = {

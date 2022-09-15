@@ -317,7 +317,7 @@ async def credential(red) :
             credential['credentialSubject']['ageRange'] = "65+"
             expiration = datetime.now() + timedelta(weeks=5*52)
         """
-        expiration = datetime.now() + timedelta(weeks=5*52)
+        expiration = datetime.now() + timedelta(weeks=52)
         credential['expirationDate'] = expiration.replace(microsecond=0).isoformat() + "Z"
     else :
         logging.warning("credential requested not found")
