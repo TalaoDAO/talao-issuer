@@ -288,7 +288,7 @@ async def credential(red) :
         year = birthDate.split('-')[0]
         month = birthDate.split('-')[1]
         day = birthDate.split('-')[2]
-        """
+        
         date18 = datetime(int(year) + 18, int(month), int(day))
         date24 = datetime(int(year) + 24, int(month), int(day))
         date34 = datetime(int(year) + 34, int(month), int(day))
@@ -316,7 +316,7 @@ async def credential(red) :
         else :
             credential['credentialSubject']['ageRange'] = "65+"
             expiration = datetime.now() + timedelta(weeks=5*52)
-        """
+        
         expiration = datetime.now() + timedelta(weeks=52)
         credential['expirationDate'] = expiration.replace(microsecond=0).isoformat() + "Z"
     else :
