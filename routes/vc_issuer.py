@@ -71,7 +71,8 @@ def get_passbase_did_from_key(key) :
     try :
         return check[-1]
     except :
-        logging.warning("no DID found")
+        logging.warning("no DID found for that key")
+        return None
       
       
 def init_app(app,red, mode) :
@@ -193,9 +194,17 @@ async def credential(red) :
         endpoint_response = {"error" : "invalid_request", "error_description" : "Challeng does not match"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    passbase_key =  get_passbase_did_from_key(data['passbase_key'])[0]
-    if passbase_key != wallet_did :
-        logging.info("passbase key = %s", passbase_key)
+    try :
+        passbase_did =  get_passbase_did_from_key(data['passbase_key'])[0]
+    except :
+        logging.info("passbase key = %s", passbase_did)
+        logging.warning("That key is not found in the database")
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error" : "key_does_not_match", "error_description" : "Passbase key not found"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    
+    if passbase_did != wallet_did :
+        logging.info("passbase key = %s", passbase_did)
         logging.info("wallet DID = %s", wallet_did)
         logging.warning("wallet key does not match passbase ID key")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}

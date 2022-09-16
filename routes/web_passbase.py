@@ -225,8 +225,14 @@ def passbase_webhook(mode) :
         logging.error("probleme d acces API")
         return jsonify("probleme d acces API")
     
-    email = identity['owner'].get('email', "")
-    did = get_passbase_did_from_key(webhook['key'])[0]
+    email = identity['owner'].get('email', "Unknown")
+    
+    try :
+        did = get_passbase_did_from_key(webhook['key'])[0]
+    except :
+        logging.error("Key does not exist in local DB")
+        return jsonify('Key not stored in DB')
+
     add_passbase_db(email,
                 webhook['status'],
                 did,
