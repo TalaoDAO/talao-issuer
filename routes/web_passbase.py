@@ -11,6 +11,7 @@ from flask_babel import Babel, _
 import sqlite3
 import requests
 from components import message
+import hashlib
 
 logging.basicConfig(level=logging.INFO)
 
@@ -26,23 +27,30 @@ vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
  
 def init_app(app,red, mode) :
     app.add_url_rule('/over18',  view_func=over18, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/over13',  view_func=over13, methods = ['GET'], defaults={'mode' : mode})
+
     app.add_url_rule('/liveness',  view_func=liveness, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/kyc',  view_func=kyc, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/nationality',  view_func=nationality, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/agerange',  view_func=agerange, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/gender',  view_func=gender, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/pass_number',  view_func=pass_number, methods = ['GET'], defaults={'mode' : mode})
+
     app.add_url_rule('/vc',  view_func=vc, methods = ['GET'], defaults={'mode' : mode})
 
     app.add_url_rule('/passbase/webhook',  view_func=passbase_webhook, methods = ['POST'], defaults={ 'mode' : mode})
     app.add_url_rule('/wallet/webhook',  view_func=wallet_webhook, methods = ['POST'],  defaults={ 'mode' : mode})
     app.add_url_rule('/passbase/check/<did>',  view_func=passbase_check, methods = ['GET'],  defaults={ 'mode' : mode})
-
+    
+    app.add_url_rule('/passbase/endpoint/over13/<id>',  view_func=passbase_endpoint_over13, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/over18/<id>',  view_func=passbase_endpoint_over18, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/liveness/<id>',  view_func=passbase_endpoint_liveness, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/kyc/<id>',  view_func=passbase_endpoint_kyc, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/agerange/<id>',  view_func=passbase_endpoint_age_range, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/nationality/<id>',  view_func=passbase_endpoint_nationality, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/gender/<id>',  view_func=passbase_endpoint_gender, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+    app.add_url_rule('/passbase/endpoint/pass_number/<id>',  view_func=passbase_endpoint_pass_number, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+
     
     app.add_url_rule('/passbase/stream',  view_func=passbase_stream, methods = ['GET', 'POST'], defaults={'red' :red})
     app.add_url_rule('/passbase/back',  view_func=passbase_back, methods = ['GET', 'POST'])
@@ -142,6 +150,8 @@ def get_identity(passbase_key, mode) :
 
 def over18(mode) :
     return redirect ('/vc?credential=over18')
+def over13(mode) :
+    return redirect ('/vc?credential=over13')
 def liveness(mode) :
     return redirect ('/vc?credential=liveness')
 def kyc(mode) :
@@ -152,6 +162,8 @@ def nationality(mode) :
     return redirect ('/vc?credential=nationality')
 def gender(mode) :
     return redirect ('/vc?credential=gender')
+def pass_number(mode) :
+    return redirect ('/vc?credential=pass_number')
 
 def vc(mode) :
     id = str(uuid.uuid1())
@@ -257,6 +269,102 @@ def passbase_webhook(mode) :
     return("ok")
 
 
+async def passbase_endpoint_over13(id,red,mode):
+    if request.method == 'GET':
+        credential = json.loads(open("./verifiable_credentials/Over13.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential_manifest = json.loads(open("./credential_manifest/over13_credential_manifest.json", 'r').read())
+        credential_manifest['id'] = str(uuid.uuid1())
+        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
+        credential_manifest['issuer']['id'] = issuer_did
+        credential['issuer'] = issuer_did
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential['credentialSubject']['id'] = "did:wallet"
+        credentialOffer = {
+            "type": "CredentialOffer",
+            "credentialPreview": credential,
+            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
+            "credential_manifest" : credential_manifest
+        }
+        red.set(id, json.dumps(credentialOffer))
+        return jsonify(credentialOffer)
+
+    try : 
+        credentialOffer = json.loads(red.get(id).decode())
+    except :
+        logging.error("red get id error, or request time out ")
+        return jsonify ('request time out'),408
+    credential =  credentialOffer['credentialPreview']
+    red.delete(id)
+    logging.info("subject_id = %s", request.form['subject_id'])
+    credential['credentialSubject']['id'] = request.form['subject_id']
+    #on recupere la cle passbase depuis notre base locale
+    try :
+        (status, passbase_key, created) = get_passbase_data_from_did(request.form['subject_id'])
+    except :
+        logging.error("Over13 check has not been done")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not done")
+                        })
+        red.publish('passbase', data)
+        return jsonify ('KYC has not been done'),404
+
+    if status != "approved" :
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not approved")
+                        })
+        red.publish('passbase', data)
+        return jsonify('not approved'), 404
+
+    identity = get_identity(passbase_key, mode)
+    if not identity :
+        logging.warning("Identity does not exist")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identity does not exist")
+                        })
+        red.publish('passbase', data)
+        return (jsonify('Identity does not exist'))
+    credential['credentialSubject']['KycId'] = passbase_key
+    birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+    current_date = datetime.now()
+    date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=13*52)
+    if (current_date > date1) :
+        credential['credentialSubject']['id'] = request.form['subject_id']
+    else :
+        logging.warning("below 13")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Below 18")
+                        })
+        red.publish('passbase', data)
+        return jsonify('below 18')
+
+    didkit_options = {
+            "proofPurpose": "assertionMethod",
+            "verificationMethod": vm
+        }
+    signed_credential =  await didkit.issue_credential(
+            json.dumps(credential),
+            didkit_options.__str__().replace("'", '"'),
+            key
+    )
+        
+    # send event to client agent to go forward
+    data = json.dumps({
+                    'id' : id,
+                    'check' : 'success',
+                        })
+    red.publish('passbase', data)
+    return jsonify(signed_credential)
+
 async def passbase_endpoint_over18(id,red,mode):
     if request.method == 'GET':
         credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
@@ -319,7 +427,7 @@ async def passbase_endpoint_over18(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-
+    credential['credentialSubject']['KycId'] = passbase_key
     birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
     current_date = datetime.now()
     date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=18*52)
@@ -352,7 +460,6 @@ async def passbase_endpoint_over18(id,red,mode):
                         })
     red.publish('passbase', data)
     return jsonify(signed_credential)
-
 
 async def passbase_endpoint_kyc(id,red,mode):
     if request.method == 'GET':
@@ -415,7 +522,7 @@ async def passbase_endpoint_kyc(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-
+    credential['credentialSubject']['KycId'] = passbase_key
     credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints']['place_of_birth']
     credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints']['date_of_birth']
     credential['credentialSubject']['givenName'] = identity['owner']['first_name']
@@ -509,6 +616,7 @@ async def passbase_endpoint_age_range(id,red,mode):
         return (jsonify('Identity does not exist'))
     
     #age range : “-18” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
+    credential['credentialSubject']['KycId'] = passbase_key
     birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
     year = birthDate.split('-')[0]
     month = birthDate.split('-')[1]
@@ -626,6 +734,7 @@ async def passbase_endpoint_nationality(id,red,mode):
         return (jsonify('Identity does not exist'))
 
     credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
+    credential['credentialSubject']['KycId'] = passbase_key
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm
@@ -644,6 +753,88 @@ async def passbase_endpoint_nationality(id,red,mode):
     red.publish('passbase', data)
     return jsonify(signed_credential)
 
+async def passbase_endpoint_pass_number(id,red,mode):
+    if request.method == 'GET':
+        credential = json.loads(open("./verifiable_credentials/PassportNumber.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential['issuer'] = issuer_did
+        credential['credentialSubject']['id'] = "did:wallet"
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential_manifest = json.loads(open("./credential_manifest/passportnumber_credential_manifest.json", 'r').read())
+        credential_manifest['id'] = str(uuid.uuid1())
+        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
+        credential_manifest['issuer']['id'] = issuer_did
+        credentialOffer = {
+            "type": "CredentialOffer",
+            "credentialPreview": credential,
+            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
+            "credential_manifest" : credential_manifest
+        }
+        red.set(id, json.dumps(credentialOffer))
+        return jsonify(credentialOffer)
+
+    try : 
+        credentialOffer = json.loads(red.get(id).decode())
+    except :
+        logging.error("red get id error, or request time out ")
+        return jsonify ('request time out'),408
+    credential =  credentialOffer['credentialPreview']
+    red.delete(id)
+    logging.info("subject_id = %s", request.form['subject_id'])
+    credential['credentialSubject']['id'] = request.form['subject_id']
+    try :
+        (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
+    except :
+        logging.error("IDcard check has not been done")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not done")
+                        })
+        red.publish('passbase_idcard', data)
+        return jsonify ('KYC has not been done'),404
+
+    if status != "approved" :
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not approved")
+                        })
+        red.publish('passbase', data)
+        return jsonify('not approved'), 404
+
+    identity = get_identity(passbase_key, mode)
+    if not identity :
+        logging.warning("Identity does not exist")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identity does not exist")
+                        })
+        red.publish('passbase', data)
+        return (jsonify('Identity does not exist'))
+    document_number = identity['resources'][0]['datapoints'].get('raw_mrz_string', "Unknown")
+    credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
+    credential['credentialSubject']['KycId'] = passbase_key
+
+    didkit_options = {
+            "proofPurpose": "assertionMethod",
+            "verificationMethod": vm
+        }
+    signed_credential =  await didkit.issue_credential(
+            json.dumps(credential),
+            didkit_options.__str__().replace("'", '"'),
+            key
+    )
+        
+    # send event to client agent to go forward
+    data = json.dumps({
+                    'id' : id,
+                    'check' : 'success',
+                        })
+    red.publish('passbase', data)
+    return jsonify(signed_credential)
 
 async def passbase_endpoint_gender(id,red,mode):
     if request.method == 'GET':
@@ -708,6 +899,7 @@ async def passbase_endpoint_gender(id,red,mode):
         return (jsonify('Identity does not exist'))
 
     credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
+    credential['credentialSubject']['KycId'] = passbase_key
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm
@@ -787,7 +979,7 @@ async def passbase_endpoint_liveness(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-
+    credential['credentialSubject']['KycId'] = passbase_key
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm

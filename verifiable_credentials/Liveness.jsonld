@@ -9,6 +9,8 @@
                     "schema" : "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
+                    "KycProvider" : "schema:company",
+                    "KycId" : "schema:identifier",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {
@@ -28,6 +30,8 @@
     "issuanceDate": "",
     "credentialSubject" : {
         "type" : "Liveness",
+        "KycProvider" : "Passbase",
+        "KycId" : "",
         "issuedBy": {
             "logo": "",
             "name": "Altme"

@@ -11,6 +11,8 @@
                     "schema" : "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
+                    "KycProvider" : "schema:company",
+                    "KycId" : "schema:identifier",
                     "givenName" : "schema:givenName",
                     "familyName" : "schema:familyName",
                     "gender" : "schema:gender",
@@ -40,6 +42,8 @@
     "issuanceDate": "",
     "credentialSubject" : {
         "id": "",
+        "KycProvider" : "Passbase",
+        "KycId" : "",
         "givenName" : "Test",
         "type" : "IdCard",
         "issuedBy": {

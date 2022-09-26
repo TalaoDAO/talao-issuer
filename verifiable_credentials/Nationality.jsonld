@@ -11,6 +11,8 @@
                     "schema" : "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
+                    "KycProvider" : "schema:company",
+                    "KycId" : "schema:identifier",
                     "nationality" : "scheam:nationality",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
@@ -32,6 +34,8 @@
     "credentialSubject" : {
         "id": "",
         "nationality" : "",
+        "KycProvider" : "Passbase",
+        "KycId" : "",
         "type" : "Nationality",
         "issuedBy": {
             "logo": "",

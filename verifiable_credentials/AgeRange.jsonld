@@ -12,6 +12,8 @@
                     "id": "@id",
                     "type": "@type",
                     "ageRange" : "schema:ageRange",
+                    "KycProvider" : "schema:company",
+                    "KycId" : "schema:identifier",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {
@@ -32,6 +34,8 @@
     "credentialSubject" : {
         "id": "",
         "ageRange" : "",
+        "KycProvider" : "Passbase",
+        "KycId" : "",
         "type" : "AgeRange",
         "issuedBy": {
             "logo": "",

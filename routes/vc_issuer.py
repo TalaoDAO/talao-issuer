@@ -25,7 +25,7 @@ import sqlite3
 
 EXPIRATION_DELAY = timedelta(weeks=52)
 LIVENESS_DELAY = timedelta(weeks=2)
-ACCESS_TOKEN_LIFE = 360
+ACCESS_TOKEN_LIFE = 180
 
 logging.basicConfig(level=logging.INFO)
 
@@ -35,6 +35,7 @@ issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
 
 od_liveness = json.loads(open("./credential_manifest/liveness_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_over18 = json.loads(open("./credential_manifest/over18_credential_manifest.json", 'r').read())['output_descriptors'][0]
+od_over13 = json.loads(open("./credential_manifest/over13_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_agerange = json.loads(open("./credential_manifest/agerange_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_idcard = json.loads(open("./credential_manifest/idcard_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_email = json.loads(open("./credential_manifest/email_credential_manifest.json", 'r').read())['output_descriptors'][0]
@@ -49,6 +50,7 @@ credential_manifest =  {
     "output_descriptors":list()
 }     
 credential_manifest["output_descriptors"].append(od_over18)
+credential_manifest["output_descriptors"].append(od_over13)
 credential_manifest["output_descriptors"].append(od_agerange)
 credential_manifest["output_descriptors"].append(od_idcard)
 credential_manifest["output_descriptors"].append(od_liveness)
@@ -218,13 +220,31 @@ async def credential(red) :
         #endpoint_response = {"error" : "invalid_proof", "error_description" : "The proof check fails"}
         # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
    
-    if wallet_request['type'] == "Over18" :
+    if wallet_request['type'] == "Over13" :
+        credential = json.loads(open("./verifiable_credentials/Over13.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential['issuer'] = issuer_did
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential['credentialSubject']['id'] = wallet_did
+        credential['credentialSubject']['KycId'] = data['passbase_key']
+        birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+        current_date = datetime.now()
+        date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=13*52)
+        if not (current_date > date1) :
+            logging.warning("Under 13")
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_over18", "error_description" : "User is under 13 age old"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    
+    elif wallet_request['type'] == "Over18" :
         credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
+        credential['credentialSubject']['KycId'] = data['passbase_key']
         birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         current_date = datetime.now()
         date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=18*52)
@@ -232,8 +252,8 @@ async def credential(red) :
             logging.warning("Under 18")
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_over18", "error_description" : "User is under 18 age old"}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)  
+
     elif wallet_request['type'] == "Liveness" :
         credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
@@ -241,6 +261,8 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
+        credential['credentialSubject']['KycId'] = data['passbase_key']
+
            
     elif wallet_request['type'] == "Gender" :
         credential = json.loads(open("./verifiable_credentials/Gender.jsonld", 'r').read())
@@ -250,6 +272,8 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Unknown")
+        credential['credentialSubject']['KycId'] = data['passbase_key']
+
 
     elif wallet_request['type'] == "Nationality" :
         credential = json.loads(open("./verifiable_credentials/Nationality.jsonld", 'r').read())
@@ -259,6 +283,8 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
+        credential['credentialSubject']['KycId'] = data['passbase_key']
+
 
     elif wallet_request['type'] == "EmailPass" :
         credential = json.loads(open("./verifiable_credentials/EmailPass.jsonld", 'r').read())
@@ -286,6 +312,8 @@ async def credential(red) :
         credential['credentialSubject']['addressCountry'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
         credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Unknown")
         credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Unknown")
+        credential['credentialSubject']['KycId'] = data['passbase_key']
+
 
     elif wallet_request['type'] == "AgeRange" :
         credential = json.loads(open("./verifiable_credentials/AgeRange.jsonld", 'r').read())
@@ -293,11 +321,11 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
+        credential['credentialSubject']['KycId'] = data['passbase_key']
         birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         year = birthDate.split('-')[0]
         month = birthDate.split('-')[1]
         day = birthDate.split('-')[2]
-        
         date18 = datetime(int(year) + 18, int(month), int(day))
         date24 = datetime(int(year) + 24, int(month), int(day))
         date34 = datetime(int(year) + 34, int(month), int(day))

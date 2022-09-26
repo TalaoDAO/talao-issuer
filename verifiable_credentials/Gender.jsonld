@@ -12,6 +12,8 @@
                     "id": "@id",
                     "type": "@type",
                     "gender" : "schema:gender",
+                    "KycProvider" : "schema:company",
+                    "KycId" : "schema:identifier",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {
@@ -32,6 +34,8 @@
     "credentialSubject" : {
         "id": "",
         "gender" : "",
+        "KycProvider" : "Passbase",
+        "KycId" : "schema:identifier",
         "type" : "Gender",
         "issuedBy": {
             "name": "Altme"

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  
+  <head>
+    {% include 'head.html' %}
+   
+  </head>
+  <body class="flex flex-col items-center justify-center h-screen w-screen">
+
+    <div id="wrapper">
+        <div class="d-flex flex-column" id="content-wrapper">
+            <div id="content" class="mt-5">
+  <!--            {% include 'nav_bar.html' %}     -->
+              <br>
+      
+      <div id="content_desktop" class="d-none d-sm-block mt-5">
+        <div class="text-center" >      
+        <p>{{_('Scan the QRCode below to get your Passport number hash into your Talao or AltMe wallet')}}</p>
+          <div class="my-2"><img src="{{qrcode(url)}}" style="width: 250px;border-radius:0px;"></div>
+        </div>
+      </div>
+
+
+
+      <div id="content_smartphone" class="d-block d-sm-none">
+          <img src="/static/img/over18.png" class="card-img-top mt-3 p-3">
+          <div class="text-center my-1 p-3">
+            <a href="{{deeplink_altme}}">{{_('Clic below to get your Passport number hash')}}</a>
+              
+        </div>
+      </div>
+
+    </div>
+    </div>
+  </div>
+
+        {% include 'footer.html' %}
+
+<script>function goBack() {  window.history.back();}</script>
+<script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='bs-init.js') }}"></script>
+  <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+
+<script>
+
+var source = new EventSource('/passbase/stream');
+source.onmessage = function (event) {
+     const result = JSON.parse(event.data)
+     console.log(result);
+     if (result.check == 'success' & result.id == '{{id}}' ){
+       console.log('success');
+       window.location.href="/passbase/back?followup=success";
+     } 
+     if (result.check == 'failed' & result.id == '{{id}}' ){
+       console.log('failed');
+       window.location.href="/passbase/back?followup=failed&message=" + result.message;
+     }
+};
+
+</script>
+</body>
+</html>
