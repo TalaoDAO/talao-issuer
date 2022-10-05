@@ -155,7 +155,7 @@ async def wallet_token(red, mode) :
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    if get_passbase_status_from_key(key) != "approved" :
+    if get_passbase_status_from_key(pre_authorized_code) != "approved" :
         logging.warning('check is pending')
         endpoint_response= {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
