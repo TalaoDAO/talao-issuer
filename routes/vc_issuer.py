@@ -41,6 +41,7 @@ od_idcard = json.loads(open("./credential_manifest/idcard_credential_manifest.js
 od_email = json.loads(open("./credential_manifest/email_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_phone = json.loads(open("./credential_manifest/phone_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_gender = json.loads(open("./credential_manifest/gender_credential_manifest.json", 'r').read())['output_descriptors'][0]
+
 credential_manifest =  {
     "id":"Identity_cards",
     "issuer":{
@@ -67,7 +68,7 @@ def get_passbase_status_from_key(key) :
     data = { "key" : key}
     c.execute("SELECT status created FROM webhook WHERE key = :key", data)
     check = c.fetchall()
-    print("check = %s", check)
+    logging.info("check = %s", check)
     conn.close()
     if len(check) == 1 :
         return check[0][0]
@@ -117,7 +118,6 @@ def get_identity(passbase_key, mode) :
     except :
         logging.error("Passbase connexion problem")
         return None
-    logging.info("status code = %s", r.status_code)
     if not 199<r.status_code<300 :
         logging.error("API call rejected %s", r.status_code)
         return None
@@ -156,7 +156,7 @@ async def wallet_token(red, mode) :
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     if get_passbase_status_from_key(pre_authorized_code) != "approved" :
-        logging.warning('check is pending')
+        logging.warning('check is still pending')
         endpoint_response= {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
@@ -240,7 +240,7 @@ async def credential(red) :
 
     result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
     if result :
-        logging.warning("Proof of key errorn %s", result)
+        logging.warning("Verify presentation  error %s", result)
         #headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         #endpoint_response = {"error" : "invalid_proof", "error_description" : "The proof check fails"}
         # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
