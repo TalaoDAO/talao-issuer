@@ -58,6 +58,25 @@ credential_manifest["output_descriptors"].append(od_gender)
 credential_manifest["output_descriptors"].append(od_email)
 
 
+def get_passbase_status_from_key(key) :
+    """
+    return the last one
+    """
+    conn = sqlite3.connect('passbase_check.db')
+    c = conn.cursor()
+    data = { "key" : key}
+    c.execute("SELECT status created FROM webhook WHERE key = :key", data)
+    check = c.fetchall()
+    print("check = %s", check)
+    conn.close()
+    if len(check) == 1 :
+        return check[0][0]
+    try :
+        return check[-1][0]
+    except :
+        return None
+
+
 def get_passbase_did_from_key(key) :
     """
     return the last one    
@@ -135,7 +154,13 @@ async def wallet_token(red, mode) :
         endpoint_response= {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    
+
+    if get_passbase_status_from_key(key) != "approved" :
+        logging.warning('check is pending')
+        endpoint_response= {"error": "unauthorized_client"}
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+
     identity = get_identity(pre_authorized_code, mode)
     if not identity :
         logging.warning('KYC not completed or ID key error' )
