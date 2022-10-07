@@ -615,37 +615,34 @@ async def passbase_endpoint_age_range(id,red,mode):
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
     
-    #age range : “-18” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
+    #age range : "-13" or "14-17” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
     credential['credentialSubject']['KycId'] = passbase_key
     birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
     year = birthDate.split('-')[0]
     month = birthDate.split('-')[1]
     day = birthDate.split('-')[2]
+    date13 = datetime(int(year) + 13, int(month), int(day))
     date18 = datetime(int(year) + 18, int(month), int(day))
-    date24 = datetime(int(year) + 24, int(month), int(day))
-    date34 = datetime(int(year) + 34, int(month), int(day))
-    date44 = datetime(int(year) + 44, int(month), int(day))
-    date54 = datetime(int(year) + 54, int(month), int(day))
-    date64 = datetime(int(year) + 64, int(month), int(day))
+    date25 = datetime(int(year) + 25, int(month), int(day))
+    date35 = datetime(int(year) + 35, int(month), int(day))
+    date45 = datetime(int(year) + 45, int(month), int(day))
+    date55 = datetime(int(year) + 55, int(month), int(day))
+    date65 = datetime(int(year) + 65, int(month), int(day))
     
-    if datetime.now() < date18 :
-        credential['credentialSubject']['ageRange'] = "-18"
-        expiration = date18
-    elif datetime.now() < date24 :
+    if datetime.now() < date13 :
+        credential['credentialSubject']['ageRange'] = "-13"
+    elif datetime.now() < date18 :
+        credential['credentialSubject']['ageRange'] = "14-17"
+    elif datetime.now() < date25 :
         credential['credentialSubject']['ageRange'] = "18-24"
-        expiration = date24
-    elif datetime.now() < date34 :
+    elif datetime.now() < date35 :
         credential['credentialSubject']['ageRange'] = "25-34"
-        expiration = date34
-    elif datetime.now() < date44 :
+    elif datetime.now() < date45 :
         credential['credentialSubject']['ageRange'] = "35-44"
-        expiration = date44
-    elif datetime.now() < date54 :
+    elif datetime.now() < date55 :
         credential['credentialSubject']['ageRange'] = "45-54"
-        expiration = date54
-    elif datetime.now() < date64 :
+    elif datetime.now() < date65 :
         credential['credentialSubject']['ageRange'] = "55-64"
-        expiration = date64
     else :
         credential['credentialSubject']['ageRange'] = "65+"
     

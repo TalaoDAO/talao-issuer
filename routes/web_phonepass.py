@@ -1,5 +1,4 @@
-from flask import jsonify, request, render_template, session, redirect, flash, Response
-import json
+from flask import jsonify, request, render_template, session, redirect, flash
 from components import sms
 import uuid
 import secrets
@@ -7,35 +6,25 @@ from datetime import timedelta, datetime
 import logging
 logging.basicConfig(level=logging.INFO)
 from flask_babel import _
-from urllib.parse import urlencode
-import didkit
 
-OFFER_DELAY = timedelta(seconds= 30)
 CODE_DELAY = timedelta(seconds= 180)
-QRCODE_DELAY = 30
-
-
-key_tz1 = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-vm_tz1 = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
-issuer_did =  "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 
 
 def init_app(app,red, mode) :
     app.add_url_rule('/phonepass',  view_func=phonepass, methods = ['GET', 'POST'], defaults={'mode' : mode})
-    app.add_url_rule('/phonepass/redirect',  view_func=phonepass_redirect, methods = ['GET'])
     app.add_url_rule('/phonepass/webhook',  view_func=phonepass_webhook, methods = ['POST'], defaults={'red' : red})
     app.add_url_rule('/phonepass/callback',  view_func=phonepass_callback, methods = ['GET', 'POST'])
     app.add_url_rule('/phonepass/authentication',  view_func=phonepass_authentication, methods = ['GET', 'POST'], defaults={'red' : red})
     global link, client_secret
-    if mode.myenv != 'aws':
-        link = "http://192.168.0.123:3000/sandbox/op/issuer/shftylibxa"
-        client_secret = "2652f832-1bbb-11ed-9222-d9af830f0c58"
+    if mode.myenv == 'aws':
+        link = 'https://talao.co/sandbox/op/issuer/iagetctadx'
+        client_secret = "1c6f9c32-1941-11ed-915c-0a1628958560"
     else :
-        link = 'https://talao.co/sandbox/op/issuer/fwkpatoulq'
-        client_secret = "7dca6002-1c77-11ed-9407-0a1628958560"
+        link = "http://192.168.0.65:3000/sandbox/op/issuer/tthhbacsiu"
+        client_secret = "33fad3c0-458b-11ed-9199-67b813a94ff7"
     return
 
-
+ 
 def phonepass(mode) :
     if request.method == 'GET' :
         return render_template('phonepass/phonepass.html')
@@ -66,7 +55,7 @@ def phonepass_authentication(red) :
             id = str(uuid.uuid1())
             red.set(id, session['phone'])
     	    # success exit
-            return redirect('/phonepass/redirect?id=' + id)
+            return redirect(link + '?id=' + id)
         elif session['code_delay'] < datetime.now().timestamp() :
             flash(_("Code expired."), "warning")
             return render_template('phonepass/phonepass.html')
@@ -81,10 +70,6 @@ def phonepass_authentication(red) :
             return render_template("phonepass/phonepass_authentication.html")
 
 
-def phonepass_redirect() :
-    return redirect (link)
-
-
 def phonepass_webhook(red):
     if request.headers.get("key") != client_secret :
         return jsonify("Forbidden"), 403
@@ -94,23 +79,19 @@ def phonepass_webhook(red):
     
     if data['event'] == 'ISSUANCE' :
         phone = red.get(data["id"]).decode()
-        credential = {
-            "credentialSubject" : {
-                "type" : "PhonePass",
+        credential =  {
+                "type" : "PhoneProof",
                 "phone" : phone,
                 "issuedBy" : {
                     "name" : "Talao",
-                    "logo" : "https://talao.mypinata.cloud/ipfs/QmNwbEEupT7jR2zmrA87FsN4hUS8eXnCxM8DsL9RXc25cu"
                     } 
             }
-        }
         return jsonify(credential)
     
     if data['event'] == 'SIGNED_CREDENTIAL' :
         logging.info("credential issued = %s", data['vc'])
         return jsonify('ok')
  
-
 def phonepass_callback() :
     message = _('Great ! you have now a proof of phone number.')
     session.clear()
