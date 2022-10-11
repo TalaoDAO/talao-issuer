@@ -41,11 +41,13 @@ od_idcard = json.loads(open("./credential_manifest/idcard_credential_manifest.js
 od_email = json.loads(open("./credential_manifest/email_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_phone = json.loads(open("./credential_manifest/phone_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_gender = json.loads(open("./credential_manifest/gender_credential_manifest.json", 'r').read())['output_descriptors'][0]
+od_nationality = json.loads(open("./credential_manifest/nationality_credential_manifest.json", 'r').read())['output_descriptors'][0]
+od_passportnumber = json.loads(open("./credential_manifest/passportnumber_credential_manifest.json", 'r').read())['output_descriptors'][0]
 
 credential_manifest =  {
     "id":"Identity_cards",
     "issuer":{
-        "id":"0000",
+        "id":"0001",
         "name":"Altme issuer"
     },
     "output_descriptors":list()
@@ -57,6 +59,9 @@ credential_manifest["output_descriptors"].append(od_idcard)
 credential_manifest["output_descriptors"].append(od_liveness)
 credential_manifest["output_descriptors"].append(od_gender)
 credential_manifest["output_descriptors"].append(od_email)
+credential_manifest["output_descriptors"].append(od_nationality)
+credential_manifest["output_descriptors"].append(od_phone)
+credential_manifest["output_descriptors"].append(od_passportnumber)
 
 
 def get_passbase_status_from_key(key) :
