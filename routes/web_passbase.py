@@ -19,6 +19,19 @@ OFFER_DELAY = timedelta(seconds= 10*60)
 EXPIRATION_DELAY = timedelta(weeks=52)
 LIVENESS_DELAY = timedelta(weeks=2)
 
+approval_text = """Hello,<br>
+<br>Well done, your <strong>KYC is complete</strong> !<br>
+<br>You can now add <strong>6 digital credentials</strong> in your <strong>Altme Wallet</strong> :<br><br>
+<li><strong>Over 18 Proof</strong> : to prove your email ownership to Web 3 Apps.</li><br>
+<li><strong>Age Range Proof</strong> : to prove your Age Range to Web 3 Apps (Gaming, DeFi...).</li><br>
+<li><strong>Email Proof</strong> : To access Web 3 services or claim benefits : Membership card, Loyalty card, Rewards…</li><br>
+<li><strong>Nationality Proof</strong> : to prove your Nationality without revealing any other information about you. It can be used in a user survey, etc.</li><br>
+<li><strong>Gender Proof</strong> : to prove your gender (M/F) for Web 3 polls for example.</li><br>
+<li><strong>Identity card</strong> : This digital identity card contains the same information as your physical ID card.You can use it in Web 3 for a KYC check for example.</li><br>
+<br>
+Regards,<br>
+Altme team - <a href='https://app.altme.io/app/download'>Open your wallet</a> 
+"""
 
 key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
@@ -255,9 +268,11 @@ def passbase_webhook(mode) :
     # send notification by email if email exists
     if email :
         if webhook['status' ] == "approved" :
-            link_text = "Great ! \n\nWe have now the proof your Identity.\nFollow the links in your wallet to get your credentials."
-            message.message(_("AltMe wallet identity credential"), email, link_text, mode)
-            logging.info("Approved, email sent to %s", email)
+            try :
+                message.message_html("Congratulations : Altme KYC is complete !", email, approval_text, mode)
+                logging.info("Approved, email sent to %s", email)
+            except :
+                logging.error("failed to send message")
             return jsonify('ok, notification sent')
         else :
             link_text = "Sorry ! \nThe authentication failed.\nProbably the identity documents are not acceptable.\nLet's try again with another type of document."

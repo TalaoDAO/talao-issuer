@@ -7,8 +7,8 @@ import codecs
 import logging
 logging.basicConfig(level=logging.INFO)
 
-
 signature = '\r\n\r\n\r\nThe Altme team.\r\nhttps://altme.io/'
+
 
 
 # dict of HTML templates with commented formating needed
@@ -45,6 +45,33 @@ def messageHTML(subject, to, HTML_key, format_dict, mode)  :
 	s = smtplib.SMTP('smtp.gmail.com', 587)
 	s.starttls()
 	s.login(fromaddr, password)
+	text = msg.as_string()
+
+	# sending the mail
+	try:
+		s.sendmail(msg['from'],  msg["To"].split(","), text)
+		logging.info('email sent')
+		s.quit()
+		return True
+	except:
+		logging.error('sending mail')
+		s.quit()
+		return False
+
+
+def message_html(subject, to, text, mode)  :
+	fromaddr = "relay@talao.io"
+	toaddr = [to]
+	msg = MIMEMultipart()
+	msg['From'] = formataddr((str(Header('Altme', 'utf-8')), fromaddr))
+	msg['To'] = ", ".join(toaddr)
+	msg['Subject'] = subject
+	# string to store the body of the mail
+	msg.attach(MIMEText(text, 'html', 'utf-8'))
+	# creates SMTP session
+	s = smtplib.SMTP('smtp.gmail.com', 587)
+	s.starttls()
+	s.login(fromaddr, mode.smtp_password)
 	text = msg.as_string()
 
 	# sending the mail
