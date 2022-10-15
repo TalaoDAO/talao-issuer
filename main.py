@@ -16,7 +16,7 @@ import markdown.extensions.fenced_code
 
 
 # local dependencies
-from routes import web_emailpass, web_phonepass, web_passbase, web_talao_community, vc_issuer
+from routes import web_emailpass, web_phonepass, web_passbase, web_talao_community, vc_issuer, web_emailpass_2
 import environment
 
 import logging
@@ -43,7 +43,7 @@ app.config['SESSION_TYPE'] = 'redis' # Redis server side session
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=360) # cookie lifetime
 app.config['SESSION_FILE_THRESHOLD'] = 100
 app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "4.0"
+app.jinja_env.globals['Version'] = "4.1"
 
 babel = Babel(app)
 
@@ -62,6 +62,7 @@ web_phonepass.init_app(app, red, mode)
 vc_issuer.init_app(app, red, mode)
 web_talao_community.init_app(app, red, mode)
 web_passbase.init_app(app, red, mode)
+#web_emailpass_2.init_app(app, red, mode)
 
 
 @babel.localeselector

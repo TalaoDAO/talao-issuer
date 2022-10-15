@@ -12,6 +12,7 @@ CODE_DELAY = timedelta(seconds= 180)
 
 def init_app(app,red, mode) :
     app.add_url_rule('/phonepass',  view_func=phonepass, methods = ['GET', 'POST'], defaults={'mode' : mode})
+    app.add_url_rule('/phoneproof',  view_func=phonepass, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/phonepass/webhook',  view_func=phonepass_webhook, methods = ['POST'], defaults={'red' : red})
     app.add_url_rule('/phonepass/callback',  view_func=phonepass_callback, methods = ['GET', 'POST'])
     app.add_url_rule('/phonepass/authentication',  view_func=phonepass_authentication, methods = ['GET', 'POST'], defaults={'red' : red})
