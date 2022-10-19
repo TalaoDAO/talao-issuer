@@ -258,11 +258,17 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
-        birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+        try :
+            birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+        except :
+            logging.warning("Under 13")
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_over18", "error_description" : "Birthdate not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
         current_date = datetime.now()
         date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=13*52)
         if not (current_date > date1) :
-            logging.warning("Under 13")
+            logging.warning("user is under 13")
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_over18", "error_description" : "User is under 13 age old"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
@@ -275,25 +281,29 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
-        birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+        try :
+            birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+        except :
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_over18", "error_description" : "Birthdate not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
         current_date = datetime.now()
         date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=18*52)
         if not (current_date > date1) :
-            logging.warning("Under 18")
+            logging.warning("User is under 18")
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_over18", "error_description" : "User is under 18 age old"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)  
 
     elif wallet_request['type'] == "Liveness" :
-        credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
+        credential = json.loads(open("./verifiable_credentials/Liveness.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         credential['expirationDate'] = (datetime.now() + LIVENESS_DELAY).replace(microsecond=0).isoformat() + "Z"
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
-
-           
+ 
     elif wallet_request['type'] == "Gender" :
         credential = json.loads(open("./verifiable_credentials/Gender.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
@@ -301,9 +311,13 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Unknown")
         credential['credentialSubject']['KycId'] = data['passbase_key']
-
+        try :
+            credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
+        except :
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_over18", "error_description" : "Gender data not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     elif wallet_request['type'] == "Nationality" :
         credential = json.loads(open("./verifiable_credentials/Nationality.jsonld", 'r').read())
@@ -312,9 +326,13 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
         credential['credentialSubject']['KycId'] = data['passbase_key']
-
+        try :
+            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
+        except :
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_over18", "error_description" : "Nationality not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     elif wallet_request['type'] == "EmailPass" :
         credential = json.loads(open("./verifiable_credentials/EmailPass.jsonld", 'r').read())
@@ -332,18 +350,22 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints']['place_of_birth']
-        credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints']['date_of_birth']
-        credential['credentialSubject']['givenName'] = identity['owner']['first_name']
-        credential['credentialSubject']['familyName'] = identity['owner']['last_name']
-        credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
-        credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Unknown")
-        credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('nationality', "Unkonwn")
-        credential['credentialSubject']['addressCountry'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
-        credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Unknown")
-        credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Unknown")
-        credential['credentialSubject']['KycId'] = data['passbase_key']
-
+        try :
+            credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', "Unknown")
+            credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Unknown")
+            credential['credentialSubject']['givenName'] = identity['owner']['first_name']
+            credential['credentialSubject']['familyName'] = identity['owner']['last_name']
+            credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
+            credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Unknown")
+            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('nationality', "Unkonwn")
+            credential['credentialSubject']['addressCountry'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
+            credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Unknown")
+            credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Unknown")
+            credential['credentialSubject']['KycId'] = data['passbase_key']
+        except :
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_over18", "error_description" : "Data for Id card not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     elif wallet_request['type'] == "AgeRange" :
         credential = json.loads(open("./verifiable_credentials/AgeRange.jsonld", 'r').read())
@@ -352,7 +374,12 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
-        birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+        try :
+            birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+        except :
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_over18", "error_description" : "Birthdate not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
         year = birthDate.split('-')[0]
         month = birthDate.split('-')[1]
         day = birthDate.split('-')[2]

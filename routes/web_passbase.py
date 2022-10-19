@@ -63,7 +63,6 @@ def init_app(app,red, mode) :
     app.add_url_rule('/passbase/endpoint/gender/<id>',  view_func=passbase_endpoint_gender, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/pass_number/<id>',  view_func=passbase_endpoint_pass_number, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
 
-    
     app.add_url_rule('/passbase/stream',  view_func=passbase_stream, methods = ['GET', 'POST'], defaults={'red' :red})
     app.add_url_rule('/passbase/back',  view_func=passbase_back, methods = ['GET', 'POST'])
     return
@@ -224,7 +223,6 @@ def wallet_webhook(mode) :
     return jsonify("ok"), 200
 
 
-
 """
 For TALAO wallet and ALtME
 
@@ -241,7 +239,7 @@ def passbase_webhook(mode) :
         logging.info(webhook['event'])
     else :
         logging.warning("Verification not completed")
-        return jsonify('Verification not completed')
+        return jsonify('Event received')
     
     # get identity data from Passbase and set the issuer local database with minimum data
     identity = get_identity(webhook['key'], mode)
@@ -263,7 +261,6 @@ def passbase_webhook(mode) :
                 webhook['key'],
                 round(datetime.now().timestamp())
                 )
-
     # send notification by email if email exists
     if email :
         if webhook['status' ] == "approved" :
@@ -276,11 +273,13 @@ def passbase_webhook(mode) :
         else :
             link_text = "Sorry ! \nThe authentication failed.\nProbably the identity documents are not acceptable.\nLet's try again with another type of document."
             message.message(_("AltMe wallet identity credential"), email, link_text, mode)
+            link_text = "The authentication failed.\nProbably the identity documents are not acceptable for " + email
+            message.message(_("AltMe wallet identity credential"), "thierry@altme.io", link_text, mode)
             logging.info("email sent to %s", email)
             logging.warning('Identification not approved')
-            return jsonify("not approved")
+            return jsonify("Event received")
 
-    return("ok")
+    return jsonify('Event received')
 
 
 async def passbase_endpoint_over13(id,red,mode):
@@ -346,7 +345,18 @@ async def passbase_endpoint_over13(id,red,mode):
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
     credential['credentialSubject']['KycId'] = passbase_key
-    birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+    try :
+        birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+    except :  
+        logging.error("Birthdate not available")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Birth date not available")
+                        })
+        red.publish('passbase', data)
+        return jsonify ('Birth date not available'),404
+
     current_date = datetime.now()
     date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=13*52)
     if (current_date > date1) :
@@ -442,7 +452,18 @@ async def passbase_endpoint_over18(id,red,mode):
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
     credential['credentialSubject']['KycId'] = passbase_key
-    birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+    try :
+        birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+    except :  
+        logging.error("Birthdate not available")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Birth date not available")
+                        })
+        red.publish('passbase', data)
+        return jsonify ('Birth date not available'),404
+
     current_date = datetime.now()
     date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=18*52)
     if (current_date > date1) :
@@ -537,11 +558,11 @@ async def passbase_endpoint_kyc(id,red,mode):
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
     credential['credentialSubject']['KycId'] = passbase_key
-    credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints']['place_of_birth']
+    credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', 'Unknwn')
     credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints']['date_of_birth']
     credential['credentialSubject']['givenName'] = identity['owner']['first_name']
     credential['credentialSubject']['familyName'] = identity['owner']['last_name']
-    credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
+    credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Unknown")
     credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Unknown")
     credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('nationality', "Unkonwn")
     credential['credentialSubject']['addressCountry'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
@@ -631,7 +652,18 @@ async def passbase_endpoint_age_range(id,red,mode):
     
     #age range : "-13" or "14-17” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
     credential['credentialSubject']['KycId'] = passbase_key
-    birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+    try :
+        birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+    except :  
+        logging.error("Birthdate not available")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Birth date not available")
+                        })
+        red.publish('passbase', data)
+        return jsonify ('Birth date not available'),404
+
     year = birthDate.split('-')[0]
     month = birthDate.split('-')[1]
     day = birthDate.split('-')[2]
@@ -744,7 +776,18 @@ async def passbase_endpoint_nationality(id,red,mode):
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
 
-    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
+    try :
+        credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['mrtd_issuing_country']
+    except :  
+        logging.error("Nationality not available")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Nationality not available")
+                        })
+        red.publish('passbase', data)
+        return jsonify ('Nationality not available not available'),404
+
     credential['credentialSubject']['KycId'] = passbase_key
     didkit_options = {
             "proofPurpose": "assertionMethod",
@@ -909,7 +952,18 @@ async def passbase_endpoint_gender(id,red,mode):
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
 
-    credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
+    try :
+        credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
+    except :  
+        logging.error("Gender not available")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Nationality not available")
+                        })
+        red.publish('passbase', data)
+        return jsonify ('Gender not available not available'),404
+
     credential['credentialSubject']['KycId'] = passbase_key
     didkit_options = {
             "proofPurpose": "assertionMethod",
