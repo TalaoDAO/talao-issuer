@@ -46,7 +46,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/nationality',  view_func=nationality, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/agerange',  view_func=agerange, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/gender',  view_func=gender, methods = ['GET'], defaults={'mode' : mode})
-    app.add_url_rule('/pass_number',  view_func=pass_number, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/passportnumber',  view_func=pass_number, methods = ['GET'], defaults={'mode' : mode})
 
     app.add_url_rule('/vc',  view_func=vc, methods = ['GET'], defaults={'mode' : mode})
 
@@ -61,7 +61,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/passbase/endpoint/agerange/<id>',  view_func=passbase_endpoint_age_range, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/nationality/<id>',  view_func=passbase_endpoint_nationality, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/gender/<id>',  view_func=passbase_endpoint_gender, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
-    app.add_url_rule('/passbase/endpoint/pass_number/<id>',  view_func=passbase_endpoint_pass_number, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+    app.add_url_rule('/passbase/endpoint/passportnumber/<id>',  view_func=passbase_endpoint_passport_number, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
 
     app.add_url_rule('/passbase/stream',  view_func=passbase_stream, methods = ['GET', 'POST'], defaults={'red' :red})
     app.add_url_rule('/passbase/back',  view_func=passbase_back, methods = ['GET', 'POST'])
@@ -174,12 +174,13 @@ def nationality(mode) :
 def gender(mode) :
     return redirect ('/vc?credential=gender')
 def pass_number(mode) :
-    return redirect ('/vc?credential=pass_number')
+    return redirect ('/vc?credential=passportnumber')
 
 def vc(mode) :
     id = str(uuid.uuid1())
     credential = request.args['credential']
     url = mode.server + "passbase/endpoint/" + credential + '/' + id +'?issuer=' + issuer_did
+    print(url)
     deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url })
     deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url })
     return render_template('/passbase/' + credential + '.html',
@@ -247,7 +248,7 @@ def passbase_webhook(mode) :
         logging.error("probleme d acces API")
         return jsonify("probleme d acces API")
     
-    email = identity['owner'].get('email', "Unknown")
+    email = identity['owner'].get('email', "Not indicated")
     
     try :
         did = get_passbase_did_from_key(webhook['key'])[0]
@@ -558,16 +559,15 @@ async def passbase_endpoint_kyc(id,red,mode):
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
     credential['credentialSubject']['KycId'] = passbase_key
-    credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', 'Unknwn')
-    credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints']['date_of_birth']
+    credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', 'Not indicated')
+    credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
     credential['credentialSubject']['givenName'] = identity['owner']['first_name']
     credential['credentialSubject']['familyName'] = identity['owner']['last_name']
-    credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Unknown")
-    credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Unknown")
-    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('nationality', "Unkonwn")
-    credential['credentialSubject']['addressCountry'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
-    credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Unknown")
-    credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Unknown")
+    credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
+    credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Not indicated")
+    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Not indicated")
+    credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
+    credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm
@@ -807,7 +807,7 @@ async def passbase_endpoint_nationality(id,red,mode):
     red.publish('passbase', data)
     return jsonify(signed_credential)
 
-async def passbase_endpoint_pass_number(id,red,mode):
+async def passbase_endpoint_passport_number(id,red,mode):
     if request.method == 'GET':
         credential = json.loads(open("./verifiable_credentials/PassportNumber.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
@@ -868,7 +868,7 @@ async def passbase_endpoint_pass_number(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-    document_number = identity['resources'][0]['datapoints'].get('raw_mrz_string', "Unknown")
+    document_number = identity['resources'][0]['datapoints'].get('raw_mrz_string', "Not indicated")
     credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
     credential['credentialSubject']['KycId'] = passbase_key
 

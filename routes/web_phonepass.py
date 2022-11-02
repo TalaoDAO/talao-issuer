@@ -84,7 +84,7 @@ def phonepass_webhook(red):
                 "type" : "PhoneProof",
                 "phone" : phone,
                 "issuedBy" : {
-                    "name" : "Talao",
+                    "name" : "Altme",
                     } 
             }
         return jsonify(credential)

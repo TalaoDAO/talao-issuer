@@ -18,6 +18,7 @@ import requests
 import json
 import uuid
 import logging
+import hashlib
 from datetime import datetime
 import didkit
 from datetime import datetime, timedelta
@@ -328,12 +329,28 @@ async def credential(red) :
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
         try :
-            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
+            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Not indicated")
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_over18", "error_description" : "Nationality not available"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
+    
+    elif wallet_request['type'] == "PassportNumber" :
+        credential = json.loads(open("./verifiable_credentials/PassportNumber.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential['issuer'] = issuer_did
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential['credentialSubject']['id'] = wallet_did
+        credential['credentialSubject']['KycId'] = data['passbase_key']
+        try :
+            document_number = identity['resources'][0]['datapoints'].get('raw_mrz_string', "Not indicated")
+            credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
+        except :
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_over18", "error_description" : "Nationality not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    
     elif wallet_request['type'] == "EmailPass" :
         credential = json.loads(open("./verifiable_credentials/EmailPass.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
@@ -351,16 +368,15 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         try :
-            credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', "Unknown")
-            credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Unknown")
+            credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', "Not indicated")
+            credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
             credential['credentialSubject']['givenName'] = identity['owner']['first_name']
             credential['credentialSubject']['familyName'] = identity['owner']['last_name']
-            credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
-            credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Unknown")
-            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('nationality', "Unkonwn")
-            credential['credentialSubject']['addressCountry'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Unknown")
-            credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Unknown")
-            credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Unknown")
+            credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
+            credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Not indicated")
+            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Not indicated")
+            credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
+            credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
             credential['credentialSubject']['KycId'] = data['passbase_key']
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}

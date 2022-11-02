@@ -20,7 +20,6 @@
                     "birthDate" : "schema:birthDate",
                     "birthPlace" : "schema:birthPlace",
                     "authority" : "schema:authority",
-                    "addressCountry" : "schema:addressCountry",
                     "expiryDate" : "schema:expiryDate",
                     "issueDate" : "schema:issuedate",
                     "issuedBy" : {
