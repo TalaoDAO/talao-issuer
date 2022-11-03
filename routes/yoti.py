@@ -153,7 +153,7 @@ async def ai_over18(mode) :
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     if  x_api_key != mode.altme_ai_token :
-        logging.warning('api key does not martch')
+        logging.warning('api key does not match')
         endpoint_response= {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
