@@ -26,8 +26,8 @@ PATHS = {
 }
 
 def init_app(app,red, mode) :
-    app.add_url_rule('/ai/over13',  view_func=ai_over13, methods = ['GET', 'POST'], defaults ={'mode' : mode})
-    app.add_url_rule('/ai/over18',  view_func=ai_over18, methods = ['GET', 'POST'], defaults ={'mode' : mode})
+    app.add_url_rule('/ai/over13',  view_func=ai_over13, methods = ['POST'], defaults ={'mode' : mode})
+    app.add_url_rule('/ai/over18',  view_func=ai_over18, methods = ['POST'], defaults ={'mode' : mode})
     return
 
 def execute(request):
@@ -137,23 +137,29 @@ async def ai_over18(mode) :
     try : 
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()    
+    except :
+        logging.warning("Invalid request")
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    try :  
         wallet_did = wallet_request['did']
         did_authn = wallet_request["vp"]
         encoded_string = wallet_request["base64_encoded_string"].encode()
     except :
-        logging.warning("Invalid request")
+        logging.warning("Invalid data sent")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "The request is not correctly formated"}
+        endpoint_response = {"error" : "invalid_request", "error_description" : "data sent are not correctly formated"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     if  x_api_key != mode.altme_ai_token :
-        logging.warning('api key is incorrect')
+        logging.warning('api key does not martch')
         endpoint_response= {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     if  sha256(encoded_string) != json.loads(did_authn)['proof']['challenge'] :
-        logging.warning("Proof challenge does not match")
+        logging.warning("Challenge does not match")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error" : "invalid_request", "error_description" : "Challeng does not match"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
