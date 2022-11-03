@@ -16,7 +16,7 @@ import markdown.extensions.fenced_code
 
 
 # local dependencies
-from routes import web_emailpass, web_phonepass, web_passbase, web_talao_community, vc_issuer, web_emailpass_2
+from routes import web_emailpass, web_phonepass, web_passbase, web_talao_community, vc_issuer, yoti, web_emailpass_2
 import environment
 
 import logging
@@ -63,6 +63,7 @@ vc_issuer.init_app(app, red, mode)
 web_talao_community.init_app(app, red, mode)
 web_passbase.init_app(app, red, mode)
 #web_emailpass_2.init_app(app, red, mode)
+yoti.init_app(app, red, mode)
 
 
 @babel.localeselector

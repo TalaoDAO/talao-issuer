@@ -14,9 +14,11 @@ class currentMode() :
 		self.deeplink_altme = 'https://app.altme.io/'			
 		with open("./passwords.json", "r") as read_content: 
 			passwords = json.load(read_content)
+		self.yoti = passwords['yoti']
 		self.analytics_key = passwords['analytics']
 		self.password = passwords['password']
 		self.altme_server_token = passwords['altme_server_token']
+		self.altme_ai_token = passwords['altme_ai_token']
 		self.passbase = passwords['passbase']
 		self.smtp_password = passwords['smtp_password'] # used in smtp.py
 		self.sms_token = passwords['sms_token'] # used in sms.py		
