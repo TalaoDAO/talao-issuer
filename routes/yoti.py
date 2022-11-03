@@ -44,7 +44,7 @@ def generate_session(encoded_string, mode):
     signed_request = (
         SignedRequest
         .builder()
-        .with_pem_file('/home/thierry/issuer/key.pem')
+        .with_pem_file('/home/admin/issuer/key.pem')
         .with_base_url("https://api.yoti.com/ai/v1")
         .with_endpoint(PATHS['AGE'])
         .with_http_method("POST")
