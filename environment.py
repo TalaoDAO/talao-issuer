@@ -26,10 +26,12 @@ class currentMode() :
 	
 		# En Prod chez AWS 
 		if self.myenv == 'aws':
+			self.yoti_pem_file = '/home/admin/issuer/key.pem'
 			self.sys_path = '/home/admin'
 			self.server = 'https://issuer.talao.co/'
 			self.IP = '3.130.207.31' 
 		elif self.myenv == 'local' :
+			self.yoti_pem_file = '/home/thierry/issuer/key.pem'
 			self.sys_path = '/home/thierry'
 			self.server = 'http://' + extract_ip() + ':5000/'
 			self.IP = extract_ip()

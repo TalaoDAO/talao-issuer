@@ -36,15 +36,13 @@ def execute(request):
     return response.content
 
 def generate_session(encoded_string, mode):
-    #with open(filename, "rb") as image_file:
-    #    encoded_string = base64.b64encode(image_file.read())
     img = {"img" : encoded_string.decode("utf-8")}
     payload_string = json.dumps(img).encode()
-  
+
     signed_request = (
         SignedRequest
         .builder()
-        .with_pem_file('/home/admin/issuer/key.pem')
+        .with_pem_file(mode.yoti_pem_file)
         .with_base_url("https://api.yoti.com/ai/v1")
         .with_endpoint(PATHS['AGE'])
         .with_http_method("POST")
@@ -65,15 +63,21 @@ async def ai_over13(mode) :
     try : 
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()    
+    except :
+        logging.warning("Invalid request")
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    try :  
         wallet_did = wallet_request['did']
         did_authn = wallet_request["vp"]
         encoded_string = wallet_request["base64_encoded_string"].encode()
     except :
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "The request is not correctly formated"}
+        endpoint_response = {"error" : "invalid_request", "error_description" : "data sent are not correctly formated"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    
+
     if  x_api_key != mode.altme_ai_token :
         logging.warning('api key is incorrect')
         endpoint_response= {"error": "unauthorized_client"}
@@ -102,7 +106,7 @@ async def ai_over13(mode) :
         endpoint_response = {"error" : "invalid_request", "error_description" : json.dumps(result)}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
       
-    logging.info("age estimate by AI = %s", age)
+    logging.info("age estimate by AI is %s", age)
     
     if age >= 14 :
         credential = json.loads(open("./verifiable_credentials/Over13.jsonld", 'r').read())
