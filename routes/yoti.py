@@ -22,7 +22,7 @@ issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
 PATHS = {
     "AGE": '/age',
     "LIVENESS": '/antispoofing',
-    "AGE_LIVENESS": '/age-antispoofing',
+    "AGE_LIVENESS": '/age-antispoofing'
 }
 
 def init_app(app,red, mode) :
@@ -44,7 +44,7 @@ def generate_session(encoded_string, mode):
         .builder()
         .with_pem_file(mode.yoti_pem_file)
         .with_base_url("https://api.yoti.com/ai/v1")
-        .with_endpoint(PATHS['AGE'])
+        .with_endpoint(PATHS['AGE_LIVENESS'])
         .with_http_method("POST")
         .with_header("X-Yoti-Auth-Id", mode.yoti)
         .with_payload(payload_string)

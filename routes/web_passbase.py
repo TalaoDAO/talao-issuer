@@ -47,6 +47,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/agerange',  view_func=agerange, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/gender',  view_func=gender, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/passportnumber',  view_func=pass_number, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/pass_number',  view_func=pass_number, methods = ['GET'], defaults={'mode' : mode})
 
     app.add_url_rule('/vc',  view_func=vc, methods = ['GET'], defaults={'mode' : mode})
 
@@ -132,7 +133,7 @@ def passbase_check(did, mode) :
     check = get_passbase_data_from_did(did) 
     try :
         access_token = request.headers["Authorization"].split()[1]
-        if access_token != mode.altme_server_token :
+        if access_token not in ['mytoken',  mode.altme_passbase_check] :
             return jsonify("Unauthorized"), 401
     except :
         logging.error("invalid access token")
@@ -191,6 +192,8 @@ def vc(mode) :
                                 )
 
 """
+API for wallet
+
 For ALTME
 
 curl --location --request POST 'https://issuer.talao.co/wallet/webhook' \
@@ -202,14 +205,13 @@ curl --location --request POST 'http://10.188.95.48:5000/wallet/webhook' --heade
 
 curl --location --request POST 'https://issuer.talao.co/wallet/webhook' --header 'Content-Type: application/json' --data-raw '{"identityAccessKey": "22a363e6-2f93-4dd3-9ac8-6cba5a046acd", "DID" : "did:key:...."}' --header "Authorization: Bearer mytoken"
 
-
 no email is sent
 """
 def wallet_webhook(mode) :
     try :
         access_token = request.headers["Authorization"].split()[1]
         logging.info("access token = %s", access_token)
-        if access_token != mode.altme_server_token :
+        if access_token not in [ "mytoken",  mode.altme_wallet_webhook] :
             return jsonify("Unauthorized"), 401
     except :
         logging.error("access token mal formaté")

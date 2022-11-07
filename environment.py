@@ -14,14 +14,16 @@ class currentMode() :
 		self.deeplink_altme = 'https://app.altme.io/'			
 		with open("./passwords.json", "r") as read_content: 
 			passwords = json.load(read_content)
-		self.yoti = passwords['yoti']
+		self.yoti = passwords['yoti']                                # yoti.py
 		self.analytics_key = passwords['analytics']
 		self.password = passwords['password']
-		self.altme_server_token = passwords['altme_server_token']
-		self.altme_ai_token = passwords['altme_ai_token']
-		self.passbase = passwords['passbase']
-		self.smtp_password = passwords['smtp_password'] # used in smtp.py
-		self.sms_token = passwords['sms_token'] # used in sms.py		
+		self.altme_passbase_check = passwords['altme_passbase_check'] # web_passabse.py
+		self.altme_wallet_webhook = passwords['altme_wallet_webhook'] # web_passbase.py
+		self.altme_ai_token = passwords['altme_ai_token'] 			  # yoti.py
+		self.altme_wallet_token = passwords['altme_wallet_token']     # vc_issuer.py
+		self.passbase = passwords['passbase']                         # web_passebase.py
+		self.smtp_password = passwords['smtp_password'] 			  # smtp.py
+		self.sms_token = passwords['sms_token']                       # sms.py		
 		self.deeplink = 'https://app.talao.co/'		
 	
 		# En Prod chez AWS 

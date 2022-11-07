@@ -155,8 +155,14 @@ async def wallet_token(red, mode) :
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
-    if grant_type != 'urn:ietf:params:oauth:grant-type:pre-authorized_code' or x_api_key != '99999-99999-99999':
+    if grant_type != 'urn:ietf:params:oauth:grant-type:pre-authorized_code'  :
         logging.warning('grant type  or api key is incorrect')
+        endpoint_response= {"error": "unauthorized_client"}
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+
+    if x_api_key not in ['99999-99999-99999', mode.altme_wallet_token] :
+        logging.warning('api key is incorrect')
         endpoint_response= {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
