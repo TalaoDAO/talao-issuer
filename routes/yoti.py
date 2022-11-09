@@ -12,8 +12,6 @@ import hashlib
 logging.basicConfig(level=logging.INFO)
 
 EXPIRATION_DELAY = timedelta(weeks=52)
-LIVENESS_DELAY = timedelta(weeks=2)
-ACCESS_TOKEN_LIFE = 180
 
 key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
@@ -44,7 +42,7 @@ def generate_session(encoded_string, mode):
         .builder()
         .with_pem_file(mode.yoti_pem_file)
         .with_base_url("https://api.yoti.com/ai/v1")
-        .with_endpoint(PATHS['AGE_LIVENESS'])
+        .with_endpoint(PATHS['AGE'])
         .with_http_method("POST")
         .with_header("X-Yoti-Auth-Id", mode.yoti)
         .with_payload(payload_string)
