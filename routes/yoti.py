@@ -288,8 +288,10 @@ async def ai_agerange(mode) :
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
     credential['issuer'] = issuer_did
-    credential['credentialSubject']['id'] = "did:wallet"
     credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+    credential['credentialSubject']['id'] = wallet_did
+    credential['credentialSubject']['KycId'] =  sha256(encoded_string)
+    credential['credentialSubject']['KycProvider'] = 'Yoti'
     #age range : "-13" or "14-17” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
     if age < 13 :
         credential['credentialSubject']['ageRange'] = "-13"
