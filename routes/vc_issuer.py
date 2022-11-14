@@ -335,7 +335,7 @@ async def credential(red) :
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
         try :
-            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Not indicated")
+            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['mrtd_issuing_country']
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_over18", "error_description" : "Nationality not available"}
@@ -350,7 +350,7 @@ async def credential(red) :
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
         try :
-            document_number = identity['resources'][0]['datapoints'].get('raw_mrz_string', "Not indicated")
+            document_number = identity['resources'][0]['datapoints']['raw_mrz_string']
             credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}

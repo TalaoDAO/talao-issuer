@@ -125,7 +125,7 @@ async def ai_over13(mode) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] =  sha256(encoded_string)
+        credential['credentialSubject']['KycId'] =  'AI age estimate'
         credential['credentialSubject']['KycProvider'] = 'Yoti'
         didkit_options = {
                 "proofPurpose": "assertionMethod",
@@ -207,7 +207,7 @@ async def ai_over18(mode) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] =  sha256(encoded_string)
+        credential['credentialSubject']['KycId'] =  'AI age estimate'
         credential['credentialSubject']['KycProvider'] = 'Yoti'
         didkit_options = {
                 "proofPurpose": "assertionMethod",
@@ -282,7 +282,6 @@ async def ai_agerange(mode) :
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error" : "invalid_request", "error_description" : "Uncertain estimate"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
   
     credential = json.loads(open("./verifiable_credentials/AgeRange.jsonld", 'r').read())
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
@@ -290,7 +289,7 @@ async def ai_agerange(mode) :
     credential['issuer'] = issuer_did
     credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
     credential['credentialSubject']['id'] = wallet_did
-    credential['credentialSubject']['KycId'] =  sha256(encoded_string)
+    credential['credentialSubject']['KycId'] =  'AI age estimate'
     credential['credentialSubject']['KycProvider'] = 'Yoti'
     #age range : "-13" or "14-17” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
     if age < 13 :

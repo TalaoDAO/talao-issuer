@@ -16,7 +16,7 @@ import markdown.extensions.fenced_code
 
 
 # local dependencies
-from routes import web_emailpass, web_phonepass, web_passbase, web_talao_community, vc_issuer, yoti, web_emailpass_2
+from routes import web_emailpass, web_phonepass, web_passbase, web_talao_community, vc_issuer, yoti, dapp_register_gamer_pass
 import environment
 
 import logging
@@ -62,7 +62,7 @@ web_phonepass.init_app(app, red, mode)
 vc_issuer.init_app(app, red, mode)
 web_talao_community.init_app(app, red, mode)
 web_passbase.init_app(app, red, mode)
-#web_emailpass_2.init_app(app, red, mode)
+dapp_register_gamer_pass.init_app(app, red, mode)
 yoti.init_app(app, red, mode)
 
 

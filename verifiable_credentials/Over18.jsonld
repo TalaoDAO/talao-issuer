@@ -30,10 +30,9 @@
     "issuanceDate": "",
     "credentialSubject" : {
         "type" : "Over18",
-        "KycProvider" : "Passbase",
+        "KycProvider" : "",
         "KycId" : "",
         "issuedBy": {
-            "logo": "",
             "name": "Altme"
         }
     }

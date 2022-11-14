@@ -34,11 +34,10 @@
     "credentialSubject" : {
         "id": "",
         "ageRange" : "",
-        "KycProvider" : "Passbase",
+        "KycProvider" : "",
         "KycId" : "",
         "type" : "AgeRange",
         "issuedBy": {
-            "logo": "",
             "name": "Altme"
         }
     }

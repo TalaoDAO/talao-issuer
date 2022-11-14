@@ -278,6 +278,7 @@ def passbase_webhook(mode) :
             message.message(_("AltMe wallet identity credential"), email, link_text, mode)
             link_text = "The authentication failed.\nProbably the identity documents are not acceptable for " + email
             message.message(_("AltMe wallet identity credential"), "thierry@altme.io", link_text, mode)
+            message.message(_("AltMe wallet identity credential"), "hugo@altme.io", link_text, mode)
             logging.info("email sent to %s", email)
             logging.warning('Identification not approved')
             return jsonify("Event received")
@@ -870,9 +871,19 @@ async def passbase_endpoint_passport_number(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-    document_number = identity['resources'][0]['datapoints'].get('raw_mrz_string', "Not indicated")
-    credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
-    credential['credentialSubject']['KycId'] = passbase_key
+    try :
+        document_number = identity['resources'][0]['datapoints'].get('raw_mrz_string', "Not indicated")
+        credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
+        credential['credentialSubject']['KycId'] = passbase_key
+    except :
+        logging.error("Passport MRZ not available")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Passport MRZ not available")
+                        })
+        red.publish('passbase', data)
+        return jsonify ('Passport MRZ not available'),404
 
     didkit_options = {
             "proofPurpose": "assertionMethod",

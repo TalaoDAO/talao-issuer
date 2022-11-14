@@ -1,0 +1,115 @@
+
+<html >
+  <head> 
+    {% include 'head.html' %}
+    <script src="/static/walletbeacon.min.js"></script>
+  </head>
+
+  <body style="background-color: rgb(185, 179, 243) ">
+
+
+    <nav class="navbar navbar-light navbar-expand-md sticky-top  mb-3" >
+      <div class="container-fluid">
+        <div>
+          <a href="https://altme.io"><img  src="/static/img/altme_logo_2.png" alt="text" style="width: auto; max-width: 127px;  height: 70;"></a>
+        </div>      
+        <ul class="nav navbar-nav ml-auto d-lg-flex align-items-center" style="flex-direction: row;">
+          <li class="nav-item active">
+              <a class="nav-link" style="color: rgb(54, 24, 88); margin-bottom: 0" href="https://altme.io">Altme wallet</a>
+            </li>
+          <li class="nav-item active">
+              <a class="nav-link" style="color: rgb(54, 24, 88); margin-bottom: 0" href="/sandbox/saas4ssi">Home</a>
+            </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class=" text-center">
+   
+
+
+    <div id="pairing">
+      <br /><br />   <br /><br />
+        <h1 class="my-5" >Register an Universal Gamer Pass with Altme</h1>
+    
+    </div>
+
+    <div id="intro">
+      <h3 class="mb-5">Get discounts on NFTs and access private drops on all blockchains with your Decentralized IDentity</h3>
+      <button  class="btn btn-outline-dark" id="requestPermission">SYNCHRONIZE YOUR ALTME WALLET</button><br>
+      {% include 'gamer_pass/dapp_footer.html' %}
+    </div>
+
+<form id="form" action="/register_gamer_pass" method ="POST">
+</form >
+
+
+
+  </div>
+  
+    <script>
+
+    // Initiate DAppClient
+    const client = beacon.getDAppClientInstance({
+        name: 'Altme', // Name of the DApp,
+        disclaimerText: 'https://altme.io',
+        //errorMessages: {
+        //  KT1RPW5kTX6WFxg8JK34rGEU24gqEEudyfvz: {
+        //    NOT_OWNER: 'You are not the owner of this token.'
+        //  }
+        //}
+      })
+
+
+
+      // Display the active account in the UI
+    const updateActiveAccount = () => {
+        client.getActiveAccount().then((activeAccount) => {
+          if (activeAccount) {
+            console.log(activeAccount)
+          
+          } else {
+            //document.getElementById('activeAccount').innerText = ''
+            //document.getElementById('activeAccountNetwork').innerText = ''
+            //document.getElementById('activeAccountTransport').innerText = ''
+          }
+        })
+    }
+
+    updateActiveAccount()
+
+      // Initiate a permission request
+    const requestPermission = (callback) => {
+        client
+          .requestPermissions(/*{ network: { type: beacon.NetworkType.DELPHINET } }*/)
+          .then((permissions) => {
+            console.log('permissions', permissions)
+            if (callback) {
+              callback(permissions)
+            }
+            updateActiveAccount();
+            document.getElementById("form").submit();
+          })
+          .catch((error) => {
+            console.log('error during permission request', error)
+          })
+      }
+
+
+      // Add event listener to the button
+    document.getElementById('requestPermission').addEventListener('click', () => {
+        requestPermission()
+    })
+
+  
+    </script>
+
+
+<script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='bs-init.js') }}"></script>
+<script src="{{ url_for('static', filename='theme.js') }}"></script>
+<script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+
+
+  </body>
+</html>
