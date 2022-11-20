@@ -1,11 +1,11 @@
 from flask import jsonify, request, render_template, session, redirect, flash
 from components import sms
 import uuid
-import secrets
 from datetime import timedelta, datetime
 import logging
 logging.basicConfig(level=logging.INFO)
 from flask_babel import _
+from random import randint
 
 CODE_DELAY = timedelta(seconds= 180)
 
@@ -32,7 +32,7 @@ def phonepass(mode) :
     if request.method == 'POST' :
         # traiter phone
         session['phone'] = request.form['phone']
-        session['code'] = str(secrets.randbelow(99999))
+        session['code'] = str(randint(10000, 99999))
         session['code_delay'] = (datetime.now() + CODE_DELAY).timestamp()
         try : 
             sms.send_code(session['phone'], session['code'], mode)

@@ -335,11 +335,14 @@ async def credential(red) :
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
         try :
-            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['mrtd_issuing_country']
+            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['document_origin_country']
         except :
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_over18", "error_description" : "Nationality not available"}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+            try :
+                credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['country']
+            except :
+                headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+                endpoint_response = {"error" : "invalid_over18", "error_description" : "Nationality not available"}
+                return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     elif wallet_request['type'] == "PassportNumber" :
         credential = json.loads(open("./verifiable_credentials/PassportNumber.jsonld", 'r').read())
@@ -380,7 +383,7 @@ async def credential(red) :
             credential['credentialSubject']['familyName'] = identity['owner']['last_name']
             credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
             credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Not indicated")
-            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Not indicated")
+            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
             credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
             credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
             credential['credentialSubject']['KycId'] = data['passbase_key']

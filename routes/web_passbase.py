@@ -181,7 +181,6 @@ def vc(mode) :
     id = str(uuid.uuid1())
     credential = request.args['credential']
     url = mode.server + "passbase/endpoint/" + credential + '/' + id +'?issuer=' + issuer_did
-    print(url)
     deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : url })
     deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url })
     return render_template('/passbase/' + credential + '.html',
@@ -568,7 +567,7 @@ async def passbase_endpoint_kyc(id,red,mode):
     credential['credentialSubject']['familyName'] = identity['owner']['last_name']
     credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
     credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Not indicated")
-    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('mrtd_issuing_country', "Not indicated")
+    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
     credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
     credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
     didkit_options = {
@@ -780,16 +779,19 @@ async def passbase_endpoint_nationality(id,red,mode):
         return (jsonify('Identity does not exist'))
 
     try :
-        credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['mrtd_issuing_country']
+        credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['document_origin_country']
     except :  
-        logging.error("Nationality not available")
-        data = json.dumps({
+        try :
+            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['country']
+        except :
+            logging.error("Nationality not available")
+            data = json.dumps({
                     'id' : id,
                     'check' : 'failed',
                     'message' : _("Nationality not available")
                         })
-        red.publish('passbase', data)
-        return jsonify ('Nationality not available not available'),404
+            red.publish('passbase', data)
+            return jsonify ('Nationality not available'),404
 
     credential['credentialSubject']['KycId'] = passbase_key
     didkit_options = {

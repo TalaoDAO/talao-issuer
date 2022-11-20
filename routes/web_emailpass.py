@@ -6,11 +6,9 @@ from datetime import timedelta, datetime
 import logging
 logging.basicConfig(level=logging.INFO)
 from flask_babel import _
-import secrets
 from urllib.parse import urlencode
 import didkit
-import base64
-import subprocess
+from random import randint
 
 OFFER_DELAY = timedelta(seconds= 10*60)
 CODE_DELAY = timedelta(seconds= 180)
@@ -31,7 +29,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/emailpass/end',  view_func=emailpass_end, methods = ['GET', 'POST'])
     return
 
-
+"""
 def build_metadata(metadata) :
     # with passbase openssl signature scheme . cant find a python lib to do the same !!! 
     # cf Passbase documentation
@@ -46,7 +44,7 @@ def build_metadata(metadata) :
         logging.error('erreur = %s', error)
         encrypted_metadata = base64.b64encode(signature)
     return encrypted_metadata.decode()
-
+"""
 
 def emailpass(mode) :
     # request email to user and send a secret code
@@ -56,7 +54,7 @@ def emailpass(mode) :
         session['email'] = request.form['email'].lower()
         logging.info("email = %s ", session['email'])
         logging.info('email = %s', session['email'])
-        session['code'] = str(secrets.randbelow(99999))
+        session['code'] = str(randint(10000, 99999))
         session['code_delay'] = (datetime.now() + CODE_DELAY).timestamp()
         try : 
             subject = _('Altme pending email verification  ')
@@ -105,7 +103,6 @@ def emailpass_qrcode(red, mode) :
     logging.info('qr code = %s', qr_code)
     deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : qr_code })
     deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : qr_code })
-
     if not session.get('email') :
         flash(_("Code expired."), "warning")
         return render_template('emailpass/emailpass.html')
@@ -124,6 +121,7 @@ async def emailpass_enpoint(id, red):
     credential['expirationDate'] =  (datetime.now() + timedelta(days= 365)).isoformat() + "Z"
     try :
         credential['credentialSubject']['email'] = red.get(id).decode()
+        credential['credentialSubject']['emailVerified'] = True
     except :
         logging.error('redis data expired')
         data = json.dumps({"id" : id, "check" : "expired"})
@@ -148,15 +146,14 @@ async def emailpass_enpoint(id, red):
         return jsonify(credential_offer)
 
     else :  #POST
-        #red.delete(id)   #TODO remove but remplace with set time = expiration delay
         # init credential
         credential['id'] = "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
         # build passbase metadata for KYC and Over18 credentials
         data = json.dumps({"did" : request.form.get('subject_id', 'unknown DID'),
                          "email" : credential['credentialSubject']['email']})
-        credential['credentialSubject']['passbaseMetadata'] = build_metadata(bytearray(data, 'utf-8'))
-        logging.info('metadata = %s', credential['credentialSubject']['passbaseMetadata'])
+        #credential['credentialSubject']['passbaseMetadata'] = build_metadata(bytearray(data, 'utf-8'))
+        #logging.info('metadata = %s', credential['credentialSubject']['passbaseMetadata'])
         # signature 
         didkit_options = {
             "proofPurpose": "assertionMethod",
