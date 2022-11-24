@@ -130,14 +130,19 @@ def passbase_check(did, mode) :
     # curl http://10.188.95.48:5000/passbase/check/did:key:z6Mkvu9HqJoNJsFPrfWEnTvy5tYh3uTgjPz3iqMPiUzzoWMb  -H "Accept: application/json"   -H "Authorization: Bearer mytoken"
 
     """
-    check = get_passbase_data_from_did(did) 
     try :
         access_token = request.headers["Authorization"].split()[1]
-        if access_token not in ['mytoken',  mode.altme_passbase_check] :
-            return jsonify("Unauthorized"), 401
     except :
-        logging.error("invalid access token")
-        return jsonify("Bad Request"), 400
+        logging.warning('invalid request')
+        endpoint_response= {"error": "invalid_request"}
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    if access_token not in ['mytoken',  mode.altme_passbase_check] :
+        logging.warning('api key is incorrect')
+        endpoint_response= {"error": "unauthorized_client"}
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    check = get_passbase_data_from_did(did) 
     if check :
         return jsonify(check[0])
     else :
@@ -209,12 +214,18 @@ no email is sent
 def wallet_webhook(mode) :
     try :
         access_token = request.headers["Authorization"].split()[1]
-        logging.info("access token = %s", access_token)
-        if access_token not in [ "mytoken",  mode.altme_wallet_webhook] :
-            return jsonify("Unauthorized"), 401
+        logging.info("access token = %s", access_token)    
     except :
-        logging.error("access token mal formaté")
-        return jsonify("Bad Request"), 400
+        logging.warning('invalid request')
+        endpoint_response= {"error": "invalid_request"}
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    
+    if access_token not in [ "mytoken",  mode.altme_wallet_webhook] :
+        endpoint_response= {"error": "unauthorized_client"}
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    
     webhook = request.get_json()
     logging.info("wallet webhook has received an event = %s", webhook)
     add_passbase_db("",

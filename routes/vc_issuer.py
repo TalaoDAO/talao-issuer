@@ -39,6 +39,7 @@ od_over18 = json.loads(open("./credential_manifest/over18_credential_manifest.js
 od_over13 = json.loads(open("./credential_manifest/over13_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_agerange = json.loads(open("./credential_manifest/agerange_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_idcard = json.loads(open("./credential_manifest/idcard_credential_manifest.json", 'r').read())['output_descriptors'][0]
+od_idlight = json.loads(open("./credential_manifest/idlight_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_email = json.loads(open("./credential_manifest/email_credential_manifest.json", 'r').read())['output_descriptors'][0]
 #od_phone = json.loads(open("./credential_manifest/phone_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_gender = json.loads(open("./credential_manifest/gender_credential_manifest.json", 'r').read())['output_descriptors'][0]
@@ -48,7 +49,7 @@ od_passportnumber = json.loads(open("./credential_manifest/passportnumber_creden
 credential_manifest =  {
     "id":"Identity_cards",
     "issuer":{
-        "id":"0001",
+        "id":"0002",
         "name":"Altme issuer"
     },
     "output_descriptors":list()
@@ -57,6 +58,7 @@ credential_manifest["output_descriptors"].append(od_over18)
 credential_manifest["output_descriptors"].append(od_over13)
 credential_manifest["output_descriptors"].append(od_agerange)
 credential_manifest["output_descriptors"].append(od_idcard)
+credential_manifest["output_descriptors"].append(od_idlight)
 credential_manifest["output_descriptors"].append(od_liveness)
 credential_manifest["output_descriptors"].append(od_gender)
 credential_manifest["output_descriptors"].append(od_email)
@@ -143,7 +145,7 @@ def openid_configuration(mode):
     return jsonify(oidc)
 
 
-# token endpoint
+# token endpoint /token
 async def wallet_token(red, mode) :
     try :
         x_api_key = request.headers['X-API-KEY']
@@ -265,6 +267,7 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
+        credential['credentialSubject']['KycProvider'] = "Passbase.com"
         try :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :
@@ -288,6 +291,7 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
+        credential['credentialSubject']['KycProvider'] = "Passbase.com"
         try :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :
@@ -310,6 +314,7 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
+        credential['credentialSubject']['KycProvider'] = "Passbase.com"
  
     elif wallet_request['type'] == "Gender" :
         credential = json.loads(open("./verifiable_credentials/Gender.jsonld", 'r').read())
@@ -319,6 +324,7 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
+        credential['credentialSubject']['KycProvider'] = "Passbase.com"
         try :
             credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
         except :
@@ -334,6 +340,7 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
+        credential['credentialSubject']['KycProvider'] = "Passbase.com"
         try :
             credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['document_origin_country']
         except :
@@ -352,6 +359,7 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
+        credential['credentialSubject']['KycProvider'] = "Passbase.com"
         try :
             document_number = identity['resources'][0]['datapoints']['raw_mrz_string']
             credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
@@ -387,9 +395,28 @@ async def credential(red) :
             credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
             credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
             credential['credentialSubject']['KycId'] = data['passbase_key']
+            credential['credentialSubject']['KycProvider'] = "Passbase.com"
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_over18", "error_description" : "Data for Id card not available"}
+            endpoint_response = {"error" : "invalid_idcard", "error_description" : "Data for Id card not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+
+    elif wallet_request['type'] == "IdLight" :
+        credential = json.loads(open("./verifiable_credentials/IdLight.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential['issuer'] = issuer_did
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential['credentialSubject']['id'] = wallet_did
+        try :
+            credential['credentialSubject']['givenName'] = identity['owner']['first_name']
+            credential['credentialSubject']['familyName'] = identity['owner']['last_name']
+            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
+            credential['credentialSubject']['KycId'] = data['passbase_key']
+            credential['credentialSubject']['KycProvider'] = "Passbase.com"
+        except :
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_Idlight", "error_description" : "Data for Id light card not available"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     elif wallet_request['type'] == "AgeRange" :
@@ -399,6 +426,7 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['KycId'] = data['passbase_key']
+        credential['credentialSubject']['KycProvider'] = "Passbase.com"
         try :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :
