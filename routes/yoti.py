@@ -112,6 +112,7 @@ async def ai_over13(red, mode) :
         result = generate_session(encoded_string, mode)
         try :
             message.message_html("New request to Yoti", "thierry@altme.io", "", mode)
+            logging.info("email sent to Thierry")
         except :
             logging.error("failed to send message")
         try :
