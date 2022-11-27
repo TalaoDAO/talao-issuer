@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timedelta
 import didkit
 import hashlib
+from components import message
 logging.basicConfig(level=logging.INFO)
 
 EXPIRATION_DELAY = timedelta(weeks=52)
@@ -109,6 +110,10 @@ async def ai_over13(red, mode) :
     except :   
         logging.info("call Yoti server, age not available")
         result = generate_session(encoded_string, mode)
+        try :
+            message.message_html("New request to Yoti", "thierry@altme.io", "", mode)
+        except :
+            logging.error("failed to send message")
         try :
             age = result['age']
             st_dev = result['st_dev']
