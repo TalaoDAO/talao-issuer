@@ -60,7 +60,6 @@ async def tezotopia_enpoint(id, red, mode):
         credential = json.loads(red.get(id).decode())
         credential['credentialSubject']['id'] = request.form['subject_id']
         presentation_list =  json.loads(request.form['presentation'])
-        print('presentation list = ', presentation_list)
         for presentation in presentation_list :
             if isinstance(presentation, str) :
                 presentation = json.loads(presentation)
@@ -95,6 +94,7 @@ async def tezotopia_enpoint(id, red, mode):
             return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
         
         # update analytics
+        """
         url ="https://talao.co/analytics/api/newvoucher"   
         headers = { "key" : mode.analytics_key,
                     "Content-Type": "application/x-www-form-urlencoded"
@@ -102,6 +102,6 @@ async def tezotopia_enpoint(id, red, mode):
         resp = requests.post(url, data=signed_credential, headers=headers)
         if not 199<resp.status_code<300 :
             logging.warning("Get access refused, analytics are not updated ", resp.status_code)
-
+        """
         return jsonify(signed_credential)
  
