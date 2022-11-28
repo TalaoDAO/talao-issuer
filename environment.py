@@ -16,6 +16,7 @@ class currentMode() :
 			passwords = json.load(read_content)
 		self.yoti = passwords['yoti']                                # yoti.py
 		self.analytics_key = passwords['analytics']
+		self.analytics_key2 = passwords['analytics2']
 		self.password = passwords['password']
 		self.altme_passbase_check = passwords['altme_passbase_check'] # web_passabse.py
 		self.altme_wallet_webhook = passwords['altme_wallet_webhook'] # web_passbase.py

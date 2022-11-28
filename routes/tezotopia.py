@@ -63,11 +63,11 @@ async def tezotopia_enpoint(id, red, mode):
         for presentation in presentation_list :
             if isinstance(presentation, str) :
                 presentation = json.loads(presentation)
-            if presentation['verifiableCredential']['credentialSubject']['type'] == 'tezosAssociatedAddress' :
+            if presentation['verifiableCredential']['credentialSubject']['type'] == 'TezosAssociatedAddress' :
                 tezos_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
                 credential['credentialSubject']['associatedAddress']['blockchainTezos'] = tezos_address
                 credential['credentialSubject']['offers']['analytics'] = "https://talao.co/analytics/" + tezos_address
-            if presentation['verifiableCredential']['credentialSubject']['type'] == 'Over13' :
+            elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over13' :
                 credential['credentialSubject']['ageRange'] = "13+"
         
         if credential['credentialSubject'].get('ageRange') != "13+" :
@@ -96,7 +96,7 @@ async def tezotopia_enpoint(id, red, mode):
         # update analytics
         
         url ="https://talao.co/analytics/api/newvoucher"   
-        headers = { "key" : "SECRET_KEY", #mode.analytics_key,
+        headers = { "key" : mode.analytics_key2,
                     "Content-Type": "application/x-www-form-urlencoded"
         }
         resp = requests.post(url, data=signed_credential, headers=headers)
