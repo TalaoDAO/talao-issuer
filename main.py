@@ -17,6 +17,7 @@ import markdown.extensions.fenced_code
 
 # local dependencies
 from routes import web_emailpass, web_phonepass, web_passbase, web_talao_community, vc_issuer, yoti, dapp_register_gamer_pass
+from routes import tezotopia
 import environment
 
 import logging
@@ -64,6 +65,7 @@ web_talao_community.init_app(app, red, mode)
 web_passbase.init_app(app, red, mode)
 dapp_register_gamer_pass.init_app(app, red, mode)
 yoti.init_app(app, red, mode)
+tezotopia.init_app(app, red, mode)
 
 
 @babel.localeselector
