@@ -89,11 +89,11 @@
                 "blockchainTezos" : ""
         },
         "offers" : {
-            "startDate" : "2022-04-08T19:55:00Z",
-            "endDate" : "2022-06-08T19:55:00Z",
+            "startDate" : "2022-04-08T00:00:00Z",
+            "endDate" : "2023-12-01T00:00:00Z",
             "category" : "membershipcard",
             "duration" : "365",
-             "analytics" : "",
+            "analytics" : "",
             "userGuide" :  "https://altme.io/#steps-03-575161",
             "cardPrice" : {
                 "currency" : "EUR",
@@ -112,7 +112,7 @@
         },
         "issuedBy": {
             "logo": "ipfs://QmZmdndUVRoxiVhUnjGrKnNPn8ah3jT8fxTCLMnAzRAFFZ",
-            "name": "Talao"
+            "name": "Altme"
         }
     }
 }

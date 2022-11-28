@@ -1,4 +1,5 @@
 from flask import jsonify, request,  Response
+import requests
 import json
 import uuid
 from datetime import timedelta, datetime
@@ -7,14 +8,11 @@ logging.basicConfig(level=logging.INFO)
 from flask_babel import _
 import didkit
 
-OFFER_DELAY = timedelta(seconds= 10*60)
-CODE_DELAY = timedelta(seconds= 180)
-QRCODE_DELAY = 60
+OFFER_DELAY = timedelta(seconds= 180)
 
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
 issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
-
 
 #curl -d '{"webhook" : "https://altme.io/webhook", "contact_email" :"thierry@gmail.io"}'  -H "Content-Type: application/json" -X POST https://talao.co/sandbox/op/beacon/verifier/api/create/over13
 # curl -H "X-API-KEY: 123456" -X GET http://192.168.0.66:50000/tezotopia/membershipcard/123
@@ -39,13 +37,14 @@ async def tezotopia_enpoint(id, red, mode):
 
     if request.method == 'GET': 
         credential = json.load(open('./verifiable_credentials/MembershipCard_1.jsonld', 'r'))
+        credential['id'] = "urn:uuid:" + str(uuid.uuid1())
         credential["issuer"] = issuer_did 
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-        credential['expirationDate'] =  (datetime.now() + timedelta(days= 365)).isoformat() + "Z"
+        duration = int(credential['credentialSubject']['offers'].get('duration', 365))
+        credential['expirationDate'] =  (datetime.now() + timedelta(days= duration)).isoformat() + "Z"
         credential_manifest = json.load(open('./credential_manifest/tezotopia_membershipcard_credential_manifest.json', 'r'))
         credential_manifest['id'] = str(uuid.uuid1())
         credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
-        credential['id'] = "urn:uuid:" + str(uuid.uuid1())
         red.setex(id, 180, json.dumps(credential))
         credential['credentialSubject']['id'] = "did:wallet"
         credential_offer = {
@@ -60,21 +59,19 @@ async def tezotopia_enpoint(id, red, mode):
         # init credential
         credential = json.loads(red.get(id).decode())
         credential['credentialSubject']['id'] = request.form['subject_id']
-        credential['credentialSubject']['offers']['benefit']['discount'] = '25%'
         presentation_list =  request.form['presentation']
-        over13 = False
         for presentation in presentation_list :
             if json.loads(presentation)['credentialSubject']['type'] == 'tezosAssociatedAddress' :
-                credential['credentialSubject']['associatedAddress']['blockchainTezos'] = json.loads(presentation)['credentialSubject']['associatedAddress']
+                tezos_address = json.loads(presentation)['credentialSubject']['associatedAddress']
+                credential['credentialSubject']['associatedAddress']['blockchainTezos'] = tezos_address
+                credential['credentialSubject']['offers']['analytics'] = "https://talao.co/analytics/" + tezos_address
             if json.loads(presentation)['credentialSubject']['type'] == 'Over13' :
-                over13 = True
-        if not over13 :
+                credential['credentialSubject']['ageRange'] = "13+"
+        if credential['credentialSubject'].get('ageRange') != "13+" :
             logging.warning('Over 13 not available')
             endpoint_response= {"error": "unauthorized_client"}
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-        # signature 
         didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": issuer_vm
@@ -83,9 +80,21 @@ async def tezotopia_enpoint(id, red, mode):
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 issuer_key)
+        
+        # update analytics
+        url ="https://talao.co/analytics/api/newvoucher"   
+        headers = { "key" : mode.analytics_key,
+                    "Content-Type": "application/x-www-form-urlencoded"
+        }
+        resp = requests.post(url, data=signed_credential, headers=headers)
+        if not 199<resp.status_code<300 :
+            logging.warning("Get access refused, analytics are not updated ", resp.status_code)
+
         if not signed_credential :         # send event to client agent to go forward
             logging.error('credential signature failed')
-            return jsonify('Server failed'), 500
-        # Success : send event to client agent to go forward
+            endpoint_response= {"error": "server_error"}
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
+        
         return jsonify(signed_credential)
  
