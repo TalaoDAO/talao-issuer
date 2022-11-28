@@ -7,7 +7,7 @@
 
 
 workers = 5
-worker_class = 'gevent' 
+#worker_class = 'gevent' 
 
 loglevel = 'info'
 #errorlog = os.path.join(_VAR, 'log/api-error.log')
