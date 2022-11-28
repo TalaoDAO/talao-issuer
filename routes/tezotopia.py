@@ -59,14 +59,18 @@ async def tezotopia_enpoint(id, red, mode):
         # init credential
         credential = json.loads(red.get(id).decode())
         credential['credentialSubject']['id'] = request.form['subject_id']
-        presentation_list =  request.form['presentation']
+        presentation_list =  json.loads(request.form['presentation'])
+        print('presentation list = ', presentation_list)
         for presentation in presentation_list :
-            if json.loads(presentation)['credentialSubject']['type'] == 'tezosAssociatedAddress' :
-                tezos_address = json.loads(presentation)['credentialSubject']['associatedAddress']
+            if isinstance(presentation, str) :
+                presentation = json.loads(presentation)
+            if presentation['verifiableCredential']['credentialSubject']['type'] == 'tezosAssociatedAddress' :
+                tezos_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
                 credential['credentialSubject']['associatedAddress']['blockchainTezos'] = tezos_address
                 credential['credentialSubject']['offers']['analytics'] = "https://talao.co/analytics/" + tezos_address
-            if json.loads(presentation)['credentialSubject']['type'] == 'Over13' :
+            if presentation['verifiableCredential']['credentialSubject']['type'] == 'Over13' :
                 credential['credentialSubject']['ageRange'] = "13+"
+        
         if credential['credentialSubject'].get('ageRange') != "13+" :
             logging.warning('Over 13 not available')
             endpoint_response= {"error": "unauthorized_client"}
