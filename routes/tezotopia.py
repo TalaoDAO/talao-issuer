@@ -64,11 +64,11 @@ async def tezotopia_enpoint(id, red, mode):
         for presentation in presentation_list :
             if isinstance(presentation, str) :
                 presentation = json.loads(presentation)
-            if presentation['verifiableCredential'][0]['credentialSubject']['type'] == 'tezosAssociatedAddress' :
-                tezos_address = presentation['verifiableCredential'][0]['credentialSubject']['associatedAddress']
+            if presentation['verifiableCredential']['credentialSubject']['type'] == 'tezosAssociatedAddress' :
+                tezos_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
                 credential['credentialSubject']['associatedAddress']['blockchainTezos'] = tezos_address
                 credential['credentialSubject']['offers']['analytics'] = "https://talao.co/analytics/" + tezos_address
-            if presentation['verifiableCredential'][0]['credentialSubject']['type'] == 'Over13' :
+            if presentation['verifiableCredential']['credentialSubject']['type'] == 'Over13' :
                 credential['credentialSubject']['ageRange'] = "13+"
         
         if credential['credentialSubject'].get('ageRange') != "13+" :
