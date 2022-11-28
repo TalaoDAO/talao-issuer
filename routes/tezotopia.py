@@ -72,14 +72,23 @@ async def tezotopia_enpoint(id, red, mode):
             endpoint_response= {"error": "unauthorized_client"}
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+        
+        print(" credential before signature = ", credential)
+        
         didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": issuer_vm
             }
-        signed_credential =  await didkit.issue_credential(
+        try : 
+            signed_credential =  await didkit.issue_credential(
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 issuer_key)
+        except :
+            logging.error('credential signature failed')
+            endpoint_response= {"error": "server_error"}
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
         
         # update analytics
         url ="https://talao.co/analytics/api/newvoucher"   
@@ -90,11 +99,5 @@ async def tezotopia_enpoint(id, red, mode):
         if not 199<resp.status_code<300 :
             logging.warning("Get access refused, analytics are not updated ", resp.status_code)
 
-        if not signed_credential :         # send event to client agent to go forward
-            logging.error('credential signature failed')
-            endpoint_response= {"error": "server_error"}
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
-        
         return jsonify(signed_credential)
  
