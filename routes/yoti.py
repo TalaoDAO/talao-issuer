@@ -102,6 +102,7 @@ async def ai_over13(red, mode) :
         # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     # test if age estimate has already been done recently
+    print("challenge = ", challenge)
     try :
         data = json.loads(red.get(challenge).decode())
         age = data['age']
@@ -119,6 +120,7 @@ async def ai_over13(red, mode) :
             st_dev = result['st_dev']
             data = {'age' : age, 'st_dev' : st_dev}
             red.setex(challenge, 60, json.dumps(data))
+            logging.info("age is stored in redis")
         except :
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -200,6 +202,7 @@ async def ai_over18(red,mode) :
         # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
    
     #test if age estimate has already been done recently
+    print("challenge = ", challenge)
     try :
         data = json.loads(red.get(challenge).decode())
         age = data['age']
@@ -217,6 +220,7 @@ async def ai_over18(red,mode) :
             st_dev = result['st_dev']
             data = {'age' : age, 'st_dev' : st_dev}
             red.setex(challenge, 60, json.dumps(data))
+            logging.info("age is stored in redis")
         except :
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -299,6 +303,7 @@ async def ai_agerange(red, mode) :
         # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
    
      #test if age estimate has already been done recently
+    print("challenge = ", challenge)
     try :
         data = json.loads(red.get(challenge).decode())
         age = data['age']
@@ -316,6 +321,7 @@ async def ai_agerange(red, mode) :
             st_dev = result['st_dev']
             data = {'age' : age, 'st_dev' : st_dev}
             red.setex(challenge, 60, json.dumps(data))
+            logging.info("age is stored in redis")
         except :
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
