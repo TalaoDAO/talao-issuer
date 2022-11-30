@@ -135,7 +135,7 @@ async def ai_ageestimate(red, mode) :
     logging.info("age estimate by AI is %s", age)
     logging.info("estimate quality by AI is %s", st_dev)
     
-    if st_dev > 6 or prediction != 'real' :
+    if st_dev > 6  :
         logging.warning(json.dumps(result))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error" : "invalid_request", "error_description" : "Uncertain estimate"}
@@ -234,7 +234,7 @@ async def ai_over13(red, mode) :
     logging.info("age estimate by AI is %s", age)
     logging.info("estimate quality by AI is %s", st_dev)
     
-    if st_dev > 6 or prediction != 'real' :
+    if st_dev > 6  :
         logging.warning(json.dumps(result))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error" : "invalid_request", "error_description" : "Uncertain estimate"}
@@ -338,7 +338,7 @@ async def ai_over18(red,mode) :
     logging.info("age estimate by AI is %s", age)
     logging.info("estimate quality by AI is %s", st_dev)
    
-    if st_dev > 6 or prediction != 'real':
+    if st_dev > 6 :
         logging.warning(json.dumps(result))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error" : "invalid_request", "error_description" : "Uncertain estimate"}
@@ -441,7 +441,7 @@ async def ai_agerange(red, mode) :
     logging.info("age estimate by AI is %s", age)
     logging.info("estimate quality by AI is %s", st_dev)
     
-    if st_dev > 6 or prediction != 'real' :
+    if st_dev > 6  :
         logging.warning(json.dumps(result))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error" : "invalid_request", "error_description" : "Uncertain estimate"}
