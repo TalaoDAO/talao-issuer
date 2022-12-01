@@ -1,0 +1,45 @@
+{
+    "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+         {
+            "TwitterVerification": "https://tzprofiles.com/TwitterVerification",
+            "TwitterAccount" : "https://github.com/TalaoDAO/context/blob/main/README.md",
+             "sameAs": "http://schema.org/sameAs",
+              "TwitterVerificationPublicTweet": 
+                {
+                    "@context": {
+                        "@protected": true,
+                        "@version": 1.1,
+                        "handle": "https://tzprofiles.com/handle",
+                        "timestamp": {"@id": "https://tzprofiles.com/timestamp", "@type": "http://www.w3.org/2001/XMLSchema#dateTime"},
+                        "tweetId": "https://tzprofiles.com/tweetId"
+                    },
+                    "@id": "https://github.com/TalaoDAO/context/blob/main/README.md"
+                    },
+            "issuedBy" : 
+                {
+                    "@id" : "schema:issuedBy",
+                    "@context" : {
+                        "@version": 1.1,
+                        "@protected": true,
+                        "website" : "schema:website",
+                        "name" : "schema:name"
+                    }
+            }
+        }
+    ],
+    "id": "",
+    "type": ["VerifiableCredential", "TwitterAccount"],
+    "credentialSubject":
+        {
+            "id": "",
+             "sameAs": "",
+             "type" : "TwitterAccount",
+            "issuedBy": {
+            "name": "Altme"
+        }
+        },
+    "issuer": "",
+    "issuanceDate": "",
+"evidence": {"type": ["TwitterVerificationPublicTweet"], "timestamp": "2021-05-27T02:27:09.138Z", "handle": "CopingCrypto", "tweetId": "1397741103747584000"}
+}

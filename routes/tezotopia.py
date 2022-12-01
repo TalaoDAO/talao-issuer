@@ -75,9 +75,7 @@ async def tezotopia_enpoint(id, red, mode):
             endpoint_response= {"error": "unauthorized_client"}
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-        
-        print(" credential before signature = ", credential)
-        
+                
         didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": issuer_vm

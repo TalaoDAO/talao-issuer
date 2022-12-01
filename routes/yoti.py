@@ -135,6 +135,9 @@ async def ai_ageestimate(red, mode) :
     logging.info("age estimate by AI is %s", age)
     logging.info("estimate quality by AI is %s", st_dev)
     
+    if prediction != 'real' :
+        logging.warning('prediction = %s', prediction)
+    
     if st_dev > 6  :
         logging.warning(json.dumps(result))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -212,10 +215,6 @@ async def ai_over13(red, mode) :
     except :   
         logging.info("call Yoti server, age not available")
         result = generate_session(encoded_string, mode)
-        try :
-            message.message_html("New request to Yoti", "thierry@altme.io", "", mode)
-        except :
-            logging.error("failed to send message")
         try :
             age = result['age']['age']
             st_dev = result['age']['st_dev']
@@ -317,10 +316,6 @@ async def ai_over18(red,mode) :
         logging.info("call Yoti server, age not available")
         result = generate_session(encoded_string, mode)
         try :
-            message.message_html("New request to Yoti", "thierry@altme.io", "", mode)
-        except :
-            logging.error("failed to send message")
-        try :
             age = result['age']['age']
             st_dev = result['age']['st_dev']
             prediction = result['antispoofing']['prediction']
@@ -420,10 +415,6 @@ async def ai_agerange(red, mode) :
     except :   
         logging.info("call Yoti server, age not available")
         result = generate_session(encoded_string, mode)
-        try :
-            message.message_html("New request to Yoti", "thierry@altme.io", "", mode)
-        except :
-            logging.error("failed to send message")
         try :
             age = result['age']['age']
             st_dev = result['age']['st_dev']
