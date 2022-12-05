@@ -11,17 +11,21 @@ import didkit
 OFFER_DELAY = timedelta(seconds= 180)
 
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
-issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
+#issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
+#issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
+issuer_vm = "did:web:app.altme.io:issuer#key-1"
+issuer_did = "did:web:app.altme.io:issuer"
+
+
 
 #curl -d '{"webhook" : "https://altme.io/webhook", "contact_email" :"thierry@gmail.io"}'  -H "Content-Type: application/json" -X POST https://talao.co/sandbox/op/beacon/verifier/api/create/over13
 # curl -H "X-API-KEY: 123456" -X GET http://192.168.0.66:50000/tezotopia/membershipcard/123
 
 def init_app(app,red, mode) :
-    app.add_url_rule('/tezotopia/membershipcard/<id>',  view_func=tezotopia_enpoint, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+    app.add_url_rule('/tezotopia/membershipcard/<id>',  view_func=tezotopia_endpoint, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     return
 
-async def tezotopia_enpoint(id, red, mode): 
+async def tezotopia_endpoint(id, red, mode): 
     try : 
         x_api_key = request.headers['X-API-KEY']
     except :
@@ -33,7 +37,7 @@ async def tezotopia_enpoint(id, red, mode):
         logging.warning('api key is incorrect')
         endpoint_response= {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+        return Response(response=json.dumps(endpoint_response), status=401, headers=headers)
 
     if request.method == 'GET': 
         credential = json.load(open('./verifiable_credentials/MembershipCard_1.jsonld', 'r'))
@@ -91,8 +95,7 @@ async def tezotopia_enpoint(id, red, mode):
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
         
-        # update analytics
-        
+        # update analytics   
         url ="https://talao.co/analytics/api/newvoucher"   
         headers = { "key" : mode.analytics_key2,
                     "Content-Type": "application/x-www-form-urlencoded"

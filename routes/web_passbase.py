@@ -34,8 +34,10 @@ Altme team - <a href='https://app.altme.io/app/download'>Open your wallet</a>
 """
 
 key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
-vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
+#issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
+#vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
+vm = "did:web:app.altme.io:issuer#key-1"
+issuer_did = "did:web:app.altme.io:issuer"
 
  
 def init_app(app,red, mode) :

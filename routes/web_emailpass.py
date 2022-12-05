@@ -15,8 +15,8 @@ CODE_DELAY = timedelta(seconds= 180)
 QRCODE_DELAY = 60
 
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
-issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
+issuer_vm = "did:web:app.altme.io:issuer#key-1"
+issuer_did = "did:web:app.altme.io:issuer"
 
 
 def init_app(app,red, mode) :
