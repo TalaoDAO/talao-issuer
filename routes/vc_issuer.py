@@ -46,19 +46,19 @@ od_gender = json.loads(open("./credential_manifest/gender_credential_manifest.js
 od_nationality = json.loads(open("./credential_manifest/nationality_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_passportnumber = json.loads(open("./credential_manifest/passportnumber_credential_manifest.json", 'r').read())['output_descriptors'][0]
 
-pd_tezotopia_membershipcard = json.loads(open("./credential_manifest/tezotopia_membershipcard_credential_manifest.json", 'r').read())['presentation_definition']
+#id_tezotopia_membershipcard = json.loads(open("./credential_manifest/tezotopia_membershipcard_credential_manifest.json", 'r').read())['presentation_definition']['input_descriptors']
 
 
 
 credential_manifest =  {
     "id":"Identity_cards",
     "issuer":{
-        "id":"0002",
+        "id":"uuid:0001",
         "name":"Altme issuer"
     },
-    "output_descriptors":list(),
-    "presentation_definition" : list()
-}     
+    "output_descriptors":list()
+}
+
 credential_manifest["output_descriptors"].append(od_over18)
 credential_manifest["output_descriptors"].append(od_over13)
 credential_manifest["output_descriptors"].append(od_agerange)
@@ -71,7 +71,7 @@ credential_manifest["output_descriptors"].append(od_nationality)
 #credential_manifest["output_descriptors"].append(od_phone)
 credential_manifest["output_descriptors"].append(od_passportnumber)
 
-credential_manifest["presentation_definition"].append(pd_tezotopia_membershipcard)
+#credential_manifest["presentation_definition"]["input_descriptors"].append(id_tezotopia_membershipcard)
 
 
 def get_passbase_status_from_key(key) :
