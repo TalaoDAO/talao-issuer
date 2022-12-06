@@ -115,7 +115,7 @@ async def tezotopia_endpoint(id, red, mode):
                 'address' : tezos_address,
                 'did' : issuer_did
             }
-            resp = requests.post(url, data=json.dumps(data), headers=headers)
+            resp = requests.post(url, data=data, headers=headers)
             if not 199<resp.status_code<300 :
                 logging.warning("Get access refused, SBT not sent %s", resp.status_code)
             else :
