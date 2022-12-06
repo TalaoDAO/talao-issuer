@@ -96,7 +96,7 @@ async def tezotopia_endpoint(id, red, mode):
             return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
         
         # update analytics   
-        url ="https://talao.co/analytics/api/newvoucher"   
+        url = 'https://talao.co/analytics/api/newvoucher'   
         headers = { "key" : mode.analytics_key2,
                     "Content-Type": "application/x-www-form-urlencoded"
         }
@@ -104,5 +104,23 @@ async def tezotopia_endpoint(id, red, mode):
         if not 199<resp.status_code<300 :
             logging.warning("Get access refused, analytics are not updated ", resp.status_code)
         
+        try :
+        # issue SBT
+            url = 'https://altme-api.dvl.compell.io/mint'
+            headers = {
+                    "Content-Type": "application/x-www-form-urlencoded"
+            }
+            data = {
+                'name' : "Tezotopia Membership Card",
+                'address' : tezos_address,
+                'did' : issuer_did
+            }
+            resp = requests.post(url, data=json.dumps(data), headers=headers)
+            if not 199<resp.status_code<300 :
+                logging.warning("Get access refused, SBT not sent", resp.status_code)
+            else :
+                logging.warning("SBT sent", resp.status_code)          
+        except :
+            logging.warniong('SBT code failed')
         return jsonify(signed_credential)
  
