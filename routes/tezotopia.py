@@ -119,8 +119,8 @@ async def tezotopia_endpoint(id, red, mode):
             if not 199<resp.status_code<300 :
                 logging.warning("Get access refused, SBT not sent %s", resp.status_code)
             else :
-                logging.warning("SBT sent")          
+                logging.info("SBT sent")          
         except :
-            logging.warniong('SBT code failed')
+            logging.warning('SBT code failed')
         return jsonify(signed_credential)
  
