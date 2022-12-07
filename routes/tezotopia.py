@@ -119,13 +119,14 @@ async def tezotopia_endpoint(id, red, mode):
             "is_transferable":False,
             "shouldPreferSymbol":False
         }
-        metadata_ipfs = add_dict_to_ipfs(metadata, "VC-SBT" + credential['id'] , mode)
-        if not metadata_ipfs :
-            metadata_url = "ipfs://" + metadata_ipfs
-        print("metadata url = ", metadata_url)
-        
-        #issue_sbt(tezos_address, metadata_url)
-
+        try : 
+            metadata_ipfs = add_dict_to_ipfs(metadata, "VC-SBT" + credential['id'] , mode)
+            print("metadata ipfs = ", metadata_ipfs)
+            if not metadata_ipfs :
+                metadata_url = "ipfs://" + metadata_ipfs
+                issue_sbt(tezos_address, metadata_url)
+        except :
+            print("code failed")
         
         # send credential to wallet        
         return jsonify(signed_credential)
