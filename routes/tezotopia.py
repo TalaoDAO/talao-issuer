@@ -104,23 +104,61 @@ async def tezotopia_endpoint(id, red, mode):
         if not 199<resp.status_code<300 :
             logging.warning("Get access refused, analytics are not updated ", resp.status_code)
         
-        try :
         # issue SBT
-            url = 'https://altme-api.dvl.compell.io/mint'
-            headers = {
-                    "Content-Type": "application/x-www-form-urlencoded"
-            }
-            data = {
-                'name' : "Tezotopia Membership Card",
-                'address' : tezos_address,
-                'did' : issuer_did
-            }
-            resp = requests.post(url, data=data, headers=headers)
-            if not 199<resp.status_code<300 :
-                logging.warning("Get access refused, SBT not sent %s", resp.status_code)
-            else :
-                logging.info("SBT sent")          
-        except :
-            logging.warning('SBT code failed')
+     
+        metadata = {
+            "name":"Tezotopia Membership Card",
+            "symbol":"",
+            "creators":["Altme.io","did:web:altme.io:did:web:app.altme.io:issuer"],
+            "decimals":"0",
+            "displayUri":"ipfs://QmPUQZUP3aB44JFCgjj7a7PtB4yng8LhA9KE7UySDosRir",
+            "publishers":["compell.io"],
+            "artifactUri": "ipfs://QmPUQZUP3aB44JFCgjj7a7PtB4yng8LhA9KE7UySDosRir",
+            "description":"During the next 365 days, when you will MINT an NFT on Tezotopia Starbase or buy a DROPS on Tezotopia Marketplace you will immediately receive a cashback on the Tezos blockchain address associated to this card. Please, use the same Tezos address to play on Tezotopia as the one you associated to this card. ID: Tezotopia Membership Card",
+            "thumbnailUri": "ipfs://QmPUQZUP3aB44JFCgjj7a7PtB4yng8LhA9KE7UySDosRir",
+            "is_transferable":False,
+            "shouldPreferSymbol":False
+        }
+        metadata_ipfs = add_dict_to_ipfs(metadata, "VC-SBT" + credential['id'] , mode)
+        if not metadata_ipfs :
+            metadata_url = "ipfs://" + metadata_ipfs
+        print("metadata url = ", metadata_url)
+        
+        #issue_sbt(tezos_address, metadata_url)
+
+        
+        # send credential to wallet        
         return jsonify(signed_credential)
+
+
+def issue_sbt(address, metadata_url) :
+ # issue SBT
+        url = 'https://altme-api.dvl.compell.io/mint'
+        headers = {
+                    "Content-Type": "application/x-www-form-urlencoded"
+        }
+        data = {
+            "address" : address,
+            "metadata" : metadata_url
+        }
+
+        resp = requests.post(url, data=data, headers=headers)
+        if not 199<resp.status_code<300 :
+            logging.warning("Get access refused, SBT not sent %s", resp.status_code)
+        else :
+            logging.info("SBT sent")
+        return
  
+
+def add_dict_to_ipfs(data_dict, name, mode) :
+	api_key = mode.pinata_api_key
+	secret = mode.pinata_secret_api_key
+	headers = {'Content-Type': 'application/json',
+				'pinata_api_key': api_key,
+               'pinata_secret_api_key': secret}
+	data = { 'pinataMetadata' : {'name' : name}, 'pinataContent' : data_dict}
+	try :
+		response = requests.post('https://api.pinata.cloud/pinning/pinJSONToIPFS', data=json.dumps(data), headers=headers)
+	except :
+		return None
+	return response.json()['IpfsHash']

@@ -17,6 +17,8 @@ class currentMode() :
 		self.yoti = passwords['yoti']                                # yoti.py
 		self.analytics_key = passwords['analytics']
 		self.analytics_key2 = passwords['analytics2']
+		self.pinata_api_key = passwords['pinata_api_key'] # used in Talao_ipfs.py
+		self.pinata_secret_api_key = passwords['pinata_secret_api_key'] # used in Talao_ipfs.py
 		self.password = passwords['password']
 		self.altme_passbase_check = passwords['altme_passbase_check'] # web_passabse.py
 		self.altme_wallet_webhook = passwords['altme_wallet_webhook'] # web_passbase.py
