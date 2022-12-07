@@ -123,7 +123,7 @@ async def tezotopia_endpoint(id, red, mode):
         try : 
             metadata_ipfs = add_dict_to_ipfs(metadata, "sbt:" + credential['id'] , mode)
             print("metadata ipfs = ", metadata_ipfs)
-            if not metadata_ipfs :
+            if metadata_ipfs :
                 metadata_url = "ipfs://" + metadata_ipfs
                 issue_sbt(tezos_address, metadata_url)
                 print('issue sbt')
