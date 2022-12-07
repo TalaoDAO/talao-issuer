@@ -126,6 +126,7 @@ async def tezotopia_endpoint(id, red, mode):
             if not metadata_ipfs :
                 metadata_url = "ipfs://" + metadata_ipfs
                 issue_sbt(tezos_address, metadata_url)
+                print('issue sbt')
         except :
             print("code failed")
         
@@ -134,21 +135,20 @@ async def tezotopia_endpoint(id, red, mode):
 
 
 def issue_sbt(address, metadata_ipfs_url) :
- # issue SBT
-        url = 'https://altme-api.dvl.compell.io/mint'
-        headers = {
+    url = 'https://altme-api.dvl.compell.io/mint'
+    headers = {
                     "Content-Type": "application/x-www-form-urlencoded"
-        }
-        data = {
-            "transfer_to" : address,
-            "ipfs_url" : metadata_ipfs_url
-        }
-        resp = requests.post(url, data=data, headers=headers)
-        if not 199<resp.status_code<300 :
-            logging.warning("Get access refused, SBT not sent %s", resp.status_code)
-        else :
-            logging.info("SBT sent")
-        return
+    }
+    data = {
+        "transfer_to" : address,
+        "ipfs_url" : metadata_ipfs_url
+    }
+    resp = requests.post(url, data=data, headers=headers)
+    if not 199<resp.status_code<300 :
+        logging.warning("Get access refused, SBT not sent %s", resp.status_code)
+    else :
+        logging.info("SBT sent")
+    return
  
 
 def add_dict_to_ipfs(data_dict, name, mode) :
