@@ -105,14 +105,15 @@ async def tezotopia_endpoint(id, red, mode):
             logging.warning("Get access refused, analytics are not updated ", resp.status_code)
         
         # issue SBT
-     
         metadata = {
-            "name":"Tezotopia Membership Card",
-            "symbol":"",
+            "name":"Tezotopia Membership",
+            "symbol":"ALTMESBT",
             "creators":["Altme.io","did:web:altme.io:did:web:app.altme.io:issuer"],
             "decimals":"0",
             "displayUri":"ipfs://QmPUQZUP3aB44JFCgjj7a7PtB4yng8LhA9KE7UySDosRir",
             "publishers":["compell.io"],
+            "minter": "KT1JwgHTpo4NZz6jKK89rx3uEo9L5kLY1FQe",
+            "rights": "No License / All Rights Reserved",
             "artifactUri": "ipfs://QmPUQZUP3aB44JFCgjj7a7PtB4yng8LhA9KE7UySDosRir",
             "description":"During the next 365 days, when you will MINT an NFT on Tezotopia Starbase or buy a DROPS on Tezotopia Marketplace you will immediately receive a cashback on the Tezos blockchain address associated to this card. Please, use the same Tezos address to play on Tezotopia as the one you associated to this card. ID: Tezotopia Membership Card",
             "thumbnailUri": "ipfs://QmPUQZUP3aB44JFCgjj7a7PtB4yng8LhA9KE7UySDosRir",
@@ -120,7 +121,7 @@ async def tezotopia_endpoint(id, red, mode):
             "shouldPreferSymbol":False
         }
         try : 
-            metadata_ipfs = add_dict_to_ipfs(metadata, "VC-SBT" + credential['id'] , mode)
+            metadata_ipfs = add_dict_to_ipfs(metadata, "sbt:" + credential['id'] , mode)
             print("metadata ipfs = ", metadata_ipfs)
             if not metadata_ipfs :
                 metadata_url = "ipfs://" + metadata_ipfs
@@ -132,17 +133,16 @@ async def tezotopia_endpoint(id, red, mode):
         return jsonify(signed_credential)
 
 
-def issue_sbt(address, metadata_url) :
+def issue_sbt(address, metadata_ipfs_url) :
  # issue SBT
         url = 'https://altme-api.dvl.compell.io/mint'
         headers = {
                     "Content-Type": "application/x-www-form-urlencoded"
         }
         data = {
-            "address" : address,
-            "metadata" : metadata_url
+            "transfer_to" : address,
+            "ipfs_url" : metadata_ipfs_url
         }
-
         resp = requests.post(url, data=data, headers=headers)
         if not 199<resp.status_code<300 :
             logging.warning("Get access refused, SBT not sent %s", resp.status_code)
