@@ -112,13 +112,13 @@ async def tezotopia_endpoint(id, red, mode):
             "creators":["Altme.io","did:web:altme.io:did:web:app.altme.io:issuer"],
             "decimals":"0",
             "identifier" :  credential['id'],
-            "displayUri":"ipfs://QmPUQZUP3aB44JFCgjj7a7PtB4yng8LhA9KE7UySDosRir",
+            "displayUri":"ipfs://QmVCUKEdc3JcBs441o3dPEVz8A84dDypz9yotx68YkK7KW",
             "publishers":["compell.io"],
             "minter": "KT1JwgHTpo4NZz6jKK89rx3uEo9L5kLY1FQe",
             "rights": "No License / All Rights Reserved",
-            "artifactUri": "ipfs://QmPUQZUP3aB44JFCgjj7a7PtB4yng8LhA9KE7UySDosRir",
+            "artifactUri": "ipfs://QmVCUKEdc3JcBs441o3dPEVz8A84dDypz9yotx68YkK7KW",
             "description":"During the next 365 days, when you will MINT an NFT on Tezotopia Starbase or buy a DROPS on Tezotopia Marketplace you will immediately receive a cashback on the Tezos blockchain address associated to this card. Please, use the same Tezos address to play on Tezotopia as the one you associated to this card. ID: Tezotopia Membership Card",
-            "thumbnailUri": "ipfs://QmPUQZUP3aB44JFCgjj7a7PtB4yng8LhA9KE7UySDosRir",
+            "thumbnailUri": "ipfs://QmZgKuTdhmywKzaisjHQyskRodnxTESUiUdbVcrEeXYr14",
             "is_transferable":False,
             "shouldPreferSymbol":False
         }
