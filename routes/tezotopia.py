@@ -105,11 +105,13 @@ async def tezotopia_endpoint(id, red, mode):
             logging.warning("Get access refused, analytics are not updated ", resp.status_code)
         
         # issue SBT
+        # https://tzip.tezosagora.org/proposal/tzip-21/#creators-array
         metadata = {
             "name":"Tezotopia Membership",
             "symbol":"ALTMESBT",
             "creators":["Altme.io","did:web:altme.io:did:web:app.altme.io:issuer"],
             "decimals":"0",
+            "identifier" :  credential['id'],
             "displayUri":"ipfs://QmPUQZUP3aB44JFCgjj7a7PtB4yng8LhA9KE7UySDosRir",
             "publishers":["compell.io"],
             "minter": "KT1JwgHTpo4NZz6jKK89rx3uEo9L5kLY1FQe",
@@ -120,24 +122,23 @@ async def tezotopia_endpoint(id, red, mode):
             "is_transferable":False,
             "shouldPreferSymbol":False
         }
-        try : 
-            metadata_ipfs = add_dict_to_ipfs(metadata, "sbt:" + credential['id'] , mode)
-            print("metadata ipfs = ", metadata_ipfs)
-            if metadata_ipfs :
-                metadata_url = "ipfs://" + metadata_ipfs
-                issue_sbt(tezos_address, metadata_url)
-                print('issue sbt')
-        except :
-            print("code failed")
+        # issue SBT on Ghostnet
+        if issue_sbt(tezos_address, metadata, credential['id'], mode) :
+            logging.info("SBT sent")
         
         # send credential to wallet        
         return jsonify(signed_credential)
 
 
-def issue_sbt(address, metadata_ipfs_url) :
+def issue_sbt(address, metadata, credential_id, mode) :
+    metadata_ipfs = add_to_ipfs(metadata, "sbt:" + credential_id , mode)
+    if metadata_ipfs :
+        metadata_ipfs_url = "ipfs://" + metadata_ipfs
+    else :
+        return None
     url = 'https://altme-api.dvl.compell.io/mint'
     headers = {
-                    "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded"
     }
     data = {
         "transfer_to" : address,
@@ -146,20 +147,26 @@ def issue_sbt(address, metadata_ipfs_url) :
     resp = requests.post(url, data=data, headers=headers)
     if not 199<resp.status_code<300 :
         logging.warning("Get access refused, SBT not sent %s", resp.status_code)
-    else :
-        logging.info("SBT sent")
-    return
+        return None
+    return True
  
 
-def add_dict_to_ipfs(data_dict, name, mode) :
-	api_key = mode.pinata_api_key
-	secret = mode.pinata_secret_api_key
-	headers = {'Content-Type': 'application/json',
-				'pinata_api_key': api_key,
-               'pinata_secret_api_key': secret}
-	data = { 'pinataMetadata' : {'name' : name}, 'pinataContent' : data_dict}
-	try :
-		response = requests.post('https://api.pinata.cloud/pinning/pinJSONToIPFS', data=json.dumps(data), headers=headers)
-	except :
-		return None
-	return response.json()['IpfsHash']
+def add_to_ipfs(data_dict, name, mode) :
+    api_key = mode.pinata_api_key
+    secret = mode.pinata_secret_api_key
+    headers = {
+        'Content-Type': 'application/json',
+		'pinata_api_key': api_key,
+        'pinata_secret_api_key': secret}
+    data = {
+        'pinataMetadata' : {
+            'name' : name
+        },
+        'pinataContent' : data_dict
+    }
+    r = requests.post('https://api.pinata.cloud/pinning/pinJSONToIPFS', data=json.dumps(data), headers=headers)
+    if not 199<r.status_code<300 :
+        logging.warning("POST access to Pinatta refused")
+        return None
+    else :
+	    return r.json()['IpfsHash']
