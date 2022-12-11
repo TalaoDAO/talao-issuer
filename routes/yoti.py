@@ -17,12 +17,8 @@ EXPIRATION_DELAY = timedelta(weeks=52)
 key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 #issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 #issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
-
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
-
-
-
 
 PATHS = {
     "AGE": '/age',
@@ -35,13 +31,14 @@ def init_app(app,red, mode) :
     app.add_url_rule('/ai/over18',  view_func=ai_over18, methods = ['POST'], defaults ={'mode' : mode, 'red' : red})
     app.add_url_rule('/ai/agerange',  view_func=ai_agerange, methods = ['POST'], defaults ={'mode' : mode, 'red' : red})
     app.add_url_rule('/ai/ageestimate',  view_func=ai_ageestimate, methods = ['POST'], defaults ={'mode' : mode, 'red' : red})
-
     return
+
 
 def execute(request):
     response = requests.request(
         url=request.url, img=request.img, headers=request.headers, method=request.method)
     return response.content
+
 
 def generate_session(encoded_string, mode):
     img = {"img" : encoded_string.decode("utf-8"),
@@ -66,8 +63,10 @@ def generate_session(encoded_string, mode):
     response_payload = json.loads(response.text)
     return response_payload
 
+
 def sha256 (x) :
     return hashlib.sha256(x).digest().hex()
+
 
 # credential endpoint
 async def ai_ageestimate(red, mode) :
@@ -117,12 +116,12 @@ async def ai_ageestimate(red, mode) :
         prediction = data['prediction']
         logging.info("age is available in redis")
     except :   
-        logging.info("call Yoti server, age not available")
+        logging.info("call Yoti server")
         result = generate_session(encoded_string, mode)
         try :
             message.message_html("New request to Yoti", "thierry@altme.io", "", mode)
         except :
-            logging.error("failed to send message")
+            logging.warning("failed to send message")
         try :
             age = result['age']['age']
             st_dev = result['age']['st_dev']
@@ -131,18 +130,19 @@ async def ai_ageestimate(red, mode) :
                      'st_dev' : st_dev,
                      'prediction' : prediction}
             red.setex(challenge, 30, json.dumps(data))
-            logging.info("age is stored in redis")
+            logging.info("age is now stored in redis for 30s")
         except :
-            logging.warning(json.dumps(result))
+            logging.error(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_request", "error_description" : json.dumps(result)}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     logging.info("age estimate by AI is %s", age)
     logging.info("estimate quality by AI is %s", st_dev)
+    logging.info("prediction is %s", prediction)
     
-    if prediction != 'real' :
-        logging.warning('prediction = %s', prediction)
+    #if prediction != 'real' :
+    #    logging.warning('prediction = %s', prediction)
     
     if st_dev > 6  :
         logging.warning(json.dumps(result))
@@ -157,8 +157,8 @@ async def ai_ageestimate(red, mode) :
     credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
     credential['credentialSubject']['id'] = wallet_did
     credential['credentialSubject']['ageEstimate'] = str(age)
-    credential['credentialSubject']['KycId'] =  'AI age estimate'
-    credential['credentialSubject']['KycProvider'] = 'Yoti'
+    credential['credentialSubject']['kycId'] =  'AI age estimate'
+    credential['credentialSubject']['kycProvider'] = 'Yoti'
     didkit_options = {
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
@@ -236,8 +236,8 @@ async def ai_over13(red, mode) :
             endpoint_response = {"error" : "invalid_request", "error_description" : json.dumps(result)}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    logging.info("age estimate by AI is %s", age)
-    logging.info("estimate quality by AI is %s", st_dev)
+    #logging.info("age estimate by AI is %s", age)
+    #logging.info("estimate quality by AI is %s", st_dev)
     
     if st_dev > 6  :
         logging.warning(json.dumps(result))
@@ -252,8 +252,8 @@ async def ai_over13(red, mode) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] =  'AI age estimate'
-        credential['credentialSubject']['KycProvider'] = 'Yoti'
+        credential['credentialSubject']['kycId'] =  'AI age estimate'
+        credential['credentialSubject']['kycProvider'] = 'Yoti'
         didkit_options = {
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
@@ -336,8 +336,8 @@ async def ai_over18(red,mode) :
             endpoint_response = {"error" : "invalid_request", "error_description" : json.dumps(result)}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
-    logging.info("age estimate by AI is %s", age)
-    logging.info("estimate quality by AI is %s", st_dev)
+    #logging.info("age estimate by AI is %s", age)
+    #logging.info("estimate quality by AI is %s", st_dev)
    
     if st_dev > 6 :
         logging.warning(json.dumps(result))
@@ -352,8 +352,8 @@ async def ai_over18(red,mode) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] =  'AI age estimate'
-        credential['credentialSubject']['KycProvider'] = 'Yoti'
+        credential['credentialSubject']['kycId'] =  'AI age estimate'
+        credential['credentialSubject']['kycProvider'] = 'Yoti'
         didkit_options = {
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
@@ -435,8 +435,8 @@ async def ai_agerange(red, mode) :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_request", "error_description" : json.dumps(result)}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    logging.info("age estimate by AI is %s", age)
-    logging.info("estimate quality by AI is %s", st_dev)
+    #logging.info("age estimate by AI is %s", age)
+    #logging.info("estimate quality by AI is %s", st_dev)
     
     if st_dev > 6  :
         logging.warning(json.dumps(result))
@@ -450,8 +450,8 @@ async def ai_agerange(red, mode) :
     credential['issuer'] = issuer_did
     credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
     credential['credentialSubject']['id'] = wallet_did
-    credential['credentialSubject']['KycId'] =  'AI age estimate'
-    credential['credentialSubject']['KycProvider'] = 'Yoti'
+    credential['credentialSubject']['kycId'] =  'AI age estimate'
+    credential['credentialSubject']['kycProvider'] = 'Yoti'
     #age range : "-13" or "14-17” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
     if age < 13 :
         credential['credentialSubject']['ageRange'] = "-13"

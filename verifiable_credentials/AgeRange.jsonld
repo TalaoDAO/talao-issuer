@@ -4,7 +4,7 @@
       
         {
             "AgeRange" : {
-                "@id": "https://github.com/TalaoDAO/context/blob/main/README.agerange",
+                "@id": "https://github.com/TalaoDAO/context#agerange",
                 "@context": {
                     "@version": 1.1,
                     "@protected": true,
@@ -12,8 +12,8 @@
                     "id": "@id",
                     "type": "@type",
                     "ageRange" : "schema:ageRange",
-                    "KycProvider" : "schema:company",
-                    "KycId" : "schema:identifier",
+                    "kycProvider" : "schema:company",
+                    "kycId" : "schema:identifier",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {
@@ -34,8 +34,8 @@
     "credentialSubject" : {
         "id": "",
         "ageRange" : "",
-        "KycProvider" : "",
-        "KycId" : "",
+        "kycProvider" : "",
+        "kycId" : "",
         "type" : "AgeRange",
         "issuedBy": {
             "name": "Altme"

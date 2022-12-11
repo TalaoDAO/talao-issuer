@@ -15,9 +15,10 @@ CODE_DELAY = timedelta(seconds= 180)
 QRCODE_DELAY = 60
 
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
-issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
-
+#issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
+#issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
+issuer_vm = "did:web:app.altme.io:issuer#key-1"
+issuer_did = "did:web:app.altme.io:issuer"
 
 def init_app(app,red, mode) :
     app.add_url_rule('/twitter/<id>',  view_func=twitter_endpoint, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
@@ -41,7 +42,7 @@ async def twitter_endpoint(id, red, mode):
 
     if request.method == 'GET': 
         # make an offer  
-        credential = json.load(open('./verifiable_credentials/TwitterAccount.jsonld', 'r'))
+        credential = json.load(open('./verifiable_credentials/TwitterAccountProof.jsonld', 'r'))
         credential['id'] = "urn:uuid:" + str(uuid.uuid1())
         credential["issuer"] = issuer_did 
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"

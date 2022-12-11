@@ -7,12 +7,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 from flask_babel import _
 import didkit
+from altme_on_chain import issue_sbt
 
 OFFER_DELAY = timedelta(seconds= 180)
 
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-#issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
-#issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
 
@@ -122,51 +121,10 @@ async def tezotopia_endpoint(id, red, mode):
             "is_transferable":False,
             "shouldPreferSymbol":False
         }
-        # issue SBT on Ghostnet
+        # issue SBT 
         if issue_sbt(tezos_address, metadata, credential['id'], mode) :
             logging.info("SBT sent")
         
         # send credential to wallet        
         return jsonify(signed_credential)
 
-
-def issue_sbt(address, metadata, credential_id, mode) :
-    metadata_ipfs = add_to_ipfs(metadata, "sbt:" + credential_id , mode)
-    if metadata_ipfs :
-        metadata_ipfs_url = "ipfs://" + metadata_ipfs
-    else :
-        return None
-    url = 'https://altme-api.dvl.compell.io/mint'
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-    data = {
-        "transfer_to" : address,
-        "ipfs_url" : metadata_ipfs_url
-    }
-    resp = requests.post(url, data=data, headers=headers)
-    if not 199<resp.status_code<300 :
-        logging.warning("Get access refused, SBT not sent %s", resp.status_code)
-        return None
-    return True
- 
-
-def add_to_ipfs(data_dict, name, mode) :
-    api_key = mode.pinata_api_key
-    secret = mode.pinata_secret_api_key
-    headers = {
-        'Content-Type': 'application/json',
-		'pinata_api_key': api_key,
-        'pinata_secret_api_key': secret}
-    data = {
-        'pinataMetadata' : {
-            'name' : name
-        },
-        'pinataContent' : data_dict
-    }
-    r = requests.post('https://api.pinata.cloud/pinning/pinJSONToIPFS', data=json.dumps(data), headers=headers)
-    if not 199<r.status_code<300 :
-        logging.warning("POST access to Pinatta refused")
-        return None
-    else :
-	    return r.json()['IpfsHash']

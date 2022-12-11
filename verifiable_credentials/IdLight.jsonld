@@ -4,15 +4,15 @@
       
         {
             "IdLight" : {
-                "@id": "https://github.com/TalaoDAO/context/blob/main/README.idcard",
+                "@id": "https://github.com/TalaoDAO/context#idlight",
                 "@context": {
                     "@version": 1.1,
                     "@protected": true,
                     "schema" : "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
-                    "KycProvider" : "schema:company",
-                    "KycId" : "schema:identifier",
+                    "kycProvider" : "schema:company",
+                    "kycId" : "schema:identifier",
                     "givenName" : "schema:givenName",
                     "familyName" : "schema:familyName",
                     "nationality" : "schema:nationality",
@@ -36,8 +36,8 @@
     "issuanceDate": "",
     "credentialSubject" : {
         "id": "",
-        "KycProvider" : "Passbase",
-        "KycId" : "",
+        "kycProvider" : "Passbase",
+        "kycId" : "",
         "type" : "IdLight",
         "issuedBy": {
             "logo": "",

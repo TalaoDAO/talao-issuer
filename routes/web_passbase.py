@@ -26,7 +26,6 @@ approval_text = """Hello,<br>
 <li><strong>Age Range Proof</strong> : to prove your Age Range to Web 3 Apps (Gaming, DeFi...).</li><br>
 <li><strong>Email Proof</strong> : To access Web 3 services or claim benefits : Membership card, Loyalty card, Rewards…</li><br>
 <li><strong>Nationality Proof</strong> : to prove your Nationality without revealing any other information about you. It can be used in a user survey, etc.</li><br>
-<li><strong>Gender Proof</strong> : to prove your gender (M/F) for Web 3 polls for example.</li><br>
 <li><strong>Identity card</strong> : This digital identity card contains the same information as your physical ID card.You can use it in Web 3 for a KYC check for example.</li><br>
 <br>
 Regards,<br>
@@ -328,6 +327,9 @@ async def passbase_endpoint_over13(id,red,mode):
     red.delete(id)
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
+    credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+    credential['credentialSubject']['kycProvider'] = "Passbase"
+
     #on recupere la cle passbase depuis notre base locale
     try :
         (status, passbase_key, created) = get_passbase_data_from_did(request.form['subject_id'])
@@ -360,7 +362,7 @@ async def passbase_endpoint_over13(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-    credential['credentialSubject']['KycId'] = passbase_key
+    credential['credentialSubject']['kycId'] = passbase_key
     try :
         birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
     except :  
@@ -435,6 +437,9 @@ async def passbase_endpoint_over18(id,red,mode):
     red.delete(id)
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
+    credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+    credential['credentialSubject']['kycProvider'] = "Passbase"
+
     #on recupere la cle passbase depuis notre base locale
     try :
         (status, passbase_key, created) = get_passbase_data_from_did(request.form['subject_id'])
@@ -467,7 +472,7 @@ async def passbase_endpoint_over18(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-    credential['credentialSubject']['KycId'] = passbase_key
+    credential['credentialSubject']['kycId'] = passbase_key
     try :
         birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
     except :  
@@ -542,6 +547,9 @@ async def passbase_endpoint_kyc(id,red,mode):
     red.delete(id)
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
+    credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+    credential['credentialSubject']['kycProvider'] = "Passbase"
+
     try :
         (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
     except :
@@ -573,7 +581,7 @@ async def passbase_endpoint_kyc(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-    credential['credentialSubject']['KycId'] = passbase_key
+    credential['credentialSubject']['kycId'] = passbase_key
     credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', 'Not indicated')
     credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
     credential['credentialSubject']['givenName'] = identity['owner']['first_name']
@@ -633,6 +641,9 @@ async def passbase_endpoint_age_range(id,red,mode):
     red.delete(id)
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
+    credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+    credential['credentialSubject']['kycProvider'] = "Passbase"
+
     try :
         (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
     except :
@@ -666,7 +677,7 @@ async def passbase_endpoint_age_range(id,red,mode):
         return (jsonify('Identity does not exist'))
     
     #age range : "-13" or "14-17” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
-    credential['credentialSubject']['KycId'] = passbase_key
+    credential['credentialSubject']['kycId'] = passbase_key
     try :
         birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
     except :  
@@ -759,6 +770,9 @@ async def passbase_endpoint_nationality(id,red,mode):
     red.delete(id)
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
+    credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+    credential['credentialSubject']['kycProvider'] = "Passbase"
+
     try :
         (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
     except :
@@ -806,7 +820,7 @@ async def passbase_endpoint_nationality(id,red,mode):
             red.publish('passbase', data)
             return jsonify ('Nationality not available'),404
 
-    credential['credentialSubject']['KycId'] = passbase_key
+    credential['credentialSubject']['kycId'] = passbase_key
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm
@@ -855,6 +869,9 @@ async def passbase_endpoint_passport_number(id,red,mode):
     red.delete(id)
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
+    credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+    credential['credentialSubject']['kycProvider'] = "Passbase"
+
     try :
         (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
     except :
@@ -889,7 +906,7 @@ async def passbase_endpoint_passport_number(id,red,mode):
     try :
         document_number = identity['resources'][0]['datapoints'].get('raw_mrz_string', "Not indicated")
         credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
-        credential['credentialSubject']['KycId'] = passbase_key
+        credential['credentialSubject']['kycId'] = passbase_key
     except :
         logging.error("Passport MRZ not available")
         data = json.dumps({
@@ -948,6 +965,9 @@ async def passbase_endpoint_gender(id,red,mode):
     red.delete(id)
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
+    credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+    credential['credentialSubject']['kycProvider'] = "Passbase"
+
     try :
         (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
     except :
@@ -992,7 +1012,7 @@ async def passbase_endpoint_gender(id,red,mode):
         red.publish('passbase', data)
         return jsonify ('Gender not available not available'),404
 
-    credential['credentialSubject']['KycId'] = passbase_key
+    credential['credentialSubject']['kycId'] = passbase_key
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm
@@ -1041,6 +1061,9 @@ async def passbase_endpoint_liveness(id,red,mode):
     red.delete(id)
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
+    credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+    credential['credentialSubject']['kycProvider'] = "Passbase"
+
     try :
         (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
     except :
@@ -1072,7 +1095,7 @@ async def passbase_endpoint_liveness(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-    credential['credentialSubject']['KycId'] = passbase_key
+    credential['credentialSubject']['kycId'] = passbase_key
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm

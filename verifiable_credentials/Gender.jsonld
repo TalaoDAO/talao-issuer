@@ -4,7 +4,7 @@
       
         {
             "Gender" : {
-                "@id": "https://github.com/TalaoDAO/context/blob/main/README.gender",
+                "@id": "https://github.com/TalaoDAO/context#gender",
                 "@context": {
                     "@version": 1.1,
                     "@protected": true,
@@ -12,8 +12,8 @@
                     "id": "@id",
                     "type": "@type",
                     "gender" : "schema:gender",
-                    "KycProvider" : "schema:company",
-                    "KycId" : "schema:identifier",
+                    "kycProvider" : "schema:company",
+                    "kycId" : "schema:identifier",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {
@@ -34,8 +34,8 @@
     "credentialSubject" : {
         "id": "",
         "gender" : "",
-        "KycProvider" : "Passbase",
-        "KycId" : "schema:identifier",
+        "kycProvider" : "Passbase",
+        "kycId" : "schema:identifier",
         "type" : "Gender",
         "issuedBy": {
             "name": "Altme"

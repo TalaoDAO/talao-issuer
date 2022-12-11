@@ -31,8 +31,10 @@ ACCESS_TOKEN_LIFE = 180
 logging.basicConfig(level=logging.INFO)
 
 key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
-issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
+#issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
+#issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
+issuer_vm = "did:web:app.altme.io:issuer#key-1"
+issuer_did = "did:web:app.altme.io:issuer"
 
 od_liveness = json.loads(open("./credential_manifest/liveness_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_over18 = json.loads(open("./credential_manifest/over18_credential_manifest.json", 'r').read())['output_descriptors'][0]
@@ -273,8 +275,10 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] = data['passbase_key']
-        credential['credentialSubject']['KycProvider'] = "Passbase.com"
+        credential['credentialSubject']['kycId'] = data['passbase_key']
+        credential['credentialSubject']['kycProvider'] = "Passbase"
+        credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+
         try :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :
@@ -297,8 +301,9 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] = data['passbase_key']
-        credential['credentialSubject']['KycProvider'] = "Passbase.com"
+        credential['credentialSubject']['kycId'] = data['passbase_key']
+        credential['credentialSubject']['kycProvider'] = "Passbase"
+        credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
         try :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :
@@ -320,8 +325,10 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] = data['passbase_key']
-        credential['credentialSubject']['KycProvider'] = "Passbase.com"
+        credential['credentialSubject']['kycId'] = data['passbase_key']
+        credential['credentialSubject']['kycProvider'] = "Passbase"
+        credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+
  
     elif wallet_request['type'] == "Gender" :
         credential = json.loads(open("./verifiable_credentials/Gender.jsonld", 'r').read())
@@ -330,8 +337,10 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] = data['passbase_key']
-        credential['credentialSubject']['KycProvider'] = "Passbase.com"
+        credential['credentialSubject']['kycId'] = data['passbase_key']
+        credential['credentialSubject']['kycProvider'] = "Passbase"
+        credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+
         try :
             credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
         except :
@@ -346,8 +355,10 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] = data['passbase_key']
-        credential['credentialSubject']['KycProvider'] = "Passbase.com"
+        credential['credentialSubject']['kycId'] = data['passbase_key']
+        credential['credentialSubject']['kycProvider'] = "Passbase"
+        credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+
         try :
             credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['document_origin_country']
         except :
@@ -365,8 +376,10 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] = data['passbase_key']
-        credential['credentialSubject']['KycProvider'] = "Passbase.com"
+        credential['credentialSubject']['kycId'] = data['passbase_key']
+        credential['credentialSubject']['kycProvider'] = "Passbase"
+        credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+
         try :
             document_number = identity['resources'][0]['datapoints']['raw_mrz_string']
             credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
@@ -391,6 +404,8 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
+        credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+
         try :
             credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', "Not indicated")
             credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
@@ -401,8 +416,8 @@ async def credential(red) :
             credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
             credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
             credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
-            credential['credentialSubject']['KycId'] = data['passbase_key']
-            credential['credentialSubject']['KycProvider'] = "Passbase.com"
+            credential['credentialSubject']['kycId'] = data['passbase_key']
+            credential['credentialSubject']['kycProvider'] = "Passbase"
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_idcard", "error_description" : "Data for Id card not available"}
@@ -419,8 +434,9 @@ async def credential(red) :
             credential['credentialSubject']['givenName'] = identity['owner']['first_name']
             credential['credentialSubject']['familyName'] = identity['owner']['last_name']
             credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
-            credential['credentialSubject']['KycId'] = data['passbase_key']
-            credential['credentialSubject']['KycProvider'] = "Passbase.com"
+            credential['credentialSubject']['kycId'] = data['passbase_key'] 
+            credential['credentialSubject']['kycProvider'] = "Passbase"
+            credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_Idlight", "error_description" : "Data for Id light card not available"}
@@ -432,8 +448,9 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['KycId'] = data['passbase_key']
-        credential['credentialSubject']['KycProvider'] = "Passbase.com"
+        credential['credentialSubject']['kycId'] = data['passbase_key']
+        credential['credentialSubject']['kycProvider'] = "Passbase"
+        credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
         try :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :

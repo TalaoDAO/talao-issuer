@@ -3,7 +3,7 @@
         "https://www.w3.org/2018/credentials/v1",
         {
             "MembershipCard_1" : {
-                "@id": "https://github.com/TalaoDAO/context/blob/main/README.md",
+                "@id": "https://github.com/TalaoDAO/context#membershipcard_1",
                 "@context": {
                     "@version": 1.1,
                     "@protected": true,
@@ -41,7 +41,7 @@
                                 "@id": "https://vocabulary.vc.compell.io/properties/cardPrice"
                             },
                             "benefit" : {
-                                "@id" : "https://github.com/TalaoDAO/context/blob/main/README",
+                                "@id" : "https://github.com/TalaoDAO/context#benefit",
                                 "@context" : {
                                     "price" : "schema:value",
                                     "category" : "schema:category",
@@ -57,7 +57,7 @@
                                     "website" : "schema:website",
                                     "logo": {"@id" : "schema:image", "@type" : "@id"},
                                     "did" : "schema:identifier",
-                                    "name" : "schema:name"         
+                                    "name" : "schema:legalName"         
                                 }
                             }
                         }
@@ -70,7 +70,7 @@
                             "website" : "schema:website",
                             "logo": {"@id" : "schema:image", "@type" : "@id"},
                             "did" : "schema:identifier",
-                            "name" : "schema:name"
+                            "name" : "schema:legalName"
                         }
                     }
                 }

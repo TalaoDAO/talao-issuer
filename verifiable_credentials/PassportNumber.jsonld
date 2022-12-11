@@ -2,7 +2,7 @@
     "@context": ["https://www.w3.org/2018/credentials/v1",
         {
             "PassportNumber" : {
-                "@id": "https://github.com/TalaoDAO/context/blob/main/README.md",
+                "@id": "https://github.com/TalaoDAO/context#passportnumber",
                 "@context": {
                     "@version": 1.1,
                     "@protected": true,
@@ -10,8 +10,8 @@
                     "id": "@id",
                     "type": "@type",
                     "passportNumber" : "schema:identifier",
-                    "KycProvider" : "schema:company",
-                    "KycId" : "schema:identifier",
+                    "kycProvider" : "schema:company",
+                    "kycId" : "schema:identifier",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {
@@ -32,8 +32,8 @@
     "credentialSubject" : {
         "type" : "PassportNumber",
         "passportNumber" : "",
-        "KycProvider" : "Passbase",
-        "KycId" : "",
+        "kycProvider" : "Passbase",
+        "kycId" : "",
         "issuedBy": {
             "logo": "",
             "name": "Altme"

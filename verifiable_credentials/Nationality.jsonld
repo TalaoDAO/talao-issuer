@@ -4,15 +4,15 @@
       
         {
             "Nationality" : {
-                "@id": "https://github.com/TalaoDAO/context/blob/main/README.nationality",
+                "@id": "https://github.com/TalaoDAO/context#nationality",
                 "@context": {
                     "@version": 1.1,
                     "@protected": true,
                     "schema" : "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
-                    "KycProvider" : "schema:company",
-                    "KycId" : "schema:identifier",
+                    "kycProvider" : "schema:company",
+                    "kycId" : "schema:identifier",
                     "nationality" : "scheam:nationality",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
@@ -34,8 +34,8 @@
     "credentialSubject" : {
         "id": "",
         "nationality" : "",
-        "KycProvider" : "Passbase.com",
-        "KycId" : "",
+        "kycProvider" : "Passbase.com",
+        "kycId" : "",
         "type" : "Nationality",
         "issuedBy": {
             "logo": "",
