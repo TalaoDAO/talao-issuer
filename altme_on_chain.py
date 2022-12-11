@@ -9,6 +9,7 @@ def register_tezid(address, id, network,  mode) :
     # check if proof already registered
     url = 'https://tezid.net/api/' + network + '/proofs/' + address
     r = requests.get(url)
+    logging.info("check if proof exist : status code = %s", r.status_code)
     if not 199<r.status_code<300 :
         logging.error("API call to TezID rejected %s", r.status_code)
         return False
@@ -19,7 +20,7 @@ def register_tezid(address, id, network,  mode) :
         for proof in r.json() :
             if proof['id'] == id and proof['verified'] :
                 proof_registered = True
-                logging.info('proof exists on TezID')
+                logging.info('Proof already exists on TezID')
                 break
     if not proof_registered :
         return True if register_proof_type(address, id, network, mode) else False
@@ -27,7 +28,7 @@ def register_tezid(address, id, network,  mode) :
 
 def register_proof_type(address, proof_type, network, mode) :
     #[{"id":"test_type","label":"Test_type","meta":{"issuer":"altme"},"verified":true,"register_date":"2022-12-03T11:16:30Z"}]
-    url = 'https://tezid.net/api/' + network + 'ghostnet/issuer/altme'
+    url = 'https://tezid.net/api/' + network + '/issuer/altme'
     headers = {
         'Content-Type' : 'application/json',
         'tezid-issuer-key' : mode.tezid_issuer_key     
@@ -38,12 +39,12 @@ def register_proof_type(address, proof_type, network, mode) :
         "register": True
     }
     r = requests.post(url, headers=headers, data=json.dumps(data))
-    logging.info("status code = %s", r.status_code)
+    logging.info("Register proof : status code = %s", r.status_code)
     if not 199<r.status_code<300 :
         logging.error("API call to TezID rejected %s", r.status_code)
         return False
     else :
-        logging.info('User has been registered on TezID')
+        logging.info('Address has been registered on TezID')
         return True
 
 
@@ -87,3 +88,12 @@ def add_to_ipfs(data_dict, name, mode) :
         return None
     else :
 	    return r.json()['IpfsHash']
+
+
+if __name__ == '__main__':
+    # ghostnet  KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
+    import environment
+    myenv='local'
+    mode = environment.currentMode(myenv)
+    register_tezid("tz1iQNe71wzVCCL5YUSniJekP3qf9cmDosJU", "tezotopia_membershipcard", "ghostnet",  mode)
+

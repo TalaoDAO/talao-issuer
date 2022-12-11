@@ -129,7 +129,7 @@ async def ai_ageestimate(red, mode) :
             data = {'age' : age,
                      'st_dev' : st_dev,
                      'prediction' : prediction}
-            red.setex(challenge, 30, json.dumps(data))
+            red.setex(challenge, 120, json.dumps(data))
             logging.info("age is now stored in redis for 30s")
         except :
             logging.error(json.dumps(result))
@@ -228,7 +228,7 @@ async def ai_over13(red, mode) :
             data = {'age' : age,
                      'st_dev' : st_dev,
                      'prediction' : prediction}
-            red.setex(challenge, 30, json.dumps(data))
+            red.setex(challenge, 120, json.dumps(data))
             logging.info("age is stored in redis")
         except :
             logging.warning(json.dumps(result))
@@ -254,6 +254,7 @@ async def ai_over13(red, mode) :
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['kycId'] =  'AI age estimate'
         credential['credentialSubject']['kycProvider'] = 'Yoti'
+        credential['credentialSubject']['kycMethod'] = 'Yoti artificial intelligence engine'
         didkit_options = {
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
@@ -328,7 +329,7 @@ async def ai_over18(red,mode) :
             data = {'age' : age,
                     'st_dev' : st_dev,
                     'prediction' : prediction}
-            red.setex(challenge, 30, json.dumps(data))
+            red.setex(challenge, 120, json.dumps(data))
             logging.info("age is stored in redis")
         except :
             logging.warning(json.dumps(result))
@@ -354,6 +355,7 @@ async def ai_over18(red,mode) :
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['kycId'] =  'AI age estimate'
         credential['credentialSubject']['kycProvider'] = 'Yoti'
+        credential['credentialSubject']['kycMethod'] = 'Yoti artificial intelligence engine'
         didkit_options = {
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
@@ -428,7 +430,7 @@ async def ai_agerange(red, mode) :
             data = {'age' : age,
                      'st_dev' : st_dev,
                      'prediction' : prediction}
-            red.setex(challenge, 30, json.dumps(data))
+            red.setex(challenge, 120, json.dumps(data))
             logging.info("age is stored in redis")
         except :
             logging.warning(json.dumps(result))
@@ -452,6 +454,8 @@ async def ai_agerange(red, mode) :
     credential['credentialSubject']['id'] = wallet_did
     credential['credentialSubject']['kycId'] =  'AI age estimate'
     credential['credentialSubject']['kycProvider'] = 'Yoti'
+    credential['credentialSubject']['kycMethod'] = 'Yoti artificial intelligence engine'
+
     #age range : "-13" or "14-17” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
     if age < 13 :
         credential['credentialSubject']['ageRange'] = "-13"

@@ -23,6 +23,7 @@ class currentMode() :
 		self.altme_passbase_check = passwords['altme_passbase_check'] # web_passabse.py
 		self.altme_wallet_webhook = passwords['altme_wallet_webhook'] # web_passbase.py
 		self.altme_ai_token = passwords['altme_ai_token'] 			  # yoti.py
+		self.tezid_issuer_key = passwords['tezid-issuer-key']
 		self.altme_wallet_token = passwords['altme_wallet_token']     # vc_issuer.py
 		self.passbase = passwords['passbase']                         # web_passebase.py
 		self.smtp_password = passwords['smtp_password'] 			  # smtp.py

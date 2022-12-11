@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 from flask_babel import _
 import didkit
-from altme_on_chain import issue_sbt
+from altme_on_chain import issue_sbt, register_tezid
 
 OFFER_DELAY = timedelta(seconds= 180)
 
@@ -124,7 +124,11 @@ async def tezotopia_endpoint(id, red, mode):
         # issue SBT 
         if issue_sbt(tezos_address, metadata, credential['id'], mode) :
             logging.info("SBT sent")
-        
+
+        # register in whitelist on ghostnet KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
+        if register_tezid(tezos_address, "tezotopia_membershipcard", "ghostnet", mode) :
+            logging.info("address whitelisted")
+
         # send credential to wallet        
         return jsonify(signed_credential)
 

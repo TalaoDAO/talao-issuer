@@ -304,6 +304,7 @@ async def credential(red) :
         credential['credentialSubject']['kycId'] = data['passbase_key']
         credential['credentialSubject']['kycProvider'] = "Passbase"
         credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+
         try :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :
@@ -328,7 +329,6 @@ async def credential(red) :
         credential['credentialSubject']['kycId'] = data['passbase_key']
         credential['credentialSubject']['kycProvider'] = "Passbase"
         credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
-
  
     elif wallet_request['type'] == "Gender" :
         credential = json.loads(open("./verifiable_credentials/Gender.jsonld", 'r').read())
@@ -418,6 +418,7 @@ async def credential(red) :
             credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
             credential['credentialSubject']['kycId'] = data['passbase_key']
             credential['credentialSubject']['kycProvider'] = "Passbase"
+
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_idcard", "error_description" : "Data for Id card not available"}
