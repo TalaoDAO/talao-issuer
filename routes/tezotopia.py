@@ -8,13 +8,13 @@ logging.basicConfig(level=logging.INFO)
 from flask_babel import _
 import didkit
 from altme_on_chain import issue_sbt, register_tezid
+from components import message
 
 OFFER_DELAY = timedelta(seconds= 180)
 
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
-
 
 
 #curl -d '{"webhook" : "https://altme.io/webhook", "contact_email" :"thierry@gmail.io"}'  -H "Content-Type: application/json" -X POST https://talao.co/sandbox/op/beacon/verifier/api/create/over13
@@ -128,6 +128,11 @@ async def tezotopia_endpoint(id, red, mode):
         # register in whitelist on ghostnet KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
         if register_tezid(tezos_address, "tezotopia_membershipcard", "ghostnet", mode) :
             logging.info("address whitelisted")
+
+        try :
+            message.message_html("New Tezotopia Membership Card", "thierry@altme.io", "", mode)
+        except :
+            logging.warning("failed to send message")
 
         # send credential to wallet        
         return jsonify(signed_credential)

@@ -3,7 +3,6 @@ from yoti_python_sdk.http import SignedRequest
 from flask import jsonify, Response, request
 import json
 import requests
-import base64
 import logging
 import uuid
 from datetime import datetime, timedelta
