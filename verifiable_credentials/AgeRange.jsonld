@@ -12,8 +12,9 @@
                     "id": "@id",
                     "type": "@type",
                     "ageRange" : "schema:ageRange",
-                    "kycProvider" : "schema:company",
+                    "kycProvider" : "schema:legalName",
                     "kycId" : "schema:identifier",
+                    "kycMethod" : "https://github.com/TalaoDAO/context#kycMethod",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {

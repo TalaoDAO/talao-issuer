@@ -13,6 +13,7 @@
                     "type": "@type",
                     "gender" : "schema:gender",
                     "kycProvider" : "schema:company",
+                    "kycMethod" : "https://github.com/TalaoDAO/context#kycMethod",
                     "kycId" : "schema:identifier",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",

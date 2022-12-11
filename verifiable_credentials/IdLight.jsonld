@@ -13,6 +13,7 @@
                     "type": "@type",
                     "kycProvider" : "schema:company",
                     "kycId" : "schema:identifier",
+                    "kycMethod" : "https://github.com/TalaoDAO/context#kycMethod",
                     "givenName" : "schema:givenName",
                     "familyName" : "schema:familyName",
                     "nationality" : "schema:nationality",

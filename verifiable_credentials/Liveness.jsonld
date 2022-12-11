@@ -11,6 +11,7 @@
                     "type": "@type",
                     "kycProvider" : "schema:company",
                     "kycId" : "schema:identifier",
+                    "kycMethod" : "https://github.com/TalaoDAO/context#kycMethod",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {
