@@ -105,6 +105,7 @@ async def tezotopia_endpoint(id, red, mode):
         
         # issue SBT
         # https://tzip.tezosagora.org/proposal/tzip-21/#creators-array
+        """
         metadata = {
             "name":"Tezotopia Membership",
             "symbol":"ALTMESBT",
@@ -121,18 +122,17 @@ async def tezotopia_endpoint(id, red, mode):
             "is_transferable":False,
             "shouldPreferSymbol":False
         }
-        # issue SBT 
         if issue_sbt(tezos_address, metadata, credential['id'], mode) :
             logging.info("SBT sent")
-
+        """
         # register in whitelist on ghostnet KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
-        if register_tezid(tezos_address, "tezotopia_membershipcard", "ghostnet", mode) :
-            logging.info("address whitelisted")
-
-        try :
-            message.message_html("New Tezotopia Membership Card", "thierry@altme.io", "", mode)
-        except :
-            logging.warning("failed to send message")
+        tezotopia_membershipcard = "urn:uuid:0e7828d9-0591-4416-95c0-9b36b4d0e478"
+        if register_tezid(tezos_address, tezotopia_membershipcard, "ghostnet", mode) :
+            logging.info("address whitelisted %s", tezos_address)
+            try :
+                message.message_html("address whitelisted = " + tezos_address, "thierry@altme.io", "", mode)
+            except :
+                logging.warning("failed to send message")
 
         # send credential to wallet        
         return jsonify(signed_credential)
