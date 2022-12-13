@@ -105,7 +105,7 @@ async def tezotopia_endpoint(id, red, mode):
         
         # issue SBT
         # https://tzip.tezosagora.org/proposal/tzip-21/#creators-array
-        """
+        
         metadata = {
             "name":"Tezotopia Membership",
             "symbol":"ALTMESBT",
@@ -124,7 +124,7 @@ async def tezotopia_endpoint(id, red, mode):
         }
         if issue_sbt(tezos_address, metadata, credential['id'], mode) :
             logging.info("SBT sent")
-        """
+        
         # register in whitelist on ghostnet KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
         tezotopia_membershipcard = "urn:uuid:0e7828d9-0591-4416-95c0-9b36b4d0e478"
         if register_tezid(tezos_address, tezotopia_membershipcard, "ghostnet", mode) :
