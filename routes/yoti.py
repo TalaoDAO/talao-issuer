@@ -129,7 +129,7 @@ async def ai_ageestimate(red, mode) :
                      'st_dev' : st_dev,
                      'prediction' : prediction}
             red.setex(challenge, 120, json.dumps(data))
-            logging.info("age is now stored in redis for 30s")
+            logging.info("age is now stored in redis for 120s")
         except :
             logging.error(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -228,7 +228,7 @@ async def ai_over13(red, mode) :
                      'st_dev' : st_dev,
                      'prediction' : prediction}
             red.setex(challenge, 120, json.dumps(data))
-            logging.info("age is stored in redis")
+            logging.info("age is stored in redis for 120 sec")
         except :
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -329,7 +329,7 @@ async def ai_over18(red,mode) :
                     'st_dev' : st_dev,
                     'prediction' : prediction}
             red.setex(challenge, 120, json.dumps(data))
-            logging.info("age is stored in redis")
+            logging.info("age is stored in redis for 120 sec")
         except :
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -430,7 +430,7 @@ async def ai_agerange(red, mode) :
                      'st_dev' : st_dev,
                      'prediction' : prediction}
             red.setex(challenge, 120, json.dumps(data))
-            logging.info("age is stored in redis")
+            logging.info("age is stored in redis for 120 sec")
         except :
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}

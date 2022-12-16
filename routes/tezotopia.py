@@ -24,6 +24,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/tezotopia/membershipcard/<id>',  view_func=tezotopia_endpoint, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     return
 
+
 async def tezotopia_endpoint(id, red, mode): 
     try : 
         x_api_key = request.headers['X-API-KEY']
@@ -63,18 +64,28 @@ async def tezotopia_endpoint(id, red, mode):
         credential = json.loads(red.get(id).decode())
         credential['credentialSubject']['id'] = request.form['subject_id']
         presentation_list =  json.loads(request.form['presentation'])
+        print('presentation list = ', presentation_list)
         for presentation in presentation_list :
             if isinstance(presentation, str) :
                 presentation = json.loads(presentation)
             if presentation['verifiableCredential']['credentialSubject']['type'] == 'TezosAssociatedAddress' :
                 tezos_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
-                credential['credentialSubject']['associatedAddress']['blockchainTezos'] = tezos_address
+                if not credential['credentialSubject']['associatedAddress']['blockchainTezos'] :
+                    credential['credentialSubject']['associatedAddress']['blockchainTezos'] = tezos_address
+                else :
+                    credential['credentialSubject']['associatedAddress']['blockchainTezos'] = list(credential['credentialSubject']['associatedAddress']['blockchainTezos'])
+                    credential['credentialSubject']['associatedAddress']['blockchainTezos'].append(tezos_address)
+                # TODO
                 credential['credentialSubject']['offers']['analytics'] = "https://talao.co/analytics/" + tezos_address
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over13' :
                 credential['credentialSubject']['ageRange'] = "13+"
-        
-        if credential['credentialSubject'].get('ageRange') != "13+" :
-            logging.warning('Over 13 not available')
+            elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over18' :
+                credential['credentialSubject']['ageRange'] = "18+"
+            else :
+                print('non expected type ',presentation['verifiableCredential']['credentialSubject']['type'] )
+
+        if credential['credentialSubject'].get('ageRange') not in ["13+", "18+"] :
+            logging.warning('Over 13/18 not available')
             endpoint_response= {"error": "unauthorized_client"}
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
@@ -105,7 +116,7 @@ async def tezotopia_endpoint(id, red, mode):
         
         # issue SBT
         # https://tzip.tezosagora.org/proposal/tzip-21/#creators-array
-        
+        """
         metadata = {
             "name":"Tezotopia Membership",
             "symbol":"ALTMESBT",
@@ -124,7 +135,7 @@ async def tezotopia_endpoint(id, red, mode):
         }
         if issue_sbt(tezos_address, metadata, credential['id'], mode) :
             logging.info("SBT sent")
-        
+        """
         # register in whitelist on ghostnet KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
         tezotopia_membershipcard = "urn:uuid:0e7828d9-0591-4416-95c0-9b36b4d0e478"
         if register_tezid(tezos_address, tezotopia_membershipcard, "ghostnet", mode) :
