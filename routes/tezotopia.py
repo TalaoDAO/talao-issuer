@@ -73,7 +73,8 @@ async def tezotopia_endpoint(id, red, mode):
                 if not credential['credentialSubject']['associatedAddress']['blockchainTezos'] :
                     credential['credentialSubject']['associatedAddress']['blockchainTezos'] = tezos_address
                 else :
-                    credential['credentialSubject']['associatedAddress']['blockchainTezos'] = list(credential['credentialSubject']['associatedAddress']['blockchainTezos'])
+                    if isinstance(credential['credentialSubject']['associatedAddress']['blockchainTezos'], str) :
+                        credential['credentialSubject']['associatedAddress']['blockchainTezos'] = credential['credentialSubject']['associatedAddress']['blockchainTezos'].split()
                     credential['credentialSubject']['associatedAddress']['blockchainTezos'].append(tezos_address)
                 # TODO
                 credential['credentialSubject']['offers']['analytics'] = "https://talao.co/analytics/" + tezos_address
