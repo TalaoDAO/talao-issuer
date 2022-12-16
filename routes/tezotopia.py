@@ -79,13 +79,13 @@ async def tezotopia_endpoint(id, red, mode):
                 # TODO
                 credential['credentialSubject']['offers']['analytics'] = "https://talao.co/analytics/" + tezos_address
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over13' :
-                credential['credentialSubject']['ageRange'] = "13+"
+                credential['credentialSubject']['ageOver'] = "13+"
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over18' :
-                credential['credentialSubject']['ageRange'] = "18+"
+                credential['credentialSubject']['ageOver'] = "18+"
             else :
                 print('non expected type ',presentation['verifiableCredential']['credentialSubject']['type'] )
 
-        if credential['credentialSubject'].get('ageRange') not in ["13+", "18+"] :
+        if credential['credentialSubject'].get('ageOver') not in ["13+", "18+"] :
             logging.warning('Over 13/18 not available')
             endpoint_response= {"error": "unauthorized_client"}
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
