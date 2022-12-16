@@ -64,7 +64,6 @@ async def tezotopia_endpoint(id, red, mode):
         credential = json.loads(red.get(id).decode())
         credential['credentialSubject']['id'] = request.form['subject_id']
         presentation_list =  json.loads(request.form['presentation'])
-        print('presentation list = ', presentation_list)
         for presentation in presentation_list :
             if isinstance(presentation, str) :
                 presentation = json.loads(presentation)
@@ -83,7 +82,7 @@ async def tezotopia_endpoint(id, red, mode):
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over18' :
                 credential['credentialSubject']['ageOver'] = "18+"
             else :
-                print('non expected type ',presentation['verifiableCredential']['credentialSubject']['type'] )
+                logging.warning('non expected type %s',presentation['verifiableCredential']['credentialSubject']['type'] )
 
         if credential['credentialSubject'].get('ageOver') not in ["13+", "18+"] :
             logging.warning('Over 13/18 not available')
