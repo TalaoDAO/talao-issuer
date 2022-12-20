@@ -33,7 +33,7 @@ def chainborn_qrcode (mode) :
 
 
 async def chainborn_endpoint(id, red, mode): 
-    # a mettre en prod
+    x_api_key = "" # a retirer en prod
     try : 
         x_api_key = request.headers['X-API-KEY']
     except :
