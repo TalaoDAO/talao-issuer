@@ -140,10 +140,7 @@ async def tezotopia_endpoint(id, red, mode):
         tezotopia_membershipcard = "urn:uuid:0e7828d9-0591-4416-95c0-9b36b4d0e478"
         if register_tezid(tezos_address, tezotopia_membershipcard, "ghostnet", mode) :
             logging.info("address whitelisted %s", tezos_address)
-            try :
-                message.message_html("address whitelisted = " + tezos_address, "thierry@altme.io", "", mode)
-            except :
-                logging.warning("failed to send message")
+            message.message_html("address whitelisted = " + tezos_address, "thierry@altme.io", "", mode)
 
         # send credential to wallet        
         return jsonify(signed_credential)

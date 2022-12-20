@@ -17,6 +17,21 @@ issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
 
+def hasSummoned(address):
+    address = address.split() if isinstance(address, str) else address
+    for add in address:
+        url = "https://api.mainnet.tzkt.io/v1/accounts/KT1ABR77guqSXfptWwLP7xVYYdrhEpcpVyRh/operations?initiator=" + add + "&entrypoint=add_hero&status=applied"
+        #url = "https://api.mainnet.tzkt.io/v1/accounts/KT1ABR77guqSXfptWwLP7xVYYdrhEpcpVyRh/operations?initiator=tz1MFSFxekD6BGbuLDYcGBZn6Gxgqu7TB8Fq&entrypoint=add_hero&status=applied"
+        r = requests.get(url)
+        if not 199<r.status_code<300 :
+            logging.error('issuer failed to send to  application webhook, status code = %s', r.status_code)
+            return False
+        logging.info("data from Chainborn = %s", r.json())
+        if r.json() :
+            logging.info("address = %s", add)
+            return True
+    return False
+
 
 def init_app(app,red, mode) :
     app.add_url_rule('/chainborn/qrcode',  view_func=chainborn_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode})
@@ -88,7 +103,10 @@ async def chainborn_endpoint(id, red, mode):
                 credential['credentialSubject']['email'] = presentation['verifiableCredential']['credentialSubject']['email']
             else :
                 logging.warning('non expected type %s',presentation['verifiableCredential']['credentialSubject']['type'] )
-        
+          
+        if not hasSummoned(credential['credentialSubject']['associatedAddress']['blockchainTezos']) :
+            return jsonify('addresses do not fit the Herro criteria'), 412
+
         didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": issuer_vm
@@ -120,6 +138,7 @@ async def chainborn_endpoint(id, red, mode):
         if not 199<r.status_code<300 :
             logging.error('issuer failed to send to  application webhook, status code = %s', r.status_code)
       
-        # send credential to wallet        
+        # send credential to wallet
+        message.message_html("Chainborn membership card issued to " +  credential['credentialSubject']['id'], "thierry@altme.io", "", mode)        
         return jsonify(signed_credential)
 

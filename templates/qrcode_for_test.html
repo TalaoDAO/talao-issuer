@@ -2,25 +2,18 @@
 <html>
   <head>{% include 'head.html' %}</head>
   <body>
-          
-  <div id="content_desktop" class="d-none d-sm-block">
-      <div class="text-center">  
-                <div id="id_text" class="m-5">
-                  <h1>QRcode for test</h1>
-                  <br><br>Scan the QRCode below with your wallet (Talao or Altme). 
-                <div id="id_qrcode" class="my-5"><img src="{{ qrcode(url) }}" class=" w-30 h-30"></div>
-                <button  type="button"  onclick="goBack()">Back</button></p>
-                </div>
+
+      <div class="text-center my-5">  
+          <h1 class="mb-2">QRcode for test</h1>
+          <h4>Scan the QRCode below with your wallet </h4> 
+          <div class="my-5"><img src="{{ qrcode(url) }}"></div>
+          <button  type="button"  onclick="goBack()">Back</button>
       </div>
-  </div>
 
-
-  <script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
     <script src="{{ url_for('static', filename='bs-init.js') }}"></script>
     <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>             
-      <script>  
-                function goBack() {  window.history.back();}
-      </script>
-     
+    <script>function goBack() {  window.history.back();}</script> 
+  
   </body>
 </html>
