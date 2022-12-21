@@ -9,28 +9,24 @@ import didkit
 from components import message
 
 OFFER_DELAY = timedelta(seconds= 180)
-WEBHOOK_URL = "https://altme.io"
-WEBHOOK_KEY = "4507a516-7fc5-11ed-a744-fb322650eae0"
 
 
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
 
-def hasSummoned(address):
-    address = address.split() if isinstance(address, str) else address
-    for add in address:
-        url = "https://api.mainnet.tzkt.io/v1/accounts/KT1ABR77guqSXfptWwLP7xVYYdrhEpcpVyRh/operations?initiator=" + add + "&entrypoint=add_hero&status=applied"
-        #url = "https://api.mainnet.tzkt.io/v1/accounts/KT1ABR77guqSXfptWwLP7xVYYdrhEpcpVyRh/operations?initiator=tz1MFSFxekD6BGbuLDYcGBZn6Gxgqu7TB8Fq&entrypoint=add_hero&status=applied"
+def hasSummoned(add):
+    address_list = [add] if isinstance(add, str) else add
+    for address in address_list:
+        url = "https://api.mainnet.tzkt.io/v1/accounts/KT1ABR77guqSXfptWwLP7xVYYdrhEpcpVyRh/operations?initiator=" + address + "&entrypoint=add_hero&status=applied"
         r = requests.get(url)
-        if not 199<r.status_code<300 :
-            logging.error('issuer failed to send to  application webhook, status code = %s', r.status_code)
+        if not 199 < r.status_code < 300 :
+            logging.error('issuer failed to call TzKT, status code = %s', r.status_code)
             return False
         logging.info("data from Chainborn = %s", r.json())
         if r.json() :
-            logging.info("address = %s", add)
+            logging.info("address = %s", address)
             return True
-    return False
 
 
 def init_app(app,red, mode) :
@@ -55,12 +51,12 @@ async def chainborn_endpoint(id, red, mode):
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
-        #return Response(response=json.dumps(endpoint_response), status=400, headers=headers)    
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)    
     if  x_api_key != mode.altme_ai_token :
         logging.warning('api key is incorrect')
         endpoint_response= {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        #return Response(response=json.dumps(endpoint_response), status=401, headers=headers)
+        return Response(response=json.dumps(endpoint_response), status=401, headers=headers)
 
     if request.method == 'GET': 
         credential = json.load(open('./verifiable_credentials/Chainborn_MembershipCard.jsonld', 'r'))
@@ -105,7 +101,7 @@ async def chainborn_endpoint(id, red, mode):
                 logging.warning('non expected type %s',presentation['verifiableCredential']['credentialSubject']['type'] )
           
         if not hasSummoned(credential['credentialSubject']['associatedAddress']['blockchainTezos']) :
-            return jsonify('addresses do not fit the Herro criteria'), 412
+            return jsonify('User has not summoned a Hero !'), 412
 
         didkit_options = {
             "proofPurpose": "assertionMethod",
@@ -124,19 +120,18 @@ async def chainborn_endpoint(id, red, mode):
         
         # send data to application webhook
         headers = {
-            "'X-API-KEY'" : WEBHOOK_KEY,
+            "chainborn-api-key" : mode.chainborn_api_key,
             "Content-Type": "application/json" 
-        }       
-        payload = { 'event' : 'ISSUANCE',
-             #'vp': json.loads(request.form['presentation']),
+        }    
+        print("header = ", headers)   
+        payload = { 
             "id": id,
             "address" :  credential['credentialSubject']['associatedAddress']['blockchainTezos'],
             "email" :  credential['credentialSubject']['email']
         }
         logging.info("event ISSUANCE sent to webhook %s", payload)
-        r = requests.post(WEBHOOK_URL,  data=json.dumps(payload), headers=headers)
-        if not 199<r.status_code<300 :
-            logging.error('issuer failed to send to  application webhook, status code = %s', r.status_code)
+        r = requests.post("https://chainborn.xyz/membership",  data=json.dumps(payload), headers=headers)
+        logging.info("Chainborn server return = %s",r.text)
       
         # send credential to wallet
         message.message_html("Chainborn membership card issued to " +  credential['credentialSubject']['id'], "thierry@altme.io", "", mode)        
