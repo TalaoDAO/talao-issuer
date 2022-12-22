@@ -7,6 +7,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 import didkit
 from components import message
+from altme_on_chain import register_tezid
+
 
 OFFER_DELAY = timedelta(seconds= 180)
 
@@ -123,7 +125,6 @@ async def chainborn_endpoint(id, red, mode):
             "chainborn-api-key" : mode.chainborn_api_key,
             "Content-Type": "application/json" 
         }    
-        print("header = ", headers)   
         payload = { 
             "id": id,
             "address" :  credential['credentialSubject']['associatedAddress']['blockchainTezos'],
@@ -133,6 +134,14 @@ async def chainborn_endpoint(id, red, mode):
         r = requests.post("https://chainborn.xyz/membership",  data=json.dumps(payload), headers=headers)
         logging.info("Chainborn server return = %s",r.text)
       
+        """
+        # register in whitelist on ghostnet KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
+        chainborn_membershipcard = "urn:uuid:0e57d9-0591-4416-95c0-9b363453578"
+        if register_tezid(tezos_address, chainborn_membershipcard, "ghostnet", mode) :
+            logging.info("address whitelisted %s", tezos_address)
+            message.message_html("address whitelisted = " + tezos_address, "thierry@altme.io", "", mode)
+        """
+        
         # send credential to wallet
         message.message_html("Chainborn membership card issued to " +  credential['credentialSubject']['id'], "thierry@altme.io", "", mode)        
         return jsonify(signed_credential)

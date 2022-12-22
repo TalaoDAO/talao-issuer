@@ -1,4 +1,4 @@
-from flask import jsonify, request,  Response
+from flask import jsonify, request,  Response, render_template
 import requests
 import json
 import uuid
@@ -21,8 +21,17 @@ issuer_did = "did:web:app.altme.io:issuer"
 # curl -H "X-API-KEY: 123456" -X GET http://192.168.0.66:50000/tezotopia/membershipcard/123
 
 def init_app(app,red, mode) :
+    #app.add_url_rule('/tezotopia/qrcode',  view_func=tezotopia_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/tezotopia/membershipcard/<id>',  view_func=tezotopia_endpoint, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     return
+
+
+# pour tester l issuer avec un qrcode
+def tezotopia_qrcode (mode) :
+    return render_template(
+        'qrcode_for_test.html',
+        url=mode.server + 'tezotopia/membershipcard/' + str(uuid.uuid1())
+    )
 
 
 async def tezotopia_endpoint(id, red, mode): 
@@ -38,7 +47,6 @@ async def tezotopia_endpoint(id, red, mode):
         endpoint_response= {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=401, headers=headers)
-
     if request.method == 'GET': 
         credential = json.load(open('./verifiable_credentials/MembershipCard_1.jsonld', 'r'))
         credential['id'] = "urn:uuid:" + str(uuid.uuid1())
@@ -63,24 +71,21 @@ async def tezotopia_endpoint(id, red, mode):
         # init credential
         credential = json.loads(red.get(id).decode())
         credential['credentialSubject']['id'] = request.form['subject_id']
+        credential['credentialSubject']['offers']['analytics'] = "https://talao.co/analytics/did/" + credential['credentialSubject']['id']
         presentation_list =  json.loads(request.form['presentation'])
         for presentation in presentation_list :
             if isinstance(presentation, str) :
                 presentation = json.loads(presentation)
+            
             if presentation['verifiableCredential']['credentialSubject']['type'] == 'TezosAssociatedAddress' :
                 tezos_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
                 if not credential['credentialSubject']['associatedAddress']['blockchainTezos'] :
-                    credential['credentialSubject']['associatedAddress']['blockchainTezos'] = tezos_address
+                    credential['credentialSubject']['associatedAddress']['blockchainTezos'] = [tezos_address]
                 else :
-                    if isinstance(credential['credentialSubject']['associatedAddress']['blockchainTezos'], str) :
-                        credential['credentialSubject']['associatedAddress']['blockchainTezos'] = credential['credentialSubject']['associatedAddress']['blockchainTezos'].split()
                     credential['credentialSubject']['associatedAddress']['blockchainTezos'].append(tezos_address)
-                # TODO
-                credential['credentialSubject']['offers']['analytics'] = "https://talao.co/analytics/" + tezos_address
+            
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over13' :
                 credential['credentialSubject']['ageOver'] = "13+"
-            elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over18' :
-                credential['credentialSubject']['ageOver'] = "18+"
             else :
                 logging.warning('non expected type %s',presentation['verifiableCredential']['credentialSubject']['type'] )
 
@@ -137,10 +142,13 @@ async def tezotopia_endpoint(id, red, mode):
             logging.info("SBT sent")
         """
         # register in whitelist on ghostnet KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
-        tezotopia_membershipcard = "urn:uuid:0e7828d9-0591-4416-95c0-9b36b4d0e478"
-        if register_tezid(tezos_address, tezotopia_membershipcard, "ghostnet", mode) :
-            logging.info("address whitelisted %s", tezos_address)
-            message.message_html("address whitelisted = " + tezos_address, "thierry@altme.io", "", mode)
+        for address in  credential['credentialSubject']['associatedAddress']['blockchainTezos'] :
+            tezotopia_membershipcard = "urn:uuid:0e7828d9-0591-4416-95c0-9b36b4d0e478"
+            if register_tezid(address, tezotopia_membershipcard, "ghostnet", mode) :
+                logging.info("Tezotopia address whitelisted %s", address)
+                message.message_html("address whitelisted = " + address, "thierry@altme.io", "", mode)
+            else :
+                logging.info("Tezotopia address NOT whitelisted %s", address)
 
         # send credential to wallet        
         return jsonify(signed_credential)
