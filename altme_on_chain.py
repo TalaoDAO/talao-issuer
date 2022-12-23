@@ -4,6 +4,13 @@ import json
 
 logging.basicConfig(level=logging.INFO)
 
+"""
+curl -XPOST https://tezid.net/api/mainnet/issuer/altme -H 'tezid-issuer-key:p3hMf9V/OaiJjPOC2Va9uzDg6uj02E1YpCD9xdTB63Q=' 
+-H 'Content-Type: application/json' 
+--data '{ "address": "tz1UZZnrre9H7KzAufFVm7ubuJh5cCfjGwam", "prooftype": "over_18", "register": true }'
+
+"""
+
 
 def register_tezid(address, id, network,  mode) :
     # check if proof already registered

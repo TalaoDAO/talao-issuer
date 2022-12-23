@@ -17,6 +17,7 @@ issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
 
+
 def hasSummoned(add):
     address_list = [add] if isinstance(add, str) else add
     for address in address_list:
@@ -46,7 +47,6 @@ def chainborn_qrcode (mode) :
 
 
 async def chainborn_endpoint(id, red, mode): 
-    x_api_key = "" # a retirer en prod
     try : 
         x_api_key = request.headers['X-API-KEY']
     except :
@@ -59,7 +59,6 @@ async def chainborn_endpoint(id, red, mode):
         endpoint_response= {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=401, headers=headers)
-
     if request.method == 'GET': 
         credential = json.load(open('./verifiable_credentials/Chainborn_MembershipCard.jsonld', 'r'))
         credential['id'] = "urn:uuid:" + str(uuid.uuid1())
@@ -134,13 +133,13 @@ async def chainborn_endpoint(id, red, mode):
         r = requests.post("https://chainborn.xyz/membership",  data=json.dumps(payload), headers=headers)
         logging.info("Chainborn server return = %s",r.text)
       
-        """
-        # register in whitelist on ghostnet KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
-        chainborn_membershipcard = "urn:uuid:0e57d9-0591-4416-95c0-9b363453578"
-        if register_tezid(tezos_address, chainborn_membershipcard, "ghostnet", mode) :
+        
+        # register in whitelist 
+        chainborn_membershipcard = "urn:uuid:0e57d9-0591-4444-95c0-9b363453578"
+        if register_tezid(tezos_address, chainborn_membershipcard, "mainnet", mode) :
             logging.info("address whitelisted %s", tezos_address)
             message.message_html("address whitelisted = " + tezos_address, "thierry@altme.io", "", mode)
-        """
+        
         
         # send credential to wallet
         message.message_html("Chainborn membership card issued to " +  credential['credentialSubject']['id'], "thierry@altme.io", "", mode)        
