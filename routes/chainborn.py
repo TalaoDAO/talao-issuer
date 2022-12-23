@@ -90,10 +90,8 @@ async def chainborn_endpoint(id, red, mode):
             if presentation['verifiableCredential']['credentialSubject']['type'] == 'TezosAssociatedAddress' :
                 tezos_address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
                 if not credential['credentialSubject']['associatedAddress']['blockchainTezos'] :
-                    credential['credentialSubject']['associatedAddress']['blockchainTezos'] = tezos_address
+                    credential['credentialSubject']['associatedAddress']['blockchainTezos'] = [tezos_address]
                 else :
-                    if isinstance(credential['credentialSubject']['associatedAddress']['blockchainTezos'], str) :
-                        credential['credentialSubject']['associatedAddress']['blockchainTezos'] = credential['credentialSubject']['associatedAddress']['blockchainTezos'].split()
                     credential['credentialSubject']['associatedAddress']['blockchainTezos'].append(tezos_address)
             # get email
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'EmailPass' :
@@ -133,13 +131,12 @@ async def chainborn_endpoint(id, red, mode):
         r = requests.post("https://chainborn.xyz/membership",  data=json.dumps(payload), headers=headers)
         logging.info("Chainborn server return = %s",r.text)
       
-        
         # register in whitelist 
         chainborn_membershipcard = "urn:uuid:0e57d9-0591-4444-95c0-9b363453578"
-        if register_tezid(tezos_address, chainborn_membershipcard, "mainnet", mode) :
-            logging.info("address whitelisted %s", tezos_address)
-            message.message_html("address whitelisted = " + tezos_address, "thierry@altme.io", "", mode)
-        
+        for address in credential['credentialSubject']['associatedAddress']['blockchainTezos'] :
+            if register_tezid(address, chainborn_membershipcard, "mainnet", mode) :
+                logging.info("address whitelisted %s", address)
+                message.message_html("address whitelisted = " + address, "thierry@altme.io", "", mode)
         
         # send credential to wallet
         message.message_html("Chainborn membership card issued to " +  credential['credentialSubject']['id'], "thierry@altme.io", "", mode)        
