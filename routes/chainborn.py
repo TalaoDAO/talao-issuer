@@ -18,10 +18,9 @@ issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
 
 
-def hasSummoned(add):
-    address_list = [add] if isinstance(add, str) else add
+def hasSummoned(address_list):
     for address in address_list:
-        url = "https://api.mainnet.tzkt.io/v1/accounts/KT1ABR77guqSXfptWwLP7xVYYdrhEpcpVyRh/operations?initiator=" + address + "&entrypoint=add_hero&status=applied"
+        url = "https://api.mainnet.tzkt.io/v1/accounts/KT1Nr4CLi7hY7QrZe8D4ar6uihpnr7nRtGJH/operations?initiator=" + address + "&entrypoint=add_hero&status=applied"
         r = requests.get(url)
         if not 199 < r.status_code < 300 :
             logging.error('issuer failed to call TzKT, status code = %s', r.status_code)
@@ -30,6 +29,7 @@ def hasSummoned(add):
         if r.json() :
             logging.info("address = %s", address)
             return True
+    return False
 
 
 def init_app(app,red, mode) :
