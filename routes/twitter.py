@@ -15,8 +15,6 @@ CODE_DELAY = timedelta(seconds= 180)
 QRCODE_DELAY = 60
 
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-#issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
-#issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
 
@@ -77,7 +75,7 @@ async def twitter_endpoint(id, red, mode):
         tzprofiles_result = r.json()
         if not tzprofiles_result :
             logging.warning('TzProfiles not found')
-            return jsonify('TzProfile not found'), 404
+            return jsonify('User does not have a Tezos Profiles'), 412
         for data in tzprofiles_result :
             for vc in data :
                 try :
@@ -86,8 +84,8 @@ async def twitter_endpoint(id, red, mode):
                 except :
                     pass
         if not credential['credentialSubject'].get('sameAs') :
-            logging.warning('TzProfiles not found')
-            return jsonify('TzProfile not found'), 404
+            logging.warning('Twitter acconut not found on Tezos Profiles')
+            return jsonify('User does not have a Twitter account registered on Tezos Profiles'), 412
         # signature 
         didkit_options = {
             "proofPurpose": "assertionMethod",
