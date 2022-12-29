@@ -456,7 +456,7 @@ async def ai_agerange(red, mode) :
     credential['credentialSubject']['kycMethod'] = 'Yoti artificial intelligence engine'
 
     #age range : "-13" or "14-17” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
-    if age < 13 :
+    if age < 15 :
         credential['credentialSubject']['ageRange'] = "-13"
     if age < 18 :
         credential['credentialSubject']['ageRange'] = "14-17"

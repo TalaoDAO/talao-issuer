@@ -75,7 +75,7 @@ async def twitter_endpoint(id, red, mode):
         tzprofiles_result = r.json()
         if not tzprofiles_result :
             logging.warning('TzProfiles not found')
-            return jsonify('User does not have a Tezos Profiles'), 412
+            return jsonify('User is not registered on Tezos Profiles'), 412
         for data in tzprofiles_result :
             for vc in data :
                 try :
