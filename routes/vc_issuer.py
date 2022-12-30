@@ -47,6 +47,8 @@ od_email = json.loads(open("./credential_manifest/email_credential_manifest.json
 od_gender = json.loads(open("./credential_manifest/gender_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_nationality = json.loads(open("./credential_manifest/nationality_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_passportnumber = json.loads(open("./credential_manifest/passportnumber_credential_manifest.json", 'r').read())['output_descriptors'][0]
+od_verifiableid = json.loads(open("./credential_manifest/verifiableid_credential_manifest.json", 'r').read())['output_descriptors'][0]
+
 
 #id_tezotopia_membershipcard = json.loads(open("./credential_manifest/tezotopia_membershipcard_credential_manifest.json", 'r').read())['presentation_definition']['input_descriptors']
 
@@ -72,6 +74,8 @@ credential_manifest["output_descriptors"].append(od_email)
 credential_manifest["output_descriptors"].append(od_nationality)
 #credential_manifest["output_descriptors"].append(od_phone)
 credential_manifest["output_descriptors"].append(od_passportnumber)
+credential_manifest["output_descriptors"].append(od_verifiableid)
+
 
 #credential_manifest["presentation_definition"]["input_descriptors"].append(id_tezotopia_membershipcard)
 
@@ -422,6 +426,30 @@ async def credential(red) :
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error" : "invalid_idcard", "error_description" : "Data for Id card not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+
+
+    elif wallet_request['type'] == "VerifiableId" :
+        credential = json.loads(open("./verifiable_credentials/VerifiableId.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['validFrom'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['issued'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential['issuer'] = issuer_did
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential['credentialSubject']['id'] = wallet_did
+
+        try :
+            credential['credentialSubject']['placeOfBirth'] = identity['resources'][0]['datapoints'].get('place_of_birth', "Not indicated")
+            credential['credentialSubject']['dateOfBirth'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
+            credential['credentialSubject']['familyName'] = identity['owner']['first_name']
+            credential['credentialSubject']['firstName'] = identity['owner']['last_name']
+            credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
+            credential['credentialSubject']['personalIdentifier'] = identity['resources'][0]['datapoints']['raw_mrz_string']
+
+        except :
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_idcard", "error_description" : "Data for Verifiable Id not available"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     elif wallet_request['type'] == "IdLight" :
