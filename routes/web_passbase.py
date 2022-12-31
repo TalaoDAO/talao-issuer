@@ -649,9 +649,6 @@ async def passbase_endpoint_verifiable_id(id,red,mode):
     red.delete(id)
     logging.info("subject_id = %s", request.form['subject_id'])
     credential['credentialSubject']['id'] = request.form['subject_id']
-    #credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
-    #credential['credentialSubject']['kycProvider'] = "Passbase"
-
     try :
         (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
     except :
@@ -683,7 +680,6 @@ async def passbase_endpoint_verifiable_id(id,red,mode):
                         })
         red.publish('passbase', data)
         return (jsonify('Identity does not exist'))
-    #credential['credentialSubject']['kycId'] = passbase_key
     credential['credentialSubject']['placeOfBirth'] = identity['resources'][0]['datapoints'].get('place_of_birth', 'Not indicated')
     credential['credentialSubject']['dateOfBirth'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
     credential['credentialSubject']['familyName'] = identity['owner']['first_name']
@@ -691,10 +687,12 @@ async def passbase_endpoint_verifiable_id(id,red,mode):
     credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
     credential['credentialSubject']['personalIdentifier'] = identity['resources'][0]['datapoints'].get('raw_mrz_string', "Not indicated")
     # "personalIdentifier": "IT/DE/1234",
-    #credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Not indicated")
-    #credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
-    #credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
-    #credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
+    credential['evidence'][0]['kycId'] = passbase_key
+    try :
+        credential['evidence'][0]['evidenceDocument'] = identity['resources'][0]['type'].replace('_', ' ')
+    except :
+        credential['evidence'][0]['evidenceDocument'] = "Not indicated"
+   
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm

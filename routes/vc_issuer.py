@@ -409,25 +409,17 @@ async def credential(red) :
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
-
-        try :
-            credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', "Not indicated")
-            credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
-            credential['credentialSubject']['givenName'] = identity['owner']['first_name']
-            credential['credentialSubject']['familyName'] = identity['owner']['last_name']
-            credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
-            credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Not indicated")
-            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
-            credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
-            credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
-            credential['credentialSubject']['kycId'] = data['passbase_key']
-            credential['credentialSubject']['kycProvider'] = "Passbase"
-
-        except :
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_idcard", "error_description" : "Data for Id card not available"}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
+        credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', "Not indicated")
+        credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
+        credential['credentialSubject']['givenName'] = identity['owner']['first_name']
+        credential['credentialSubject']['familyName'] = identity['owner']['last_name']
+        credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
+        credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Not indicated")
+        credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
+        credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
+        credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
+        credential['credentialSubject']['kycId'] = data['passbase_key']
+        credential['credentialSubject']['kycProvider'] = "Passbase"
 
     elif wallet_request['type'] == "VerifiableId" :
         credential = json.loads(open("./verifiable_credentials/VerifiableId.jsonld", 'r').read())
@@ -438,20 +430,18 @@ async def credential(red) :
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-
+        credential['credentialSubject']['placeOfBirth'] = identity['resources'][0]['datapoints'].get('place_of_birth', "Not indicated")
+        credential['credentialSubject']['dateOfBirth'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
+        credential['credentialSubject']['familyName'] = identity['owner']['first_name']
+        credential['credentialSubject']['firstName'] = identity['owner']['last_name']
+        credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
+        credential['credentialSubject']['personalIdentifier'] = identity['resources'][0]['datapoints']['raw_mrz_string']
+        credential['evidence'][0]['kycId'] = data['passbase_key']
         try :
-            credential['credentialSubject']['placeOfBirth'] = identity['resources'][0]['datapoints'].get('place_of_birth', "Not indicated")
-            credential['credentialSubject']['dateOfBirth'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
-            credential['credentialSubject']['familyName'] = identity['owner']['first_name']
-            credential['credentialSubject']['firstName'] = identity['owner']['last_name']
-            credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
-            credential['credentialSubject']['personalIdentifier'] = identity['resources'][0]['datapoints']['raw_mrz_string']
-
+            credential['evidence'][0]['evidenceDocument'] = identity['resources'][0]['type'].replace('_', ' ')
         except :
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_idcard", "error_description" : "Data for Verifiable Id not available"}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
+            credential['evidence'][0]['evidenceDocument'] = "Not indicated"
+        
     elif wallet_request['type'] == "IdLight" :
         credential = json.loads(open("./verifiable_credentials/IdLight.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
