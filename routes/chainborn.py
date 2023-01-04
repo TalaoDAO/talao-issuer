@@ -136,9 +136,9 @@ async def chainborn_endpoint(id, red, mode):
         for address in credential['credentialSubject']['associatedAddress']['blockchainTezos'] :
             if register_tezid(address, chainborn_membershipcard, "mainnet", mode) :
                 logging.info("address whitelisted %s", address)
-                message.message_html("address whitelisted = " + address, "thierry@altme.io", "", mode)
+                message.message("Chainborn address whitelisted", "thierry@altme.io", address, mode)
         
         # send credential to wallet
-        message.message_html("Chainborn membership card issued to " +  credential['credentialSubject']['id'], "thierry@altme.io", "", mode)        
+        message.message("Chainborn membership card issued ", "thierry@altme.io", credential['credentialSubject']['id'], mode)
         return jsonify(signed_credential)
 

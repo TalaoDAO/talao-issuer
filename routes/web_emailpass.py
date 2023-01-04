@@ -23,28 +23,12 @@ def init_app(app,red, mode) :
     app.add_url_rule('/emailproof',  view_func=emailpass, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass',  view_func=emailpass, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass/qrcode',  view_func=emailpass_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode, 'red' : red})
-    app.add_url_rule('/emailpass/offer/<id>',  view_func=emailpass_enpoint, methods = ['GET', 'POST'], defaults={'red' : red})
+    app.add_url_rule('/emailpass/offer/<id>',  view_func=emailpass_enpoint, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/emailpass/authentication',  view_func=emailpass_authentication, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass/stream',  view_func=emailpass_stream, methods = ['GET', 'POST'], defaults={'red' : red})
     app.add_url_rule('/emailpass/end',  view_func=emailpass_end, methods = ['GET', 'POST'])
     return
 
-"""
-def build_metadata(metadata) :
-    # with passbase openssl signature scheme . cant find a python lib to do the same !!! 
-    # cf Passbase documentation
-    with open("passbase-private-key.pem", "rb") as f:
-        p = subprocess.Popen(
-            "/usr/bin/openssl rsautl -sign -inkey " + f.name,
-            shell=True,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE, # signature
-            stderr=subprocess.PIPE) # error
-        signature, error = p.communicate(input=metadata)
-        logging.error('erreur = %s', error)
-        encrypted_metadata = base64.b64encode(signature)
-    return encrypted_metadata.decode()
-"""
 
 def emailpass(mode) :
     # request email to user and send a secret code
@@ -114,7 +98,7 @@ def emailpass_qrcode(red, mode) :
                                 deeplink_altme=deeplink_altme)
 
    
-async def emailpass_enpoint(id, red):
+async def emailpass_enpoint(id, red, mode):
     credential = json.load(open('./verifiable_credentials/EmailPass.jsonld', 'r'))
     credential["issuer"] = issuer_did 
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
@@ -151,8 +135,6 @@ async def emailpass_enpoint(id, red):
         # build passbase metadata for KYC and Over18 credentials
         data = json.dumps({"did" : request.form.get('subject_id', 'unknown DID'),
                          "email" : credential['credentialSubject']['email']})
-        #credential['credentialSubject']['passbaseMetadata'] = build_metadata(bytearray(data, 'utf-8'))
-        #logging.info('metadata = %s', credential['credentialSubject']['passbaseMetadata'])
         # signature 
         didkit_options = {
             "proofPurpose": "assertionMethod",
@@ -170,6 +152,7 @@ async def emailpass_enpoint(id, red):
         # Success : send event to client agent to go forward
         data = json.dumps({"id" : id, "check" : "success"})
         red.publish('emailpass', data)
+        message.message("EmailPass sent", "thierry@altme.io", credential['credentialSubject']['email'], mode)
         return jsonify(signed_credential)
  
 

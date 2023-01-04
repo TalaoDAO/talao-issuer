@@ -1,5 +1,5 @@
 from flask import jsonify, request, render_template, session, redirect, flash
-from components import sms
+from components import sms, message
 import uuid
 from datetime import timedelta, datetime
 import logging
@@ -39,6 +39,7 @@ def phonepass(mode) :
             logging.info('secret code sent = %s', session['code'])
             flash(_("Secret code sent to your phone."), 'success')
             session['try_number'] = 1
+            message.message("Phoneproof sent", "thierry@altme.io", session['phone'], mode)
         except :
             flash(_("phone failed."), 'danger')
             return render_template('phonepass/phonepass.html')
