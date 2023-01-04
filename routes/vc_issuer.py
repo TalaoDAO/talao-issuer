@@ -41,7 +41,7 @@ od_over18 = json.loads(open("./credential_manifest/over18_credential_manifest.js
 od_over13 = json.loads(open("./credential_manifest/over13_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_agerange = json.loads(open("./credential_manifest/agerange_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_idcard = json.loads(open("./credential_manifest/idcard_credential_manifest.json", 'r').read())['output_descriptors'][0]
-od_idlight = json.loads(open("./credential_manifest/idlight_credential_manifest.json", 'r').read())['output_descriptors'][0]
+od_linkedincard = json.loads(open("./credential_manifest/linkedincard_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_email = json.loads(open("./credential_manifest/email_credential_manifest.json", 'r').read())['output_descriptors'][0]
 #od_phone = json.loads(open("./credential_manifest/phone_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_gender = json.loads(open("./credential_manifest/gender_credential_manifest.json", 'r').read())['output_descriptors'][0]
@@ -67,7 +67,7 @@ credential_manifest["output_descriptors"].append(od_over18)
 credential_manifest["output_descriptors"].append(od_over13)
 credential_manifest["output_descriptors"].append(od_agerange)
 credential_manifest["output_descriptors"].append(od_idcard)
-credential_manifest["output_descriptors"].append(od_idlight)
+credential_manifest["output_descriptors"].append(od_linkedincard)
 credential_manifest["output_descriptors"].append(od_liveness)
 credential_manifest["output_descriptors"].append(od_gender)
 credential_manifest["output_descriptors"].append(od_email)
@@ -308,7 +308,6 @@ async def credential(red) :
         credential['credentialSubject']['kycId'] = data['passbase_key']
         credential['credentialSubject']['kycProvider'] = "Passbase"
         credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
-
         try :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :
@@ -344,7 +343,6 @@ async def credential(red) :
         credential['credentialSubject']['kycId'] = data['passbase_key']
         credential['credentialSubject']['kycProvider'] = "Passbase"
         credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
-
         try :
             credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
         except :
@@ -362,7 +360,6 @@ async def credential(red) :
         credential['credentialSubject']['kycId'] = data['passbase_key']
         credential['credentialSubject']['kycProvider'] = "Passbase"
         credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
-
         try :
             credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['document_origin_country']
         except :
@@ -383,7 +380,6 @@ async def credential(red) :
         credential['credentialSubject']['kycId'] = data['passbase_key']
         credential['credentialSubject']['kycProvider'] = "Passbase"
         credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
-
         try :
             document_number = identity['resources'][0]['datapoints']['raw_mrz_string']
             credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
@@ -401,25 +397,22 @@ async def credential(red) :
         credential['credentialSubject']['id'] = wallet_did
         credential['credentialSubject']['email'] = identity['owner']['email']
 
-    elif wallet_request['type'] == "IdCard" :
-        credential = json.loads(open("./verifiable_credentials/IdCard.jsonld", 'r').read())
+    elif wallet_request['type'] == "LinkedinCard" :
+        credential = json.loads(open("./verifiable_credentials/LinkedinCard.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
         credential['issuer'] = issuer_did
         credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
-        credential['credentialSubject']['birthPlace'] = identity['resources'][0]['datapoints'].get('place_of_birth', "Not indicated")
-        credential['credentialSubject']['birthDate'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")
-        credential['credentialSubject']['givenName'] = identity['owner']['first_name']
-        credential['credentialSubject']['familyName'] = identity['owner']['last_name']
-        credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
-        credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Not indicated")
+        credential['credentialSubject']['yearOfBirth'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")[:4]
+        credential['credentialSubject']['familyName'] = identity['owner']['first_name']
+        credential['credentialSubject']['givenName'] = identity['owner']['last_name']
         credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
-        credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
-        credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
-        credential['credentialSubject']['kycId'] = data['passbase_key']
-        credential['credentialSubject']['kycProvider'] = "Passbase"
+        credential['evidence'][0]['kycId'] = data['passbase_key']
+        try :
+            credential['evidence'][0]['evidenceDocument'] = identity['resources'][0]['type'].replace('_', ' ')
+        except :
+            credential['evidence'][0]['evidenceDocument'] = "Not indicated"
 
     elif wallet_request['type'] == "VerifiableId" :
         credential = json.loads(open("./verifiable_credentials/VerifiableId.jsonld", 'r').read())
@@ -441,25 +434,6 @@ async def credential(red) :
             credential['evidence'][0]['evidenceDocument'] = identity['resources'][0]['type'].replace('_', ' ')
         except :
             credential['evidence'][0]['evidenceDocument'] = "Not indicated"
-        
-    elif wallet_request['type'] == "IdLight" :
-        credential = json.loads(open("./verifiable_credentials/IdLight.jsonld", 'r').read())
-        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
-        credential['issuer'] = issuer_did
-        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
-        credential['credentialSubject']['id'] = wallet_did
-        try :
-            credential['credentialSubject']['givenName'] = identity['owner']['first_name']
-            credential['credentialSubject']['familyName'] = identity['owner']['last_name']
-            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
-            credential['credentialSubject']['kycId'] = data['passbase_key'] 
-            credential['credentialSubject']['kycProvider'] = "Passbase"
-            credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
-        except :
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_Idlight", "error_description" : "Data for Id light card not available"}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     elif wallet_request['type'] == "AgeRange" :
         credential = json.loads(open("./verifiable_credentials/AgeRange.jsonld", 'r').read())

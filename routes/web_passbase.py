@@ -50,6 +50,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/passportnumber',  view_func=pass_number, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/pass_number',  view_func=pass_number, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/verifiableid',  view_func=verifiableid, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/linkedincard',  view_func=linkedincard, methods = ['GET'], defaults={'mode' : mode})
 
 
     app.add_url_rule('/vc',  view_func=vc, methods = ['GET'], defaults={'mode' : mode})
@@ -67,6 +68,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/passbase/endpoint/gender/<id>',  view_func=passbase_endpoint_gender, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/passportnumber/<id>',  view_func=passbase_endpoint_passport_number, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/verifiableid/<id>',  view_func=passbase_endpoint_verifiable_id, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+    app.add_url_rule('/passbase/endpoint/linkedincard/<id>',  view_func=passbase_endpoint_linkedin_card, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
 
 
     app.add_url_rule('/passbase/stream',  view_func=passbase_stream, methods = ['GET', 'POST'], defaults={'red' :red})
@@ -188,6 +190,8 @@ def pass_number(mode) :
     return redirect ('/vc?credential=passportnumber')
 def verifiableid(mode) :
     return redirect ('/vc?credential=verifiableid')
+def linkedincard(mode) :
+    return redirect ('/vc?credential=linkedincard')
 
 
 def vc(mode) :
@@ -687,6 +691,96 @@ async def passbase_endpoint_verifiable_id(id,red,mode):
     credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
     credential['credentialSubject']['personalIdentifier'] = identity['resources'][0]['datapoints'].get('raw_mrz_string', "Not indicated")
     # "personalIdentifier": "IT/DE/1234",
+    credential['evidence'][0]['kycId'] = passbase_key
+    try :
+        credential['evidence'][0]['evidenceDocument'] = identity['resources'][0]['type'].replace('_', ' ')
+    except :
+        credential['evidence'][0]['evidenceDocument'] = "Not indicated"
+   
+    didkit_options = {
+            "proofPurpose": "assertionMethod",
+            "verificationMethod": vm
+        }
+    signed_credential =  await didkit.issue_credential(
+            json.dumps(credential),
+            didkit_options.__str__().replace("'", '"'),
+            key
+    )
+        
+    # send event to client agent to go forward
+    data = json.dumps({
+                    'id' : id,
+                    'check' : 'success',
+                        })
+    red.publish('passbase', data)
+    return jsonify(signed_credential)
+
+
+async def passbase_endpoint_linkedin_card(id,red,mode):
+    if request.method == 'GET':
+        credential = json.loads(open("./verifiable_credentials/LinkedinCard.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential['issuer'] = issuer_did
+        credential['credentialSubject']['id'] = "did:wallet"
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential_manifest = json.loads(open("./credential_manifest/linkedincard_credential_manifest.json", 'r').read())
+        credential_manifest['id'] = str(uuid.uuid1())
+        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
+        credential_manifest['issuer']['id'] = issuer_did
+        credentialOffer = {
+            "type": "CredentialOffer",
+            "credentialPreview": credential,
+            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
+            "credential_manifest" : credential_manifest
+        }
+        red.set(id, json.dumps(credentialOffer))
+        return jsonify(credentialOffer)
+
+    try : 
+        credentialOffer = json.loads(red.get(id).decode())
+    except :
+        logging.error("red get id error, or request time out ")
+        return jsonify ('request time out'),408
+    credential =  credentialOffer['credentialPreview']
+    red.delete(id)
+    logging.info("subject_id = %s", request.form['subject_id'])
+    credential['credentialSubject']['id'] = request.form['subject_id']
+    try :
+        (status, passbase_key, c) = get_passbase_data_from_did(request.form['subject_id'])
+    except :
+        logging.error("IDcard check has not been done")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not done")
+                        })
+        red.publish('passbase_idcard', data)
+        return jsonify ('Your ID check has not been done'),412
+
+    if status != "approved" :
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not approved")
+                        })
+        red.publish('passbase', data)
+        return jsonify('not approved'), 404
+
+    identity = get_identity(passbase_key, mode)
+    if not identity :
+        logging.warning("Identity does not exist")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identity does not exist")
+                        })
+        red.publish('passbase', data)
+        return (jsonify('Identity does not exist'))
+    credential['credentialSubject']['yearOfBirth'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")[:4]
+    credential['credentialSubject']['familyName'] = identity['owner']['first_name']
+    credential['credentialSubject']['givenName'] = identity['owner']['last_name']
+    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
     credential['evidence'][0]['kycId'] = passbase_key
     try :
         credential['evidence'][0]['evidenceDocument'] = identity['resources'][0]['type'].replace('_', ' ')
