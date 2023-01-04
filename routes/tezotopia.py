@@ -57,7 +57,7 @@ async def tezotopia_endpoint(id, red, mode):
         credential_manifest = json.load(open('./credential_manifest/tezotopia_membershipcard_credential_manifest.json', 'r'))
         credential_manifest['id'] = str(uuid.uuid1())
         credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
-        red.setex(id, 180, json.dumps(credential))
+        red.setex(id, 360, json.dumps(credential))
         credential['credentialSubject']['id'] = "did:wallet"
         credential_offer = {
             "type": "CredentialOffer",
@@ -69,7 +69,14 @@ async def tezotopia_endpoint(id, red, mode):
 
     else :  #POST
         # init credential
-        credential = json.loads(red.get(id).decode())
+        try :
+            credential = json.loads(red.get(id).decode())
+        except :
+            logging.error("redis get id failed")
+            endpoint_response= {"error": "delay_expired"}
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+
         credential['credentialSubject']['id'] = request.form['subject_id']
         credential['credentialSubject']['offers']['analytics'] = "https://talao.co/analytics/did/" + credential['credentialSubject']['id']
         presentation_list =  json.loads(request.form['presentation'])
@@ -146,10 +153,11 @@ async def tezotopia_endpoint(id, red, mode):
             tezotopia_membershipcard = "urn:uuid:0e7828d9-0591-4416-95c0-9b36b4d0e478"
             if register_tezid(address, tezotopia_membershipcard, "ghostnet", mode) :
                 logging.info("Tezotopia address whitelisted %s", address)
-                message.message_html("address whitelisted = " + address, "thierry@altme.io", "", mode)
+                message.message("Tezotopia address whitelisted", "thierry@altme.io", address, mode)
             else :
                 logging.info("Tezotopia address NOT whitelisted %s", address)
 
-        # send credential to wallet        
+        # send credential to wallet     
+        message.message("Tezotopia membership card issued ", "thierry@altme.io", credential['credentialSubject']['id'], mode)
         return jsonify(signed_credential)
 
