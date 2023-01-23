@@ -781,12 +781,13 @@ async def passbase_endpoint_linkedin_card(id,red,mode):
     credential['credentialSubject']['familyName'] = identity['owner']['first_name']
     credential['credentialSubject']['givenName'] = identity['owner']['last_name']
     credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
+    """
     credential['evidence'][0]['kycId'] = passbase_key
     try :
         credential['evidence'][0]['evidenceDocument'] = identity['resources'][0]['type'].replace('_', ' ')
     except :
         credential['evidence'][0]['evidenceDocument'] = "Not indicated"
-   
+    """
     didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": vm

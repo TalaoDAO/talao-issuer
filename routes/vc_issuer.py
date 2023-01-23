@@ -408,12 +408,13 @@ async def credential(red) :
         credential['credentialSubject']['familyName'] = identity['owner']['first_name']
         credential['credentialSubject']['givenName'] = identity['owner']['last_name']
         credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
+        """
         credential['evidence'][0]['kycId'] = data['passbase_key']
         try :
             credential['evidence'][0]['evidenceDocument'] = identity['resources'][0]['type'].replace('_', ' ')
         except :
             credential['evidence'][0]['evidenceDocument'] = "Not indicated"
-
+        """
     elif wallet_request['type'] == "VerifiableId" :
         credential = json.loads(open("./verifiable_credentials/VerifiableId.jsonld", 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
