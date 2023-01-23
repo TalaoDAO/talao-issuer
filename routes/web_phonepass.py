@@ -76,9 +76,7 @@ def phonepass_webhook(red):
     if request.headers.get("key") != client_secret :
         return jsonify("Forbidden"), 403
 
-    data = request.get_json()
-    logging.info("data = %s", data)
-    
+    data = request.get_json()    
     if data['event'] == 'ISSUANCE' :
         phone = red.get(data["id"]).decode()
         credential =  {
@@ -91,7 +89,7 @@ def phonepass_webhook(red):
         return jsonify(credential)
     
     if data['event'] == 'SIGNED_CREDENTIAL' :
-        logging.info("credential issued = %s", data['vc'])
+        logging.info("credential issued")
         return jsonify('ok')
  
 def phonepass_callback() :
