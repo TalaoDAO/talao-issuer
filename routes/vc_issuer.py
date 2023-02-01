@@ -361,14 +361,11 @@ async def credential(red) :
         credential['credentialSubject']['kycProvider'] = "Passbase"
         credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
         try :
-            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['document_origin_country']
+            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['nationality']
         except :
-            try :
-                credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['country']
-            except :
-                headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-                endpoint_response = {"error" : "invalid_over18", "error_description" : "Nationality not available"}
-                return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_over18", "error_description" : "Nationality not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     elif wallet_request['type'] == "PassportNumber" :
         credential = json.loads(open("./verifiable_credentials/PassportNumber.jsonld", 'r').read())
@@ -407,7 +404,7 @@ async def credential(red) :
         credential['credentialSubject']['yearOfBirth'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")[:4]
         credential['credentialSubject']['familyName'] = identity['owner']['first_name']
         credential['credentialSubject']['givenName'] = identity['owner']['last_name']
-        credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
+        credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('nationality', "Not available")
         """
         credential['evidence'][0]['kycId'] = data['passbase_key']
         try :

@@ -2,10 +2,11 @@
     "@context": [
         "https://www.w3.org/2018/credentials/v1",
         {
-            "givenName" : "https://schema.org/givenName",
-            "familyName" : "https://schema.org/familyName",
-            "nationality" : "https://schema.org/nationality",
-            "yearOfBirth" : "https://schema.org/number",
+            "schema" : "https://schema.org/",
+            "givenName" : "schema:givenName",
+            "familyName" : "schema:familyName",
+            "nationality" : "schema:nationality",
+            "yearOfBirth" : "schema:number",
             "LinkedinCard" : "https://github.com/TalaoDAO/context#linkedincard"   
         }
     ],

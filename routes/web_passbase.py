@@ -599,7 +599,7 @@ async def passbase_endpoint_kyc(id,red,mode):
     credential['credentialSubject']['familyName'] = identity['owner']['last_name']
     credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
     credential['credentialSubject']['authority'] = identity['resources'][0]['datapoints'].get('authority', "Not indicated")
-    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
+    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('nationality', "Not indicated")
     credential['credentialSubject']['expiryDate'] = identity['resources'][0]['datapoints'].get('date_of_expiry', "Not indicated")
     credential['credentialSubject']['issueDate'] = identity['resources'][0]['datapoints'].get('date_of_issue', "Not indicated")
     didkit_options = {
@@ -780,7 +780,7 @@ async def passbase_endpoint_linkedin_card(id,red,mode):
     credential['credentialSubject']['yearOfBirth'] = identity['resources'][0]['datapoints'].get('date_of_birth', "Not indicated")[:4]
     credential['credentialSubject']['familyName'] = identity['owner']['first_name']
     credential['credentialSubject']['givenName'] = identity['owner']['last_name']
-    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('document_origin_country', "Not indicated")
+    credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints'].get('nationality', "Not indicated")
     """
     credential['evidence'][0]['kycId'] = passbase_key
     try :
@@ -1002,19 +1002,16 @@ async def passbase_endpoint_nationality(id,red,mode):
         return (jsonify('Identity does not exist'))
 
     try :
-        credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['document_origin_country']
+        credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['nationality']
     except :  
-        try :
-            credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['country']
-        except :
-            logging.error("Nationality not available")
-            data = json.dumps({
-                    'id' : id,
-                    'check' : 'failed',
-                    'message' : _("Nationality not available")
-                        })
-            red.publish('passbase', data)
-            return jsonify ('Nationality not available'),404
+        logging.error("Nationality not available")
+        data = json.dumps({
+                'id' : id,
+                'check' : 'failed',
+                'message' : _("Nationality not available")
+        })
+        red.publish('passbase', data)
+        return jsonify ('Nationality not available'),404
 
     credential['credentialSubject']['kycId'] = passbase_key
     didkit_options = {
