@@ -83,9 +83,10 @@ def emailpass_qrcode(red, mode) :
     if not session.get('email') :
         return redirect ('/emailpass')
     id = str(uuid.uuid1())
-    qr_code = mode.server + "emailpass/offer/" + id +'?' + urlencode({'issuer' : issuer_did})
+    qr_code = mode.server + "emailpass/offer/" + id 
     logging.info('qr code = %s', qr_code)
     deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : qr_code })
+    print(deeplink_talao)
     deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri' : qr_code })
     if not session.get('email') :
         flash(_("Code expired."), "warning")

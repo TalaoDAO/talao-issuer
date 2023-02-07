@@ -33,8 +33,6 @@ Altme team - <a href='https://app.altme.io/app/download'>Open your wallet</a>
 """
 
 key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-#issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
-#vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
 vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
 
@@ -52,7 +50,6 @@ def init_app(app,red, mode) :
     app.add_url_rule('/verifiableid',  view_func=verifiableid, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/linkedincard',  view_func=linkedincard, methods = ['GET'], defaults={'mode' : mode})
 
-
     app.add_url_rule('/vc',  view_func=vc, methods = ['GET'], defaults={'mode' : mode})
 
     app.add_url_rule('/passbase/webhook',  view_func=passbase_webhook, methods = ['POST'], defaults={ 'mode' : mode})
@@ -69,7 +66,6 @@ def init_app(app,red, mode) :
     app.add_url_rule('/passbase/endpoint/passportnumber/<id>',  view_func=passbase_endpoint_passport_number, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/verifiableid/<id>',  view_func=passbase_endpoint_verifiable_id, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/linkedincard/<id>',  view_func=passbase_endpoint_linkedin_card, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
-
 
     app.add_url_rule('/passbase/stream',  view_func=passbase_stream, methods = ['GET', 'POST'], defaults={'red' :red})
     app.add_url_rule('/passbase/back',  view_func=passbase_back, methods = ['GET', 'POST'])
