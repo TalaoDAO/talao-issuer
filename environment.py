@@ -29,7 +29,6 @@ class currentMode() :
 		self.chainborn_api_key = passwords['chainborn_api_key']       # chainborn.py                 
 		self.smtp_password = passwords['smtp_password'] 			  # smtp.py
 		self.sms_token = passwords['sms_token']                       # sms.py		
-		self.deeplink = 'https://app.talao.co/'		
 	
 		# En Prod chez AWS 
 		if self.myenv == 'aws':

@@ -91,7 +91,7 @@ def phonepass_qrcode(red, mode) :
     return render_template('phonepass/phonepass_qrcode.html',
                                 url=qr_code,
                                 id=id,
-                                deeplinktalao=deeplink_talao,
+                                deeplink_talao=deeplink_talao,
                                 deeplink_altme=deeplink_altme)
 
   
