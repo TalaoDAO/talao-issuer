@@ -83,7 +83,7 @@ def emailpass_qrcode(red, mode) :
     if not session.get('email') :
         return redirect ('/emailpass')
     id = str(uuid.uuid1())
-    qr_code = mode.server + "emailpass/offer/" + id 
+    qr_code = mode.server + "emailpass/offer/" + id + "?issuer=" + issuer_did
     logging.info('qr code = %s', qr_code)
     deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri' : qr_code })
     print(deeplink_talao)

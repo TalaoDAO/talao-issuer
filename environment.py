@@ -10,7 +10,7 @@ class currentMode() :
 		self.admin = 'thierry.thevenet@talao.io'
 		self.test = True
 		self.myenv = myenv
-		self.deeplink_talao = 'https://app.talao.co/'	
+		self.deeplink_talao = 'https://issuer.talao.co/'	
 		self.deeplink_altme = 'https://app.altme.io/'			
 		with open("./passwords.json", "r") as read_content: 
 			passwords = json.load(read_content)
