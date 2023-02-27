@@ -156,6 +156,16 @@ async def tezotopia_endpoint(id, red, mode):
                 message.message("Tezotopia address whitelisted", "thierry@altme.io", address, mode)
             else :
                 logging.info("Tezotopia address NOT whitelisted %s", address)
+        # call tezotopia endpoint
+        """
+        curl -XPOST https://tezotopia.com/altme -H 'tezotopia-issuer-key:0e7828d9-0591-4416-95c0-9b36b4d0e478' 
+        -H 'Content-Type: application/json' 
+        --data '{ 
+            "address": ["tz1UZZnrre9H7KzAufFVm7ubuJh5cCfjGwam", "tz2UZZnrre9H7KzAufFVm7ubuJh5cCfjkhgt],
+            "device": "iphone 10",
+            "systemVersion" : "16.1.1" 
+            "over13": true }'
+        """
 
         # send credential to wallet     
         message.message("Tezotopia membership card issued ", "thierry@altme.io", credential['credentialSubject']['id'], mode)

@@ -14,8 +14,6 @@ logging.basicConfig(level=logging.INFO)
 EXPIRATION_DELAY = timedelta(weeks=52)
 
 key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
-#issuer_did = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du"
-#issuer_vm = "did:tz:tz1NyjrTUNxDpPaqNZ84ipGELAcTWYg6s5Du#blockchainAccountId"
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
 
@@ -128,8 +126,8 @@ async def ai_ageestimate(red, mode) :
             data = {'age' : age,
                      'st_dev' : st_dev,
                      'prediction' : prediction}
-            red.setex(challenge, 120, json.dumps(data))
-            logging.info("age is now stored in redis for 120s")
+            red.setex(challenge, 240, json.dumps(data))
+            logging.info("age is now stored in redis for 240s")
         except :
             logging.error(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -227,8 +225,8 @@ async def ai_over13(red, mode) :
             data = {'age' : age,
                      'st_dev' : st_dev,
                      'prediction' : prediction}
-            red.setex(challenge, 120, json.dumps(data))
-            logging.info("age is stored in redis for 120 sec")
+            red.setex(challenge, 240, json.dumps(data))
+            logging.info("age is stored in redis for 240 sec")
         except :
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -328,8 +326,8 @@ async def ai_over18(red,mode) :
             data = {'age' : age,
                     'st_dev' : st_dev,
                     'prediction' : prediction}
-            red.setex(challenge, 120, json.dumps(data))
-            logging.info("age is stored in redis for 120 sec")
+            red.setex(challenge, 240, json.dumps(data))
+            logging.info("age is stored in redis for 240 sec")
         except :
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -429,8 +427,8 @@ async def ai_agerange(red, mode) :
             data = {'age' : age,
                      'st_dev' : st_dev,
                      'prediction' : prediction}
-            red.setex(challenge, 120, json.dumps(data))
-            logging.info("age is stored in redis for 120 sec")
+            red.setex(challenge, 240, json.dumps(data))
+            logging.info("age is stored in redis for 240 sec")
         except :
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
