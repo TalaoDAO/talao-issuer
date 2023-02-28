@@ -1,0 +1,38 @@
+{
+    "@context": ["https://www.w3.org/2018/credentials/v1",
+        {
+            "ageOver" : "https://schema.org/ageOver",
+            "alternateName" : "https://schema.org/alternatName",
+            "tezosAddress" : "https://schema.org/accountId",
+            "ethereumAddress" : "https://schema.org/accountId",
+            "polygonAddress" : "https://schema.org/accountId",
+            "binanceAddress" : "https://schema.org/accountId",
+            "fantomAddress" : "https://schema.org/accountId",
+            "chatSupport" : "https://schema.org/identifier",
+            "duration" : "https://schema.org/duration",
+            "issuedBy": {
+                "@id": "https://schema.org/issuedBy",
+                "@context": {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "schema" : "https://schema.org/",
+                    "name" :  "schema:name"
+                }
+            }
+        }
+    ],
+    "id": "",
+    "type": ["VerifiableCredential", "BloometaPass"],
+    "issuer": "",
+    "issuanceDate": "",
+    "credentialSubject" : {
+        "id": "",
+        "type" : "BloometaPass",
+        "ageOver" : "",
+        "tezosAddress" : "",
+        "ethereumAddress" : "",
+        "polygonAddress" : "",
+        "duration" : "",
+        "issuedBy" : {"name" : "Bloometa"}
+    }
+}

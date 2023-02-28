@@ -265,7 +265,7 @@ async def ai_over13(red, mode) :
     else :
         logging.warning("Age is estimated under 13")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_over18", "error_description" : "User is estimated under 13"}
+        endpoint_response = {"error" : "invalid_over13", "error_description" : "User is estimated under 13"}
         return Response(response=json.dumps(endpoint_response), status=403, headers=headers)  
 
 

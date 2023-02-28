@@ -17,7 +17,7 @@ import markdown.extensions.fenced_code
 
 # local dependencies
 from routes import web_emailpass, web_phonepass, web_passbase, web_talao_community, vc_issuer, yoti, dapp_register_gamer_pass
-from routes import tezotopia, twitter, chainborn
+from routes import tezotopia, twitter, chainborn, bloometa
 import environment
 
 import logging
@@ -44,7 +44,7 @@ app.config['SESSION_TYPE'] = 'redis' # Redis server side session
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=360) # cookie lifetime
 app.config['SESSION_FILE_THRESHOLD'] = 100
 app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "4.5"
+app.jinja_env.globals['Version'] = "4.6"
 
 babel = Babel(app)
 
@@ -68,6 +68,8 @@ yoti.init_app(app, red, mode)
 tezotopia.init_app(app, red, mode)
 twitter.init_app(app, red, mode)
 chainborn.init_app(app, red, mode)
+bloometa.init_app(app, red, mode)
+
 
 
 @babel.localeselector
