@@ -21,10 +21,10 @@ LIVENESS_DELAY = timedelta(weeks=2)
 
 approval_text = """Hello,<br>
 <br>Well done, your <strong>KYC is complete</strong> !<br>
-<br>You can now add <strong>6 digital credentials</strong> in your <strong>Altme Wallet</strong> :<br><br>
-<li><strong>Over 18 Proof</strong> : to prove your email ownership to Web 3 Apps.</li><br>
-<li><strong>Age Range Proof</strong> : to prove your Age Range to Web 3 Apps (Gaming, DeFi...).</li><br>
-<li><strong>Email Proof</strong> : To access Web 3 services or claim benefits : Membership card, Loyalty card, Rewards…</li><br>
+<br>You can now add <strong>new digital credentials</strong> in your <strong>Altme Wallet</strong> :<br><br>
+<li><strong>Over 18 and Over 13 Proof</strong> : to prove your age to Web 3 Apps.</li><br>
+<li><strong>Age Range Proof</strong> : to give an indication about your Age Range to Web 3 Apps (Gaming, DeFi...).</li><br>
+<li><strong>Email Proof</strong> : To authenticate to Web 3 services and claim benefits : Membership card, Loyalty card, Rewards…</li><br>
 <li><strong>Nationality Proof</strong> : to prove your Nationality without revealing any other information about you. It can be used in a user survey, etc.</li><br>
 <li><strong>Identity card</strong> : This digital identity card contains the same information as your physical ID card.You can use it in Web 3 for a KYC check for example.</li><br>
 <br>
