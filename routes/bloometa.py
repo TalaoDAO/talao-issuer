@@ -34,18 +34,19 @@ def bloometa_qrcode (mode) :
 
 
 async def bloometa_endpoint(id, red, mode): 
-    try : 
-        x_api_key = request.headers['X-API-KEY']
-    except :
-        logging.warning("Invalid request")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)    
-    if  x_api_key != mode.altme_ai_token :
-        logging.warning('api key is incorrect')
-        endpoint_response= {"error": "unauthorized_client"}
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        return Response(response=json.dumps(endpoint_response), status=401, headers=headers)
+    if mode.myenv == 'aws' :
+        try : 
+            x_api_key = request.headers['X-API-KEY']
+        except :
+            logging.warning("Invalid request")
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)    
+        if  x_api_key != mode.altme_ai_token :
+            logging.warning('api key is incorrect')
+            endpoint_response= {"error": "unauthorized_client"}
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            return Response(response=json.dumps(endpoint_response), status=401, headers=headers)
     
     if request.method == 'GET': 
         credential = json.load(open('./verifiable_credentials/BloometaPass.jsonld', 'r'))
@@ -81,25 +82,41 @@ async def bloometa_endpoint(id, red, mode):
         for presentation in presentation_list :
             if isinstance(presentation, str) :
                 presentation = json.loads(presentation)
-
+            # tezos
             if presentation['verifiableCredential']['credentialSubject']['type'] == 'TezosAssociatedAddress' :
                 address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
-                if not credential['credentialSubject']['tezosAddress'] :
+                if not credential['credentialSubject'].get('tezosAddress') :
                     credential['credentialSubject']['tezosAddress'] = [address]
                 else :
                     credential['credentialSubject']['tezosAddress'].append(address)
+            # Ethereum
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'EthereumAssociatedAddress' :
                 address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
-                if not credential['credentialSubject']['ethereumAddress'] :
+                if not credential['credentialSubject'].get('ethereumAddress') :
                     credential['credentialSubject']['ethereumAddress'] = [address]
                 else :
                     credential['credentialSubject']['ethereumAddress'].append(address)
+            # Polygon
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'PolygonAssociatedAddress' :
                 address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
-                if not credential['credentialSubject']['polygonAddress'] :
+                if not credential['credentialSubject'].get('polygonAddress') :
                     credential['credentialSubject']['polygonAddress'] = [address]
                 else :
                     credential['credentialSubject']['polygonAddress'].append(address)
+            # Binance
+            elif presentation['verifiableCredential']['credentialSubject']['type'] == 'BinanceAssociatedAddress' :
+                address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
+                if not credential['credentialSubject'].get('binanceAddress') :
+                    credential['credentialSubject']['binanceAddress'] = [address]
+                else :
+                    credential['credentialSubject']['binanceAddress'].append(address)
+            # Fantom
+            elif presentation['verifiableCredential']['credentialSubject']['type'] == 'FantomAssociatedAddress' :
+                address = presentation['verifiableCredential']['credentialSubject']['associatedAddress']
+                if not credential['credentialSubject'].get('fantomAddress') :
+                    credential['credentialSubject']['fantomAddress'] = [address]
+                else :
+                    credential['credentialSubject']['fantomAddress'].append(address)
             
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over18' :
                 credential['credentialSubject']['ageOver'] = "18+"

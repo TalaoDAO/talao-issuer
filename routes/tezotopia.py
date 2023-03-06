@@ -35,18 +35,20 @@ def tezotopia_qrcode (mode) :
 
 
 async def tezotopia_endpoint(id, red, mode): 
-    try : 
-        x_api_key = request.headers['X-API-KEY']
-    except :
-        logging.warning("Invalid request")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)    
-    if  x_api_key != mode.altme_ai_token :
-        logging.warning('api key is incorrect')
-        endpoint_response= {"error": "unauthorized_client"}
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        return Response(response=json.dumps(endpoint_response), status=401, headers=headers)
+    if mode.myenv == 'aws' :
+        try : 
+            x_api_key = request.headers['X-API-KEY']
+        except :
+            logging.warning("Invalid request")
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)    
+        if  x_api_key != mode.altme_ai_token :
+            logging.warning('api key is incorrect')
+            endpoint_response= {"error": "unauthorized_client"}
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            return Response(response=json.dumps(endpoint_response), status=401, headers=headers)
+    
     if request.method == 'GET': 
         credential = json.load(open('./verifiable_credentials/MembershipCard_1.jsonld', 'r'))
         credential['id'] = "urn:uuid:" + str(uuid.uuid1())

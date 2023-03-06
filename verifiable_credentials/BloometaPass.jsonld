@@ -26,13 +26,7 @@
     "issuer": "",
     "issuanceDate": "",
     "credentialSubject" : {
-        "id": "",
         "type" : "BloometaPass",
-        "ageOver" : "",
-        "tezosAddress" : "",
-        "ethereumAddress" : "",
-        "polygonAddress" : "",
-        "duration" : "",
         "issuedBy" : {"name" : "Bloometa"}
     }
 }
