@@ -25,6 +25,37 @@ def init_app(app,red, mode) :
     return
 
 
+def send_data_to_tezotopia(data, mode) :
+    """
+
+    curl -X POST \
+        'https://bloometa.com/altme' \
+        --header 'bloometa-issuer-key: 234465687-0591-4416-95c0-9b36b4d0e478' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{
+        "address": ["tz1test", "tz2test"],
+        "device": "Test",
+        "systemVersion": "1.0",
+        "over13": true,
+        "anythingElse": "value"
+        }'
+    
+    """
+    url = 'https://us-central1-tezotopia-testnet.cloudfunctions.net/altme'
+    headers = {
+        'Content-Type' : 'application/json',
+        'tezotopia-issuer-key' : mode.bloometa_issuer_key     
+    }
+    r = requests.post(url, headers=headers, data=json.dumps(data))
+    logging.info("Send data : status code = %s", r.status_code)
+    if not 199<r.status_code<300 :
+        logging.error("API call to Tezootpia rejected %s", r.status_code)
+        return
+    else :
+        logging.info('Data has been sent to Tezotopia')
+        return True
+
+
 # pour tester l issuer avec un qrcode
 def bloometa_qrcode (mode) :
     return render_template(
@@ -118,8 +149,16 @@ async def bloometa_endpoint(id, red, mode):
                 else :
                     credential['credentialSubject']['fantomAddress'].append(address)
             
+            elif presentation['verifiableCredential']['credentialSubject']['type'] == 'WalletCredential' :
+                deviceName = presentation['verifiableCredential']['credentialSubject']['deviceName']
+                systemName = presentation['verifiableCredential']['credentialSubject']['systemName']
+
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over18' :
                 credential['credentialSubject']['ageOver'] = "18+"
+            
+            elif presentation['verifiableCredential']['credentialSubject']['type'] == 'EmailPass' :
+                email = presentation['verifiableCredential']['credentialSubject']['email']
+                
             else :
                 logging.warning('non expected type %s',presentation['verifiableCredential']['credentialSubject']['type'] )
 
@@ -133,27 +172,31 @@ async def bloometa_endpoint(id, red, mode):
             "proofPurpose": "assertionMethod",
             "verificationMethod": issuer_vm
             }
-        #try : 
-        signed_credential =  await didkit.issue_credential(
+        try : 
+            signed_credential =  await didkit.issue_credential(
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 issuer_key)
-        """except :
+        except :
             logging.error('credential signature failed')
             endpoint_response= {"error": "server_error"}
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
-       """
+       
         # call bloometa endpoint
-        """
-        curl -XPOST https://bloometa.com/altme -H 'bloometa-issuer-key:0e7828d9-0591-4416-95c0-9b36b4d0e478' 
-        -H 'Content-Type: application/json' 
-        --data '{ 
-            "address": ["tz1UZZnrre9H7KzAufFVm7ubuJh5cCfjGwam", "tz2UZZnrre9H7KzAufFVm7ubuJh5cCfjkhgt],
-            "device": "iphone 10",
-            "systemVersion" : "16.1.1" 
-            "over13": true }'
-        """
+        data = {
+            'tezosAddress' :  credential['credentialSubject']['tezosAddress'],
+            'ethereumAddress' :  credential['credentialSubject']['ethereumAddress'],
+            'polygonAddress' :  credential['credentialSubject']['polygonAddress'],
+            'binanceAddress' :  credential['credentialSubject']['binanceAddress'],
+            'fantomAddress' :  credential['credentialSubject']['fantomAddress'],
+            'email' : email,
+            'device' : deviceName,
+            'systemVersion' : systemName,
+            'over18' : True
+        }
+        logging.info('data  = %s', data)
+        send_data_to_tezotopia(data, mode)
 
         # send credential to wallet     
         message.message("Bloometa membership card issued ", "thierry@altme.io", credential['credentialSubject']['id'], mode)

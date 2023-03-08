@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 from flask_babel import _
 import didkit
-from altme_on_chain import issue_sbt, register_tezid
+from altme_on_chain import register_tezid
 from components import message
 
 OFFER_DELAY = timedelta(seconds= 180)
@@ -21,9 +21,40 @@ issuer_did = "did:web:app.altme.io:issuer"
 # curl -H "X-API-KEY: 123456" -X GET http://192.168.0.66:50000/tezotopia/membershipcard/123
 
 def init_app(app,red, mode) :
-    #app.add_url_rule('/tezotopia/qrcode',  view_func=tezotopia_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode})
+    app.add_url_rule('/tezotopia/qrcode',  view_func=tezotopia_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/tezotopia/membershipcard/<id>',  view_func=tezotopia_endpoint, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     return
+
+
+def send_data_to_tezotopia(data, mode) :
+    """
+
+    curl -X POST \
+        'https://us-central1-tezotopia-testnet.cloudfunctions.net/altme' \
+        --header 'tezotopia-issuer-key: 0e7828d9-0591-4416-95c0-9b36b4d0e478' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{
+        "address": ["tz1test", "tz2test"],
+        "device": "Test",
+        "systemVersion": "1.0",
+        "over13": true,
+        "anythingElse": "value"
+        }'
+    
+    """
+    url = 'https://us-central1-tezotopia-testnet.cloudfunctions.net/altme'
+    headers = {
+        'Content-Type' : 'application/json',
+        'tezotopia-issuer-key' : mode.tezotopia_issuer_key     
+    }
+    r = requests.post(url, headers=headers, data=json.dumps(data))
+    logging.info("Send data : status code = %s", r.status_code)
+    if not 199<r.status_code<300 :
+        logging.error("API call to Tezootpia rejected %s", r.status_code)
+        return
+    else :
+        logging.info('Data has been sent to Tezotopia')
+        return True
 
 
 # pour tester l issuer avec un qrcode
@@ -95,6 +126,14 @@ async def tezotopia_endpoint(id, red, mode):
             
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over13' :
                 credential['credentialSubject']['ageOver'] = "13+"
+            
+            elif presentation['verifiableCredential']['credentialSubject']['type'] == 'EmailPass' :
+                email = presentation['verifiableCredential']['credentialSubject']['email']
+            
+            elif presentation['verifiableCredential']['credentialSubject']['type'] == 'WalletCredential' :
+                deviceName = presentation['verifiableCredential']['credentialSubject']['deviceName']
+                systemName = presentation['verifiableCredential']['credentialSubject']['systemName']
+
             else :
                 logging.warning('non expected type %s',presentation['verifiableCredential']['credentialSubject']['type'] )
 
@@ -128,28 +167,6 @@ async def tezotopia_endpoint(id, red, mode):
         if not 199<resp.status_code<300 :
             logging.warning("Get access refused, analytics are not updated ", resp.status_code)
         
-        # issue SBT
-        # https://tzip.tezosagora.org/proposal/tzip-21/#creators-array
-        """
-        metadata = {
-            "name":"Tezotopia Membership",
-            "symbol":"ALTMESBT",
-            "creators":["Altme.io","did:web:altme.io:did:web:app.altme.io:issuer"],
-            "decimals":"0",
-            "identifier" :  credential['id'],
-            "displayUri":"ipfs://QmVCUKEdc3JcBs441o3dPEVz8A84dDypz9yotx68YkK7KW",
-            "publishers":["compell.io"],
-            "minter": "KT1JwgHTpo4NZz6jKK89rx3uEo9L5kLY1FQe",
-            "rights": "No License / All Rights Reserved",
-            "artifactUri": "ipfs://QmVCUKEdc3JcBs441o3dPEVz8A84dDypz9yotx68YkK7KW",
-            "description":"During the next 365 days, when you will MINT an NFT on Tezotopia Starbase or buy a DROPS on Tezotopia Marketplace you will immediately receive a cashback on the Tezos blockchain address associated to this card. Please, use the same Tezos address to play on Tezotopia as the one you associated to this card. ID: Tezotopia Membership Card",
-            "thumbnailUri": "ipfs://QmZgKuTdhmywKzaisjHQyskRodnxTESUiUdbVcrEeXYr14",
-            "is_transferable":False,
-            "shouldPreferSymbol":False
-        }
-        if issue_sbt(tezos_address, metadata, credential['id'], mode) :
-            logging.info("SBT sent")
-        """
         # register in whitelist on ghostnet KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
         for address in  credential['credentialSubject']['associatedAddress']['blockchainTezos'] :
             tezotopia_membershipcard = "urn:uuid:0e7828d9-0591-4416-95c0-9b36b4d0e478"
@@ -157,17 +174,18 @@ async def tezotopia_endpoint(id, red, mode):
                 logging.info("Tezotopia address whitelisted %s", address)
                 message.message("Tezotopia address whitelisted", "thierry@altme.io", address, mode)
             else :
-                logging.info("Tezotopia address NOT whitelisted %s", address)
+                logging.info("Tezotopia address Not whitelisted %s", address)
+        
         # call tezotopia endpoint
-        """
-        curl -XPOST https://tezotopia.com/altme -H 'tezotopia-issuer-key:0e7828d9-0591-4416-95c0-9b36b4d0e478' 
-        -H 'Content-Type: application/json' 
-        --data '{ 
-            "address": ["tz1UZZnrre9H7KzAufFVm7ubuJh5cCfjGwam", "tz2UZZnrre9H7KzAufFVm7ubuJh5cCfjkhgt],
-            "device": "iphone 10",
-            "systemVersion" : "16.1.1" 
-            "over13": true }'
-        """
+        data = {
+            'address' : credential['credentialSubject']['associatedAddress']['blockchainTezos'],
+            'email' : email,
+            'device' : deviceName,
+            'systemVersion' : systemName,
+            'over13' : True
+        }
+        logging.info('data  = %s', data)
+        send_data_to_tezotopia(data, mode)
 
         # send credential to wallet     
         message.message("Tezotopia membership card issued ", "thierry@altme.io", credential['credentialSubject']['id'], mode)
