@@ -426,7 +426,7 @@ async def credential(red) :
         credential['credentialSubject']['familyName'] = identity['owner']['first_name']
         credential['credentialSubject']['firstName'] = identity['owner']['last_name']
         credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints'].get('sex', "Not indicated")
-        credential['credentialSubject']['personalIdentifier'] = identity['resources'][0]['datapoints']['raw_mrz_string']
+        credential['credentialSubject']['personalIdentifier'] = identity['resources'][0]['datapoints'].get('raw_mrz_string', 'Not indicated')
         credential['evidence'][0]['kycId'] = data['passbase_key']
         try :
             credential['evidence'][0]['evidenceDocument'] = identity['resources'][0]['type'].replace('_', ' ')
