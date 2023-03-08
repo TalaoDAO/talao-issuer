@@ -23,8 +23,9 @@ class currentMode() :
 		self.altme_passbase_check = passwords['altme_passbase_check'] # web_passabse.py
 		self.altme_wallet_webhook = passwords['altme_wallet_webhook'] # web_passbase.py
 		self.altme_ai_token = passwords['altme_ai_token'] 			  # yoti.py
-		self.tezid_issuer_key = passwords['tezid-issuer-key']
-		self.tezotopia_issuer_key = passwords['tezotopia-issuer-key']
+		self.tezid_issuer_key = passwords['tezid_issuer_key']
+		self.tezotopia_issuer_key = passwords['tezotopia_issuer_key']
+		self.bloometa_issuer_key = passwords['bloometa_issuer_key']
 		self.altme_wallet_token = passwords['altme_wallet_token']     # vc_issuer.py
 		self.passbase = passwords['passbase'] # web_passebase.py
 		self.chainborn_api_key = passwords['chainborn_api_key']       # chainborn.py                 

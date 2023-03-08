@@ -33,11 +33,14 @@ def send_data_to_tezotopia(data, mode) :
         --header 'bloometa-issuer-key: 234465687-0591-4416-95c0-9b36b4d0e478' \
         --header 'Content-Type: application/json' \
         --data-raw '{
-        "address": ["tz1test", "tz2test"],
-        "device": "Test",
-        "systemVersion": "1.0",
-        "over13": true,
-        "anythingElse": "value"
+            "tezosAddress": ["tz1aDroxdCBaNtLFyxtcMP89vcUY2xRT4ND6"],
+            "ethereumAddress": null,
+            "polygonAddress": ["0x03817255659dc455079df516c5271b4046b2065b"],
+            "binanceAddress": ["0x03817255659dc455079df516c5271b4046b2065b"],
+            "fantomAddress": ["0x03817255659dc455079df516c5271b4046b2065b"],
+            "email": "thierry.thevenet@talao.io",
+            "device": "SM-A025G", 
+            "systemVersion": "android",
         }'
     
     """
@@ -158,7 +161,7 @@ async def bloometa_endpoint(id, red, mode):
             
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'EmailPass' :
                 email = presentation['verifiableCredential']['credentialSubject']['email']
-                
+
             else :
                 logging.warning('non expected type %s',presentation['verifiableCredential']['credentialSubject']['type'] )
 
@@ -185,11 +188,11 @@ async def bloometa_endpoint(id, red, mode):
        
         # call bloometa endpoint
         data = {
-            'tezosAddress' :  credential['credentialSubject']['tezosAddress'],
-            'ethereumAddress' :  credential['credentialSubject']['ethereumAddress'],
-            'polygonAddress' :  credential['credentialSubject']['polygonAddress'],
-            'binanceAddress' :  credential['credentialSubject']['binanceAddress'],
-            'fantomAddress' :  credential['credentialSubject']['fantomAddress'],
+            'tezosAddress' :  credential['credentialSubject'].get('tezosAddress'),
+            'ethereumAddress' :  credential['credentialSubject'].get('ethereumAddress'),
+            'polygonAddress' :  credential['credentialSubject'].get('polygonAddress'),
+            'binanceAddress' :  credential['credentialSubject'].get('binanceAddress'),
+            'fantomAddress' :  credential['credentialSubject'].get('fantomAddress'),
             'email' : email,
             'device' : deviceName,
             'systemVersion' : systemName,
