@@ -27,6 +27,7 @@
     "issuanceDate": "",
     "credentialSubject" : {
         "type" : "BloometaPass",
+        "chatSupport" : "@bloometa:matrix.talao.co",
         "issuedBy" : {"name" : "Bloometa"}
     }
 }
