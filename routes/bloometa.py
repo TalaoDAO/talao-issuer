@@ -1,4 +1,4 @@
-from flask import jsonify, request,  Response, render_template
+from flask import jsonify, request,  Response, render_template, session, redirect
 import requests
 import json
 import uuid
@@ -8,6 +8,8 @@ logging.basicConfig(level=logging.INFO)
 from flask_babel import _
 import didkit
 from components import message
+from urllib.parse import urlencode
+
 
 OFFER_DELAY = timedelta(seconds= 180)
 
@@ -16,18 +18,16 @@ issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
 
 
-#curl -d '{"webhook" : "https://altme.io/webhook", "contact_email" :"thierry@gmail.io"}'  -H "Content-Type: application/json" -X POST https://talao.co/sandbox/op/beacon/verifier/api/create/over13
-# curl -H "X-API-KEY: 123456" -X GET http://192.168.0.66:50000/bloometa/membershipcard/123
-
 def init_app(app,red, mode) :
-    app.add_url_rule('/bloometa/qrcode',  view_func=bloometa_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode})
+    app.add_url_rule('/bloometa',  view_func=bloometa, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/bloometa/membershipcard/<id>',  view_func=bloometa_endpoint, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+    app.add_url_rule('/bloometa/stream',  view_func=bloometa_stream, methods = ['GET', 'POST'], defaults={'red' : red})
+    app.add_url_rule('/bloometa/end',  view_func=bloometa_end, methods = ['GET', 'POST'])
     return
 
 
-def send_data_to_tezotopia(data, mode) :
+def send_data_to_bloometa(data, mode) :
     """
-
     curl -X POST \
         'https://bloometa.com/altme' \
         --header 'bloometa-issuer-key: 234465687-0591-4416-95c0-9b36b4d0e478' \
@@ -44,45 +44,47 @@ def send_data_to_tezotopia(data, mode) :
         }'
     
     """
-    url = 'https://us-central1-tezotopia-testnet.cloudfunctions.net/altme'
+    url = 'https://bloometa.com/altme'
     headers = {
         'Content-Type' : 'application/json',
-        'tezotopia-issuer-key' : mode.bloometa_issuer_key     
+        'bloometa-issuer-key' : mode.bloometa_issuer_key     
     }
     r = requests.post(url, headers=headers, data=json.dumps(data))
     logging.info("Send data : status code = %s", r.status_code)
     if not 199<r.status_code<300 :
-        logging.error("API call to Tezootpia rejected %s", r.status_code)
+        logging.error("API call to Bloometa rejected %s", r.status_code)
         return
     else :
-        logging.info('Data has been sent to Tezotopia')
+        logging.info('Data has been sent to Bloometa')
         return True
 
 
-# pour tester l issuer avec un qrcode
-def bloometa_qrcode (mode) :
-    return render_template(
-        'qrcode_for_test.html',
-        url=mode.server + 'bloometa/membershipcard/' + str(uuid.uuid1())
-    )
+def bloometa(red, mode) :
+    if request.method == 'GET':
+        session['authenticated'] = True
+        return render_template ('bloometa/bloometa.html')
+    else :
+        if not session.get('authenticated') :
+            return redirect ('/bloometa')
+        id =str(uuid.uuid1())
+        data = {
+            "alternateName" : request.form.get('alternateName'),
+            "twitterAccount" : request.form.get('twitterAccount'),
+            "discordAccount" : request.form.get('discordAccount')
+        }
+        red.setex(id, 360, json.dumps(data))
+        url=mode.server + 'bloometa/membershipcard/' + id
+        return render_template(
+            'bloometa/qrcode.html',
+            id =id,
+            deeplink_altme= mode.deeplink_altme + 'app/download?' + urlencode({'uri' : url }),
+            url=url
+        )
 
 
-async def bloometa_endpoint(id, red, mode): 
-    if mode.myenv == 'aws' :
-        try : 
-            x_api_key = request.headers['X-API-KEY']
-        except :
-            logging.warning("Invalid request")
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)    
-        if  x_api_key != mode.altme_ai_token :
-            logging.warning('api key is incorrect')
-            endpoint_response= {"error": "unauthorized_client"}
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            return Response(response=json.dumps(endpoint_response), status=401, headers=headers)
-    
-    if request.method == 'GET': 
+async def bloometa_endpoint(id, red, mode):
+    if request.method == 'GET':
+        data = json.loads(red.get(id).decode())
         credential = json.load(open('./verifiable_credentials/BloometaPass.jsonld', 'r'))
         credential['id'] = "urn:uuid:" + str(uuid.uuid1())
         credential["issuer"] = issuer_did 
@@ -91,8 +93,14 @@ async def bloometa_endpoint(id, red, mode):
         credential_manifest = json.load(open('./credential_manifest/bloometapass_credential_manifest.json', 'r'))
         credential_manifest['id'] = str(uuid.uuid1())
         credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
-        red.setex(id, 360, json.dumps(credential))
         credential['credentialSubject']['id'] = "did:wallet"
+        if data['alternateName'] :
+            credential['credentialSubject']['alternateName'] = data['alternateName']
+        if data['twitterAccount'] :
+            credential['credentialSubject']['twitterAccount'] = data['twitterAccount']
+        if data['discordAccount'] :
+            credential['credentialSubject']['discordAccount'] = data['discordAccount']
+        red.setex(id, 360, json.dumps(credential))
         credential_offer = {
             "type": "CredentialOffer",
             "credentialPreview": credential,
@@ -186,8 +194,12 @@ async def bloometa_endpoint(id, red, mode):
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
        
+        print('credential = ', signed_credential)
         # call bloometa endpoint
         data = {
+            'alternateName' :  credential['credentialSubject'].get('alternateName'),
+            'twitterAccount' :  credential['credentialSubject'].get('twitterAccount'),
+            'discordAccount' :  credential['credentialSubject'].get('discordAccount'),
             'tezosAddress' :  credential['credentialSubject'].get('tezosAddress'),
             'ethereumAddress' :  credential['credentialSubject'].get('ethereumAddress'),
             'polygonAddress' :  credential['credentialSubject'].get('polygonAddress'),
@@ -199,9 +211,39 @@ async def bloometa_endpoint(id, red, mode):
             'over18' : True
         }
         logging.info('data  = %s', data)
-        send_data_to_tezotopia(data, mode)
+        send_data_to_bloometa(data, mode)
 
-        # send credential to wallet     
+        # Success : send event to client agent to go forward
+        data = json.dumps({"id" : id, "check" : "success"})
+        red.publish('bloometa', data)
         message.message("Bloometa membership card issued ", "thierry@altme.io", credential['credentialSubject']['id'], mode)
+        
+        # send credential to wallet
         return jsonify(signed_credential)
 
+
+def bloometa_end() :
+    if not session.get('authenticated') :
+        return redirect ('/bloometa')
+    if request.args['followup'] == "success" :
+        message = _('Great ! You have now your Bloometa card.')
+    elif request.args['followup'] == 'expired' :
+        message = _('Sorry ! Session expired.')
+    else :
+        message = _('Sorry ! There is a server problem, try again later.')
+    session.clear()
+    return render_template('bloometa/bloometa_end.html', message=message)
+
+
+# server event
+def bloometa_stream(red):
+    def event_stream(red):
+        pubsub = red.pubsub()
+        pubsub.subscribe('bloometa')
+        for message in pubsub.listen():
+            if message['type']=='message':
+                yield 'data: %s\n\n' % message['data'].decode()
+    headers = { "Content-Type" : "text/event-stream",
+                "Cache-Control" : "no-cache",
+                "X-Accel-Buffering" : "no"}
+    return Response(event_stream(red), headers=headers)
