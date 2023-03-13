@@ -167,17 +167,10 @@ async def bloometa_endpoint(id, red, mode):
                     credential['credentialSubject']['fantomAddress'] = [address]
                 else :
                     credential['credentialSubject']['fantomAddress'].append(address)
-            
-            elif presentation['verifiableCredential']['credentialSubject']['type'] == 'WalletCredential' :
-                deviceName = presentation['verifiableCredential']['credentialSubject']['deviceName']
-                systemName = presentation['verifiableCredential']['credentialSubject']['systemName']
-
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'Over18' :
                 credential['credentialSubject']['ageOver'] = "18+"
-            
             elif presentation['verifiableCredential']['credentialSubject']['type'] == 'EmailPass' :
                 email = presentation['verifiableCredential']['credentialSubject']['email']
-
             else :
                 logging.warning('non expected type %s',presentation['verifiableCredential']['credentialSubject']['type'] )
 
@@ -190,7 +183,7 @@ async def bloometa_endpoint(id, red, mode):
         didkit_options = {
             "proofPurpose": "assertionMethod",
             "verificationMethod": issuer_vm
-            }
+        }
         try : 
             signed_credential =  await didkit.issue_credential(
                 json.dumps(credential),
@@ -202,7 +195,6 @@ async def bloometa_endpoint(id, red, mode):
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
        
-        print('credential = ', signed_credential)
         # call bloometa endpoint
         data = {
             'alternateName' :  credential['credentialSubject'].get('alternateName'),
@@ -214,8 +206,6 @@ async def bloometa_endpoint(id, red, mode):
             'binanceAddress' :  credential['credentialSubject'].get('binanceAddress'),
             'fantomAddress' :  credential['credentialSubject'].get('fantomAddress'),
             'email' : email,
-            'device' : deviceName,
-            'systemVersion' : systemName,
             'over18' : True
         }
         logging.info('data  = %s', data)
