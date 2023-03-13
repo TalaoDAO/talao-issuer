@@ -72,6 +72,7 @@ def bloometa(red, mode) :
             "twitterAccount" : request.form.get('twitterAccount'),
             "discordAccount" : request.form.get('discordAccount')
         }
+        logging.info('data = %s', data)
         red.setex(id, 360, json.dumps(data))
         url=mode.server + 'bloometa/membershipcard/' + id
         return render_template(
@@ -84,7 +85,14 @@ def bloometa(red, mode) :
 
 async def bloometa_endpoint(id, red, mode):
     if request.method == 'GET':
-        data = json.loads(red.get(id).decode())
+        try :
+            data = json.loads(red.get(id).decode())
+        except :
+            logging.error("redis get data failed")
+            endpoint_response= {"error": "delay_expired"}
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+        
         credential = json.load(open('./verifiable_credentials/BloometaPass.jsonld', 'r'))
         credential['id'] = "urn:uuid:" + str(uuid.uuid1())
         credential["issuer"] = issuer_did 
@@ -94,11 +102,11 @@ async def bloometa_endpoint(id, red, mode):
         credential_manifest['id'] = str(uuid.uuid1())
         credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
         credential['credentialSubject']['id'] = "did:wallet"
-        if data['alternateName'] :
+        if data.get('alternateName') :
             credential['credentialSubject']['alternateName'] = data['alternateName']
-        if data['twitterAccount'] :
+        if data.get('twitterAccount') :
             credential['credentialSubject']['twitterAccount'] = data['twitterAccount']
-        if data['discordAccount'] :
+        if data.get('discordAccount') :
             credential['credentialSubject']['discordAccount'] = data['discordAccount']
         red.setex(id, 360, json.dumps(credential))
         credential_offer = {
