@@ -184,16 +184,16 @@ async def bloometa_endpoint(id, red, mode):
             "proofPurpose": "assertionMethod",
             "verificationMethod": issuer_vm
         }
-        try : 
-            signed_credential =  await didkit.issue_credential(
+        #try : 
+        signed_credential =  await didkit.issue_credential(
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 issuer_key)
-        except :
-            logging.error('credential signature failed')
-            endpoint_response= {"error": "server_error"}
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
+        #except :
+        #    logging.error('credential signature failed')
+        #    endpoint_response= {"error": "server_error"}
+        #    headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        #    return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
        
         # call bloometa endpoint
         data = {

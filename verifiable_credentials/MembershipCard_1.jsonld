@@ -11,12 +11,21 @@
                     "id": "@id",
                     "type": "@type",
                     "ageOver" : "schema:ageRange",
-                    "addressCountry" : "schema:addressCountry",
+                    "chatSupport" : "https://schema.org/identifier",
                     "associatedAddress" : {
                         "@id": "https://schema.org/address",
                         "@context" : {
                             "@protected" : true,
                             "blockchainTezos" : "https://schema.org/account"
+                        }
+                    },
+                    "offeredBy" : {
+                        "@id" : "schema:offeredBy",
+                        "@context" : {
+                            "@version": 1.1,
+                            "@protected": true,
+                            "website" : "schema:website",
+                            "name" : "schema:legalName"         
                         }
                     },
                     "offers" : {
@@ -33,15 +42,6 @@
                                     "@version": 1.1,
                                     "@protected": true,
                                     "discount" : "schema:discount"
-                                }
-                            },
-                            "offeredBy" : {
-                                "@id" : "schema:offeredBy",
-                                "@context" : {
-                                    "@version": 1.1,
-                                    "@protected": true,
-                                    "website" : "schema:website",
-                                    "name" : "schema:legalName"         
                                 }
                             }
                         }
@@ -65,7 +65,7 @@
         "id" : "did:wallet:example",
         "type" : "MembershipCard_1",
         "ageOver" : "",
-        "addressCountry" : "",
+        "chatSupport" : "@tezotopia:matrix.talao.co",
         "associatedAddress" : {"blockchainTezos" : ""},
         "offers" : {
             "duration" : "365",
@@ -73,11 +73,11 @@
             "userGuide" :  "https://altme.io/#steps-03-575161",
             "benefit" : {
                 "discount" : "25%"
-            },    
-            "offeredBy": {
-                "name": "GifGames",
-                "website" : "https://tezotopia.com"
             }
+        },    
+        "offeredBy": {
+            "name": "GifGames",
+            "website" : "https://tezotopia.com"
         },
         "issuedBy": {
             "name": "Altme"

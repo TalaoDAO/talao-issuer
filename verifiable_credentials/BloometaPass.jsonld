@@ -18,7 +18,18 @@
                     "@version": 1.1,
                     "@protected": true,
                     "schema" : "https://schema.org/",
-                    "website" :  "schema:website"
+                    "website" :  "schema:website",
+                    "name" : "schema:legalName"
+                }
+            },
+            "offeredBy": {
+                "@id": "https://schema.org/offeredBy",
+                "@context": {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "schema" : "https://schema.org/",
+                    "website" :  "schema:website",
+                    "name" : "schema:legalName"
                 }
             }
         }
@@ -30,6 +41,13 @@
     "credentialSubject" : {
         "type" : "BloometaPass",
         "chatSupport" : "@bloometa:matrix.talao.co",
-        "issuedBy" : {"website" : "https://bloometa.com"}
+        "issuedBy" : {
+            "website" : "https://altme.io",
+            "name" : "Altme"
+        },
+        "offeredBy" : {
+            "website" : "https://bloometa.com",
+            "name" : "Bloometa"
+        }
     }
 }
