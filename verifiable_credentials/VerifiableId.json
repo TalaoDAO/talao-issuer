@@ -1,0 +1,28 @@
+{
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1"
+    ],
+    "id": "",
+    "type": [
+      "VerifiableCredential",
+      "VerifiableAttestation",
+      "VerifiableId"
+    ],
+    "issuer": "",
+    "issuanceDate": "",
+    "validFrom": "",
+    "issued": "",
+    "credentialSubject": {
+    },
+    "credentialSchema": {
+      "id": "https://api-conformance.ebsi.eu/trusted-schemas-registry/v2/schemas/z22ZAMdQtNLwi51T2vdZXGGZaYyjrsuP1yzWyXZirCAHv",
+      "type": "FullJsonSchemaValidator2021"
+    },
+    "evidence": [{
+      "id": "https://github.com/TalaoDAO/context#evidence",
+      "type": ["DocumentVerification"],
+      "verifier": "Passbase",
+      "evidenceDocument": "",
+      "kycId": ""
+    }]
+  }

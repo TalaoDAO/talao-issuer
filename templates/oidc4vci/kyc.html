@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<!-- qr code page 1  -->
+
+<html style="background-color: {{ page_background_color }} ">
+  <head>
+   
+    <meta charset="utf-8">
+   <meta name="viewport" content="width=300px, initial-scale=1, maximum-scale=1">  
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='./img/3D.ico') }}"/>
+    <title>{{company_name}}</title>
+    <link rel = "stylesheet" type= "text/css" href= "{{ url_for('static', filename='bootstrap.min.css') }}">
+  </head>
+  <body >
+
+    <font color="{{page_text_color}}">  
+
+        <div id="content_desktop" class="d-none d-sm-block" style="background-color: {{page_background_color}} " >
+         
+          <div class="text-center">
+         
+            <h1 class="mt-5">{{page_title}}</h1><br>
+            <h3>{{page_subtitle}}</h3><br>
+            <div class="row">
+              <div class="col-6 offset-3">
+                <h5>{{page_description}}</h5>
+              </div>
+            </div>
+          </div> 
+
+          <div class="row d-flex justify-content-center ">    
+            <div class="col-2">
+
+              <div class="text-center border-radius: 20%">
+                <h2 hidden class="mt-2 p-2">{{title}}</h2>
+                
+                <div class="card shadow border-dark mt-2 " style="border-radius: 4%; background-color: {{qrcode_background_color}} ">
+                <img class="card-img-top p-3 " src="{{ qrcode(url) }}">
+                </div>             
+              </div>
+            
+            </div>  
+          </div>  
+
+          <div class="text-center mt-5">
+            <h2>QR code</h2><br>
+          <textarea rows="3" cols="150">{{url|safe}}</textarea>
+          </div>
+
+          <div class="text-center mt-5">
+            <h2>QR code json</h2><br>
+          <textarea rows="10" cols="150">{{url_data|safe}}</textarea>
+          </div>
+
+          <div class="text-center mt-5">
+            <h2>OpenID issuer configuration</h2><br>
+          <textarea rows="30" cols="150">{{openid_configuration|safe}}</textarea>
+          </div>
+
+         
+
+          {% if back_button  %}
+          <div class="text-center mt-5">
+            <button  onclick="goBack()" class="btn btn-outline-secondary mt-2">Back to configurator</button>
+          </div>  
+          {% endif %}
+        </div>
+        
+        
+          
+        <div id="content_smartphone" class="d-block d-sm-none " style="background-color: {{page_background_color}}" > 
+          
+          <br><br><br>
+          <div class="mt-5">
+            <div class="text-center">
+              <div class="row mt-5">
+                <did class="col-10 offset-1" >
+
+                <div class="card shadow border-dark mt-2 " style="border-radius: 10%; background-color: {{qrcode_background_color}} ">
+
+                  <div class="row mt-3">
+                    <div class="col-10 offset-1">
+                  <div class="my-3">
+                    <h5>Choose your preferred wallet</h5>
+                  </div>
+                  </div>
+                  </div>
+
+                    <div class="row mt-3">
+                      <div class="col">
+                         
+                        <a href="{{deeplink_altme}}" class="bg-transparent" style="text-decoration: none;"><img src="/static/img/AltMe.png"  style="width: 50px;"></a>
+                        <br><bt><br><h6>Altme wallet</h6>
+                      </div>
+                     
+                    </div>
+
+                    <div class="row my-3">
+                      <div class="col">
+                         
+                        <a href="{{deeplink_talao}}" class="bg-transparent" style="text-decoration: none;"><img src="/static/img/talao_icon.png"  style="width: 100px;"></a>
+                        <h6>Talao wallet</h6>
+                      </div>
+                    </div>
+         
+                </div>
+              
+                      </div>
+              </div>
+            </div>
+          </div>
+          
+
+
+
+
+
+   
+         
+        
+     
+
+
+       
+    <script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bs-init.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+ 
+      <script>      
+                function goBack() {  window.history.back();}
+      </script>
+      <script>
+        var source = new EventSource('/oidc4vci/kyc/issuer_stream');
+        source.onmessage = function (event) {
+        const data = JSON.parse(event.data)
+        if (data.stream_id == '{{stream_id}}'){
+          window.location.href='/oidc4vci/kyc/issuer_followup?';
+          }
+        };
+      </script>
+      
+      
+    
+     
+
+      </font>
+  </body>
+</html>
