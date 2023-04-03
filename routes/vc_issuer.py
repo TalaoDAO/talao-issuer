@@ -38,6 +38,7 @@ issuer_did = "did:web:app.altme.io:issuer"
 
 od_liveness = json.loads(open("./credential_manifest/liveness_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_over18 = json.loads(open("./credential_manifest/over18_credential_manifest.json", 'r').read())['output_descriptors'][0]
+od_over15 = json.loads(open("./credential_manifest/over15_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_over13 = json.loads(open("./credential_manifest/over13_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_agerange = json.loads(open("./credential_manifest/agerange_credential_manifest.json", 'r').read())['output_descriptors'][0]
 od_idcard = json.loads(open("./credential_manifest/idcard_credential_manifest.json", 'r').read())['output_descriptors'][0]
@@ -65,6 +66,7 @@ credential_manifest =  {
 
 credential_manifest["output_descriptors"].append(od_over18)
 credential_manifest["output_descriptors"].append(od_over13)
+credential_manifest["output_descriptors"].append(od_over15)
 credential_manifest["output_descriptors"].append(od_agerange)
 credential_manifest["output_descriptors"].append(od_idcard)
 credential_manifest["output_descriptors"].append(od_linkedincard)
@@ -282,21 +284,44 @@ async def credential(red) :
         credential['credentialSubject']['kycId'] = data['passbase_key']
         credential['credentialSubject']['kycProvider'] = "Passbase"
         credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
-
         try :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :
             logging.warning("Under 13")
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_over18", "error_description" : "Birthdate not available"}
+            endpoint_response = {"error" : "not_found", "error_description" : "Birthdate not available"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
         current_date = datetime.now()
         date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=13*52)
         if not (current_date > date1) :
             logging.warning("user is under 13")
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_over18", "error_description" : "User is under 13 age old"}
+            endpoint_response = {"error" : "invalid", "error_description" : "User is under 13 age old"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    
+    elif wallet_request['type'] == "Over15" :
+        credential = json.loads(open("./verifiable_credentials/Over15.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential['issuer'] = issuer_did
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential['credentialSubject']['id'] = wallet_did
+        credential['credentialSubject']['kycId'] = data['passbase_key']
+        credential['credentialSubject']['kycProvider'] = "Passbase"
+        credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+        try :
+            birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+        except :
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "not_found", "error_description" : "Birthdate not available"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+        current_date = datetime.now()
+        date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=15*52)
+        if not (current_date > date1) :
+            logging.warning("User is under 15")
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error" : "invalid", "error_description" : "User is under 15 age old"}
+            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)  
     
     elif wallet_request['type'] == "Over18" :
         credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
@@ -312,14 +337,14 @@ async def credential(red) :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_over18", "error_description" : "Birthdate not available"}
+            endpoint_response = {"error" : "not_available", "error_description" : "Birthdate not available"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
         current_date = datetime.now()
         date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=18*52)
         if not (current_date > date1) :
             logging.warning("User is under 18")
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_over18", "error_description" : "User is under 18 age old"}
+            endpoint_response = {"error" : "invalid", "error_description" : "User is under 18 age old"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)  
 
     elif wallet_request['type'] == "Liveness" :
@@ -347,7 +372,7 @@ async def credential(red) :
             credential['credentialSubject']['gender'] = identity['resources'][0]['datapoints']['sex']
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_over18", "error_description" : "Gender data not available"}
+            endpoint_response = {"error" : "not_found", "error_description" : "Gender data not available"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     elif wallet_request['type'] == "Nationality" :
@@ -364,7 +389,7 @@ async def credential(red) :
             credential['credentialSubject']['nationality'] = identity['resources'][0]['datapoints']['nationality']
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_over18", "error_description" : "Nationality not available"}
+            endpoint_response = {"error" : "not_found", "error_description" : "Nationality not available"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     elif wallet_request['type'] == "PassportNumber" :
@@ -382,7 +407,7 @@ async def credential(red) :
             credential['credentialSubject']['passportNumber'] = hashlib.sha256(document_number.encode()).hexdigest()
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_over18", "error_description" : "Nationality not available"}
+            endpoint_response = {"error" : "not_found", "error_description" : "Nationality not available"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     elif wallet_request['type'] == "EmailPass" :
@@ -446,7 +471,7 @@ async def credential(red) :
             birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
         except :
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_over18", "error_description" : "Birthdate not available"}
+            endpoint_response = {"error" : "not_found", "error_description" : "Birthdate not available"}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
         year = birthDate.split('-')[0]
         month = birthDate.split('-')[1]

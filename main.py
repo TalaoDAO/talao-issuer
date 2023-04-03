@@ -17,7 +17,7 @@ import markdown.extensions.fenced_code
 
 # local dependencies
 from routes import web_emailpass, web_phonepass, web_passbase, web_talao_community, vc_issuer, yoti, dapp_register_gamer_pass
-from routes import tezotopia, twitter, chainborn, bloometa
+from routes import tezotopia, twitter, chainborn, bloometa, oidc4vci_kyc
 import environment
 
 import logging
@@ -69,7 +69,7 @@ tezotopia.init_app(app, red, mode)
 twitter.init_app(app, red, mode)
 chainborn.init_app(app, red, mode)
 bloometa.init_app(app, red, mode)
-
+oidc4vci_kyc.init_app(app, red, mode)
 
 
 @babel.localeselector

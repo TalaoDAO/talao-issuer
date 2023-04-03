@@ -22,7 +22,7 @@ LIVENESS_DELAY = timedelta(weeks=2)
 approval_text = """Hello,<br>
 <br>Well done, your <strong>KYC is complete</strong> !<br>
 <br>You can now add <strong>new digital credentials</strong> in your <strong>Altme Wallet</strong> :<br><br>
-<li><strong>Over 18 and Over 13 Proof</strong> : to prove your age to Web 3 Apps.</li><br>
+<li><strong>Over 18, Over 15 and Over 13 Proof</strong> : to prove your age to Web 3 Apps.</li><br>
 <li><strong>Age Range Proof</strong> : to give an indication about your Age Range to Web 3 Apps (Gaming, DeFi...).</li><br>
 <li><strong>Email Proof</strong> : To authenticate to Web 3 services and claim benefits : Membership card, Loyalty card, Rewards…</li><br>
 <li><strong>Nationality Proof</strong> : to prove your Nationality without revealing any other information about you. It can be used in a user survey, etc.</li><br>
@@ -40,6 +40,7 @@ issuer_did = "did:web:app.altme.io:issuer"
 def init_app(app,red, mode) :
     app.add_url_rule('/over18',  view_func=over18, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/over13',  view_func=over13, methods = ['GET'], defaults={'mode' : mode})
+    app.add_url_rule('/over15',  view_func=over15, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/liveness',  view_func=liveness, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/kyc',  view_func=kyc, methods = ['GET'], defaults={'mode' : mode})
     app.add_url_rule('/nationality',  view_func=nationality, methods = ['GET'], defaults={'mode' : mode})
@@ -58,6 +59,7 @@ def init_app(app,red, mode) :
     
     app.add_url_rule('/passbase/endpoint/over13/<id>',  view_func=passbase_endpoint_over13, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/over18/<id>',  view_func=passbase_endpoint_over18, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
+    app.add_url_rule('/passbase/endpoint/over15/<id>',  view_func=passbase_endpoint_over15, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/liveness/<id>',  view_func=passbase_endpoint_liveness, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/kyc/<id>',  view_func=passbase_endpoint_kyc, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/passbase/endpoint/agerange/<id>',  view_func=passbase_endpoint_age_range, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
@@ -172,6 +174,8 @@ def over18(mode) :
     return redirect ('/vc?credential=over18')
 def over13(mode) :
     return redirect ('/vc?credential=over13')
+def over15(mode) :
+    return redirect ('/vc?credential=over15')
 def liveness(mode) :
     return redirect ('/vc?credential=liveness')
 def kyc(mode) :
@@ -296,7 +300,7 @@ def passbase_webhook(mode) :
             message.message(_("AltMe wallet identity credential"), email, link_text, mode)
             link_text = "The authentication failed.\nProbably the identity documents are not acceptable for " + email
             message.message(_("AltMe wallet identity credential"), "thierry@altme.io", link_text, mode)
-            message.message(_("AltMe wallet identity credential"), "hugo@altme.io", link_text, mode)
+            #message.message(_("AltMe wallet identity credential"), "hugo@altme.io", link_text, mode)
             logging.info("email sent to %s", email)
             logging.warning('Identification not approved')
             return jsonify("Event received")
@@ -348,7 +352,7 @@ async def passbase_endpoint_over13(id,red,mode):
                     'message' : _("Identification not done")
                         })
         red.publish('passbase', data)
-        return jsonify ('KYC has not been done'),404
+        return jsonify ('KYC has not been done'),412
 
     if status != "approved" :
         data = json.dumps({
@@ -414,6 +418,118 @@ async def passbase_endpoint_over13(id,red,mode):
     red.publish('passbase', data)
     return jsonify(signed_credential)
 
+
+async def passbase_endpoint_over15(id,red,mode):
+    if request.method == 'GET':
+        credential = json.loads(open("./verifiable_credentials/Over15.jsonld", 'r').read())
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+        credential_manifest = json.loads(open("./credential_manifest/over15_credential_manifest.json", 'r').read())
+        credential_manifest['id'] = str(uuid.uuid1())
+        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
+        credential_manifest['issuer']['id'] = issuer_did
+        credential['issuer'] = issuer_did
+        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+        credential['credentialSubject']['id'] = "did:wallet"
+        credentialOffer = {
+            "type": "CredentialOffer",
+            "credentialPreview": credential,
+            "expires" : (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat() + "Z",
+            "credential_manifest" : credential_manifest
+        }
+        red.set(id, json.dumps(credentialOffer))
+        return jsonify(credentialOffer)
+
+    try : 
+        credentialOffer = json.loads(red.get(id).decode())
+    except :
+        logging.error("red get id error, or request time out ")
+        return jsonify ('request time out'),408
+    credential =  credentialOffer['credentialPreview']
+    red.delete(id)
+    logging.info("subject_id = %s", request.form['subject_id'])
+    credential['credentialSubject']['id'] = request.form['subject_id']
+    credential['credentialSubject']['kycMethod'] = "https://docs.passbase.com/"
+    credential['credentialSubject']['kycProvider'] = "Passbase"
+
+    #on recupere la cle passbase depuis notre base locale
+    try :
+        (status, passbase_key, created) = get_passbase_data_from_did(request.form['subject_id'])
+    except :
+        logging.error("Over15 check has not been done")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not done")
+                        })
+        red.publish('passbase', data)
+        return jsonify ('KYC has not been done'),412
+
+    if status != "approved" :
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identification not approved")
+                        })
+        red.publish('passbase', data)
+        return jsonify('not approved'), 404
+
+    identity = get_identity(passbase_key, mode)
+    if not identity :
+        logging.warning("Identity does not exist")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Identity does not exist")
+                        })
+        red.publish('passbase', data)
+        return (jsonify('Identity does not exist'))
+    credential['credentialSubject']['kycId'] = passbase_key
+    try :
+        birthDate = identity['resources'][0]['datapoints']['date_of_birth'] # "1970-01-01"
+    except :  
+        logging.error("Birthdate not available")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Birth date not available")
+                        })
+        red.publish('passbase', data)
+        return jsonify ('Birth date not available'),404
+
+    current_date = datetime.now()
+    date1 = datetime.strptime(birthDate,'%Y-%m-%d') + timedelta(weeks=15*52)
+    if (current_date > date1) :
+        credential['credentialSubject']['id'] = request.form['subject_id']
+    else :
+        logging.warning("below 15")
+        data = json.dumps({
+                    'id' : id,
+                    'check' : 'failed',
+                    'message' : _("Below 15")
+                        })
+        red.publish('passbase', data)
+        return jsonify('below 18')
+
+    didkit_options = {
+            "proofPurpose": "assertionMethod",
+            "verificationMethod": vm
+        }
+    signed_credential =  await didkit.issue_credential(
+            json.dumps(credential),
+            didkit_options.__str__().replace("'", '"'),
+            key
+    )
+        
+    # send event to client agent to go forward
+    data = json.dumps({
+                    'id' : id,
+                    'check' : 'success',
+                        })
+    red.publish('passbase', data)
+    return jsonify(signed_credential)
+
+
 async def passbase_endpoint_over18(id,red,mode):
     if request.method == 'GET':
         credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
@@ -458,7 +574,7 @@ async def passbase_endpoint_over18(id,red,mode):
                     'message' : _("Identification not done")
                         })
         red.publish('passbase', data)
-        return jsonify ('KYC has not been done'),404
+        return jsonify ('KYC has not been done'),412
 
     if status != "approved" :
         data = json.dumps({
@@ -567,7 +683,7 @@ async def passbase_endpoint_kyc(id,red,mode):
                     'message' : _("Identification not done")
                         })
         red.publish('passbase_idcard', data)
-        return jsonify ('KYC has not been done'),404
+        return jsonify ('KYC has not been done'),412
 
     if status != "approved" :
         data = json.dumps({
@@ -846,7 +962,7 @@ async def passbase_endpoint_age_range(id,red,mode):
                     'message' : _("Identification not done")
                         })
         red.publish('passbase_idcard', data)
-        return jsonify ('KYC has not been done'),404
+        return jsonify ('KYC has not been done'),412
 
     if status != "approved" :
         data = json.dumps({
@@ -975,7 +1091,7 @@ async def passbase_endpoint_nationality(id,red,mode):
                     'message' : _("Identification not done")
                         })
         red.publish('passbase_idcard', data)
-        return jsonify ('KYC has not been done'),404
+        return jsonify ('KYC has not been done'),412
 
     if status != "approved" :
         data = json.dumps({
@@ -1071,7 +1187,7 @@ async def passbase_endpoint_passport_number(id,red,mode):
                     'message' : _("Identification not done")
                         })
         red.publish('passbase_idcard', data)
-        return jsonify ('KYC has not been done'),404
+        return jsonify ('KYC has not been done'),412
 
     if status != "approved" :
         data = json.dumps({
@@ -1167,7 +1283,7 @@ async def passbase_endpoint_gender(id,red,mode):
                     'message' : _("Identification not done")
                         })
         red.publish('passbase_idcard', data)
-        return jsonify ('KYC has not been done'),404
+        return jsonify ('KYC has not been done'),412
 
     if status != "approved" :
         data = json.dumps({
@@ -1263,7 +1379,7 @@ async def passbase_endpoint_liveness(id,red,mode):
                     'message' : _("Identification not done")
                         })
         red.publish('passbase_idcard', data)
-        return jsonify ('KYC has not been done'),404
+        return jsonify ('KYC has not been done'),412
 
     if status != "approved" :
         data = json.dumps({
