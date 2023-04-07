@@ -36,17 +36,15 @@ def emailpass(mode) :
         return render_template('emailpass/emailpass.html')
     if request.method == 'POST' :
         session['email'] = request.form['email'].lower()
-        logging.info("email = %s ", session['email'])
-        logging.info('email = %s', session['email'])
+        logging.info("email = %s", session['email'])
         session['code'] = str(randint(10000, 99999))
         session['code_delay'] = (datetime.now() + CODE_DELAY).timestamp()
-        try : 
-            subject = _('Altme pending email verification  ')
-            message.messageHTML(subject, session['email'], 'code_auth_' + session['language'], {'code' : session['code']}, mode)
+        subject = _('Altme pending email verification ')
+        if message.messageHTML(subject, session['email'], 'code_auth_en', {'code' : session['code']}, mode) :
             logging.info('secret code sent = %s', session['code'])
             flash(_("Secret code sent to your email."), 'success')
             session['try_number'] = 1
-        except :
+        else :
             flash(_("Email failed."), 'danger')
             return render_template('emailpass/emailpass.html')
         return redirect ('emailpass/authentication')
