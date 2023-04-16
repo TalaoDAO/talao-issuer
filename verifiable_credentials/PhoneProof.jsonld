@@ -11,7 +11,6 @@
                     "id": "@id",
                     "type": "@type",
                     "phone" : "schema:phone",
-                    "phoneVerified" : "schema:phone",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {
@@ -32,10 +31,8 @@
     "credentialSubject" : {
         "type" : "PhoneProof",
         "phone" : "",
-        "phoneVerified" : "",
         "issuedBy" : {
-            "name" : "Talao",
-            "logo" : "https://talao.mypinata.cloud/ipfs/QmNwbEEupT7jR2zmrA87FsN4hUS8eXnCxM8DsL9RXc25cu"
+            "name" : "Altme"
         }
       
     }

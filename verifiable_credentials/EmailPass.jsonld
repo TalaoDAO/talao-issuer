@@ -10,7 +10,6 @@
                     "id": "@id",
                     "type": "@type",
                     "email": "schema:email",
-                    "emailVerified": "schema:email",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {
@@ -32,7 +31,6 @@
     "credentialSubject" : {
         "type" : "EmailPass",
         "email" : "",
-        "emailVerified" : false,
         "issuedBy" : {
             "name" : "Altme"
         }

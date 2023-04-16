@@ -101,21 +101,12 @@ async def emailpass_enpoint(id, red, mode):
     credential["issuer"] = issuer_did 
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     credential['expirationDate'] =  (datetime.now() + timedelta(days= 365)).isoformat() + "Z"
-    try :
-        credential['credentialSubject']['email'] = red.get(id).decode()
-        credential['credentialSubject']['emailVerified'] = True
-    except :
-        logging.error('redis data expired')
-        data = json.dumps({"id" : id, "check" : "expired"})
-        red.publish('emailpass', data)
-        return jsonify('session expired'), 408
-    
+    credential['id'] = "urn:uuid:" + str(uuid.uuid1())
     if request.method == 'GET': 
         # make an offer  
         credential_manifest = json.load(open('./credential_manifest/email_credential_manifest.json', 'r'))
         credential_manifest['issuer']['id'] = issuer_did
         credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
-        credential['id'] = "urn:uuid:random"
         credential['credentialSubject']['id'] = "did:wallet"
         credential_offer = {
             "type": "CredentialOffer",
@@ -126,12 +117,15 @@ async def emailpass_enpoint(id, red, mode):
         return jsonify(credential_offer)
 
     else :  #POST
-        # init credential
-        credential['id'] = "urn:uuid:" + str(uuid.uuid1())
+        try :
+            credential['credentialSubject']['email'] = red.get(id).decode()
+            red.delete(id)
+        except :
+            logging.error('redis data expired')
+            data = json.dumps({"id" : id, "check" : "expired"})
+            red.publish('emailpass', data)
+            return jsonify('session expired'), 408
         credential['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
-        # build passbase metadata for KYC and Over18 credentials
-        data = json.dumps({"did" : request.form.get('subject_id', 'unknown DID'),
-                         "email" : credential['credentialSubject']['email']})
         # signature 
         didkit_options = {
             "proofPurpose": "assertionMethod",
@@ -141,11 +135,6 @@ async def emailpass_enpoint(id, red, mode):
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 issuer_key)
-        if not signed_credential :         # send event to client agent to go forward
-            logging.error('credential signature failed')
-            data = json.dumps({"id" : id, "check" : "failed"})
-            red.publish('emailpass', data)
-            return jsonify('Server failed'), 500
         # Success : send event to client agent to go forward
         data = json.dumps({"id" : id, "check" : "success"})
         red.publish('emailpass', data)

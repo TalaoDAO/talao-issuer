@@ -42,7 +42,6 @@ def phonepass(mode) :
             logging.info('secret code sent = %s', session['code'])
             flash(_("Secret code sent to your phone."), 'success')
             session['try_number'] = 1
-            message.message("Phoneproof sent", "thierry@altme.io", session['phone'], mode)
         except :
             flash(_("phone failed."), 'danger')
             return render_template('phonepass/phonepass.html')
@@ -100,21 +99,12 @@ async def phonepass_enpoint(id, red, mode):
     credential["issuer"] = issuer_did 
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     credential['expirationDate'] =  (datetime.now() + timedelta(days= 365)).isoformat() + "Z"
-    try :
-        credential['credentialSubject']['phone'] = red.get(id).decode()
-        credential['credentialSubject']['phoneVerified'] = True
-    except :
-        logging.error('redis data expired')
-        data = json.dumps({"id" : id, "check" : "expired"})
-        red.publish('phonepass', data)
-        return jsonify('session expired'), 408
-    
+    credential['id'] = "urn:uuid:" + str(uuid.uuid1())
     if request.method == 'GET': 
         # make an offer  
         credential_manifest = json.load(open('./credential_manifest/phone_credential_manifest.json', 'r'))
         credential_manifest['issuer']['id'] = issuer_did
         credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
-        credential['id'] = "urn:uuid:random"
         credential['credentialSubject']['id'] = "did:wallet"
         credential_offer = {
             "type": "CredentialOffer",
@@ -125,12 +115,16 @@ async def phonepass_enpoint(id, red, mode):
         return jsonify(credential_offer)
 
     else :  #POST
+        try :
+            credential['credentialSubject']['phone'] = red.get(id).decode()
+            red.delete(id)
+        except :
+            logging.error('redis data expired')
+            data = json.dumps({"id" : id, "check" : "expired"})
+            red.publish('phonepass', data)
+            return jsonify('session expired'), 408
         # init credential
-        credential['id'] = "urn:uuid:" + str(uuid.uuid1())
         credential['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
-        # build passbase metadata for KYC and Over18 credentials
-        data = json.dumps({"did" : request.form.get('subject_id', 'unknown DID'),
-                         "phone" : credential['credentialSubject']['phone']})
         # signature 
         didkit_options = {
             "proofPurpose": "assertionMethod",
@@ -140,15 +134,10 @@ async def phonepass_enpoint(id, red, mode):
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 issuer_key)
-        if not signed_credential :         # send event to client agent to go forward
-            logging.error('credential signature failed')
-            data = json.dumps({"id" : id, "check" : "failed"})
-            red.publish('phonepass', data)
-            return jsonify('Server failed'), 500
         # Success : send event to client agent to go forward
         data = json.dumps({"id" : id, "check" : "success"})
         red.publish('phonepass', data)
-        message.message("EmailPass sent", "thierry@altme.io", credential['credentialSubject']['phone'], mode)
+        message.message("PhonePass sent", "thierry@altme.io", credential['credentialSubject']['phone'], mode)
         return jsonify(signed_credential)
  
 
