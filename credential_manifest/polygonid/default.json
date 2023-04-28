@@ -1,0 +1,73 @@
+            {
+              "id":"default_credential_manifest",
+              "spec_version": "https://identity.foundation/credential-manifest/spec/v1.0.0/",
+              "issuer":{
+                "id":"PolygonID:issuer",
+                "name":"PolygonID issuer"
+              },
+              "output_descriptors":[                       
+                        {
+                          "id": "Default",
+                          "schema": "https://issuer.talao.co/credential-manifest/default.json",
+                          "styles": {
+                            "background": {
+                              "color": "#baaaad"
+                            },
+                            "text": {
+                              "color": "#ffffff"
+                            }
+                          },
+                          "display": {
+                            "title": {
+                                "path": ["$.credentialSubject.type"],
+                                "schema": {
+                                  "type": "string"
+                                },
+                                "fallback": "PolygonID credential"
+                              },
+                              "subtitle": {
+                                "path": [],
+                                "schema": {
+                                  "type": "string"
+                                },
+                                "fallback": "Your decentralized identity document"
+                              },
+                            "description": {
+                              "path": [],
+                              "schema": {
+                                "type": "string"
+                              },
+                              "fallback": "This card is a digital identity document. You can use it when you need to prove your identity with services that have already adopted the verifiable and decentralized identity system."
+                            },
+                            "properties": [
+                              {
+                                "path": ["$.expirationDate"],
+                                "schema": {
+                                  "type": "string",
+                                  "format" : "date"
+                                },
+                                "fallback": "",
+                                "label": "Expiration date"
+                              },
+                              {
+                                "path": ["$.issuanceDate"],
+                                "schema": {
+                                  "type": "string",
+                                  "format" : "date"
+                                },
+                                "fallback": "",
+                                "label": "Issue date"
+                              },
+                              {
+                                "path": ["$.issuer"],
+                                "schema": {
+                                  "type": "string"
+                                },
+                                "fallback": "Unknown",
+                                "label": "Issuer DID"
+                              }
+                            ]
+                          }
+                        }
+              ]
+            }

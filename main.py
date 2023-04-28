@@ -16,8 +16,8 @@ import markdown.extensions.fenced_code
 
 
 # local dependencies
-from routes import web_emailpass, web_phonepass, web_passbase, web_talao_community, vc_issuer, yoti, dapp_register_gamer_pass
-from routes import tezotopia, twitter, chainborn, bloometa, oidc4vci_kyc
+from routes import web_emailpass, web_phonepass, web_passbase, vc_issuer, yoti, dapp_register_gamer_pass
+from routes import tezotopia, twitter, chainborn, bloometa, oidc4vci_kyc, polygonid
 import environment
 
 import logging
@@ -61,7 +61,6 @@ sess.init_app(app)
 web_emailpass.init_app(app, red, mode)
 web_phonepass.init_app(app, red, mode)
 vc_issuer.init_app(app, red, mode)
-web_talao_community.init_app(app, red, mode)
 web_passbase.init_app(app, red, mode)
 dapp_register_gamer_pass.init_app(app, red, mode)
 yoti.init_app(app, red, mode)
@@ -70,7 +69,7 @@ twitter.init_app(app, red, mode)
 chainborn.init_app(app, red, mode)
 bloometa.init_app(app, red, mode)
 oidc4vci_kyc.init_app(app, red, mode)
-
+polygonid.init_app(app)
 
 @babel.localeselector
 def get_locale():
