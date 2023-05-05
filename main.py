@@ -151,10 +151,11 @@ Verifiable Credential presented by user is transfered through vp_token in OAuth2
 """
 @app.route('/pornhub',  methods = ['GET', 'POST'])
 def site_x():
-    if request.method == "GET" :
-        return render_template('site_x.html')
-    else :
-        return redirect('/pornhub/login') 
+	if request.method == "GET" :
+		session.clear()
+		return render_template('site_x.html')
+	else :
+		return redirect('/pornhub/login') 
    
 
 @app.route('/pornhub/login')
