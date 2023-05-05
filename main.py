@@ -2,7 +2,7 @@
 Python 3.9 ++
 didkit 0.3.0 get_version
 """
-from flask import Flask, jsonify, session, request, render_template_string, render_template
+from flask import Flask, jsonify, session, request, render_template_string, render_template, redirect
 from flask_qrcode import QRcode
 from flask_session import Session
 import didkit
@@ -13,6 +13,12 @@ from flask_babel import Babel, _, refresh
 from datetime import timedelta
 import markdown
 import markdown.extensions.fenced_code
+
+from flask_session import Session
+from flask_pyoidc import OIDCAuthentication
+from flask_pyoidc.provider_configuration import ProviderConfiguration, ClientMetadata
+from flask_pyoidc.user_session import UserSession
+
 
 
 # local dependencies
@@ -44,8 +50,13 @@ app.config['SESSION_TYPE'] = 'redis' # Redis server side session
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=360) # cookie lifetime
 app.config['SESSION_FILE_THRESHOLD'] = 100
 app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "4.6"
+app.jinja_env.globals['Version'] = "4.7"
 
+# site X
+app.config.update(
+    OIDC_REDIRECT_URI = mode.server + 'callback', # your application redirect uri. Must not be used in your code
+    SECRET_KEY = "lkjhlkjh" # your application secret code for session, random
+)
 babel = Babel(app)
 
 """
@@ -120,6 +131,39 @@ def company() :
 @app.route('/' , methods=['GET']) 
 def test() :
    return jsonify("Hello")
+
+
+### SITE X
+
+client_metadata = ClientMetadata(
+        client_id='cxltfjraph',
+        client_secret= "d5aa3daa-dacd-11ed-b76d-0a1628958560",
+        post_logout_redirect_uris=[mode.server + 'site_x/logout']) # your post logout uri (optional)
+
+provider_config = ProviderConfiguration(issuer= 'https://talao.co/sandbox/op',
+                                        client_metadata=client_metadata)
+auth = OIDCAuthentication({'default': provider_config}, app)
+
+
+""" 
+Verifiable Credential presented by user is transfered through vp_token in OAuth2 userinfo endpoint
+
+"""
+@app.route('/pornhub',  methods = ['GET', 'POST'])
+def site_x():
+    if request.method == "GET" :
+        return render_template('site_x.html')
+    else :
+        return redirect('/pornhub/login') 
+   
+
+@app.route('/pornhub/login')
+@auth.oidc_auth('default')
+def index():
+    user_session = UserSession(session)    
+    return jsonify(access_token=user_session.access_token,
+                   id_token=user_session.id_token,
+                   userinfo=user_session.userinfo) # this is the user credential
 
 
 # MAIN entry point. Flask test server

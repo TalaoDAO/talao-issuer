@@ -55,6 +55,8 @@ def register_proof_type(address, proof_type, network, mode) :
         return True
 
 
+# 18+ QmRmmqEFCeCtgyp6xdwHGCKjMcEiQUqA8Q76kP9diN1s5F
+
 def issue_sbt(address, metadata, credential_id, mode) :
     metadata_ipfs = add_to_ipfs(metadata, "sbt:" + credential_id , mode)
     if metadata_ipfs :
@@ -74,7 +76,7 @@ def issue_sbt(address, metadata, credential_id, mode) :
         logging.warning("Get access refused, SBT not sent %s", resp.status_code)
         return None
     return True
- 
+
 
 def add_to_ipfs(data_dict, name, mode) :
     api_key = mode.pinata_api_key

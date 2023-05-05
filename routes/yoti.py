@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 import didkit
 import hashlib
 from components import message
+
+
 logging.basicConfig(level=logging.INFO)
 
 EXPIRATION_DELAY = timedelta(weeks=52)
