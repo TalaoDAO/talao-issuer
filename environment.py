@@ -26,6 +26,7 @@ class currentMode() :
 		self.tezid_issuer_key = passwords['tezid_issuer_key']
 		self.tezotopia_issuer_key = passwords['tezotopia_issuer_key']
 		self.bloometa_issuer_key = passwords['bloometa_issuer_key']
+		self.pep_api_key = passwords['pep_api_key']
 		self.altme_wallet_token = passwords['altme_wallet_token']     # vc_issuer.py
 		self.passbase = passwords['passbase'] # web_passebase.py
 		self.chainborn_api_key = passwords['chainborn_api_key']       # chainborn.py                 
