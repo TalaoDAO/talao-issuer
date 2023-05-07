@@ -42,7 +42,8 @@ def send_data_to_tezotopia(data, mode) :
         }'
     
     """
-    url = 'https://us-central1-tezotopia-testnet.cloudfunctions.net/altme'
+    #url = 'https://us-central1-tezotopia-testnet.cloudfunctions.net/altme'
+    url = 'https://testnet-be.tezotopia.com/altme'
     headers = {
         'Content-Type' : 'application/json',
         'tezotopia-issuer-key' : mode.tezotopia_issuer_key     
