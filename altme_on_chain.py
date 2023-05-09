@@ -55,14 +55,14 @@ def register_proof_type(address, proof_type, network, mode) :
         return True
 
 
-# 18+ QmRmmqEFCeCtgyp6xdwHGCKjMcEiQUqA8Q76kP9diN1s5F
 
 def issue_sbt(address, metadata, credential_id, mode) :
     metadata_ipfs = add_to_ipfs(metadata, "sbt:" + credential_id , mode)
     if metadata_ipfs :
         metadata_ipfs_url = "ipfs://" + metadata_ipfs
     else :
-        return None
+        return
+    print("metadata_ipfs_url = ", metadata_ipfs_url)
     url = 'https://altme-api.dvl.compell.io/mint'
     headers = {
         "Content-Type": "application/x-www-form-urlencoded"
@@ -74,7 +74,7 @@ def issue_sbt(address, metadata, credential_id, mode) :
     resp = requests.post(url, data=data, headers=headers)
     if not 199<resp.status_code<300 :
         logging.warning("Get access refused, SBT not sent %s", resp.status_code)
-        return None
+        return
     return True
 
 
