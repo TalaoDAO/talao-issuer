@@ -9,6 +9,7 @@ from random import randint
 import json
 from urllib.parse import urlencode
 import didkit
+import requests
 
 OFFER_DELAY = timedelta(seconds= 10*60)
 CODE_DELAY = timedelta(seconds= 180)
@@ -134,6 +135,11 @@ async def phonepass_enpoint(id, red, mode):
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 issuer_key)
+        
+        # update counter
+        data = {"vc" : "emailpass" , "count" : "1" }
+        requests.post(mode.server + 'counter/update', data=data)
+
         # Success : send event to client agent to go forward
         data = json.dumps({"id" : id, "check" : "success"})
         red.publish('phonepass', data)

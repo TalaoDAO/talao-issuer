@@ -159,6 +159,10 @@ async def tezotopia_endpoint(id, red, mode):
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
         
+        # update counter
+        data = {"vc" : "tezotopia" , "count" : "1" }
+        requests.post(mode.server + 'counter/update', data=data)
+
         # update analytics   
         url = 'https://talao.co/analytics/api/newvoucher'   
         headers = { "key" : mode.analytics_key2,

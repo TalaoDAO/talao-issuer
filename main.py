@@ -23,7 +23,7 @@ from flask_pyoidc.user_session import UserSession
 
 # local dependencies
 from routes import web_emailpass, web_phonepass, web_passbase, vc_issuer, yoti, dapp_register_gamer_pass
-from routes import tezotopia, twitter, chainborn, bloometa, oidc4vci_kyc, polygonid, defi
+from routes import tezotopia, twitter, chainborn, bloometa, oidc4vci_kyc, polygonid, defi, counter
 import environment
 
 import logging
@@ -82,6 +82,7 @@ bloometa.init_app(app, red, mode)
 oidc4vci_kyc.init_app(app, red, mode)
 polygonid.init_app(app)
 defi.init_app(app, red, mode)
+counter.init_app(app)
 
 @babel.localeselector
 def get_locale():

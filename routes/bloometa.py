@@ -195,6 +195,10 @@ async def bloometa_endpoint(id, red, mode):
         #    headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         #    return Response(response=json.dumps(endpoint_response), status=500, headers=headers)
        
+        # update counter
+        data = {"vc" : "bloometa" , "count" : "1" }
+        requests.post(mode.server + 'counter/update', data=data)
+
         # call bloometa endpoint
         data = {
             'alternateName' :  credential['credentialSubject'].get('alternateName'),

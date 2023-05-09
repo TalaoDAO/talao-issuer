@@ -263,6 +263,11 @@ async def ai_over13(red, mode) :
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 key)
+        
+        # update counter
+        data = {"vc" : "over13" , "count" : "1" }
+        requests.post(mode.server + 'counter/update', data=data)
+        
         logging.info("VC Over13 is sent to wallet")
         return jsonify(credential_signed)
     else :
@@ -362,6 +367,11 @@ async def ai_over15(red, mode) :
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 key)
+        
+        # update counter
+        data = {"vc" : "over15" , "count" : "1" }
+        requests.post(mode.server + 'counter/update', data=data)
+
         logging.info("VC Over15 is sent to wallet")
         return jsonify(credential_signed)
     else :
@@ -460,6 +470,11 @@ async def ai_over18(red,mode) :
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 key)
+        
+        # update counter
+        data = {"vc" : "over18" , "count" : "1" }
+        requests.post(mode.server + 'counter/update', data=data)
+
         logging.info("VC Over18 is sent to wallet")
         return jsonify(credential_signed)
     else :
@@ -582,5 +597,9 @@ async def ai_agerange(red, mode) :
             didkit_options.__str__().replace("'", '"'),
             key
     )
+    # update counter
+    data = {"vc" : "agerange" , "count" : "1" }
+    requests.post(mode.server + 'counter/update', data=data)
+    
     logging.info("VC AgeRange is sent to wallet")
     return jsonify(signed_credential)
