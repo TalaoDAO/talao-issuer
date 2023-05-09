@@ -23,6 +23,7 @@ def counter_update():
     for credential in credential_list :
         if credential == vc :
             counter[credential] += int(count)
+            counter["total"] += int(count)
             break
     counter_file = open("counter.json", "w")
     counter_file.write(json.dumps(counter))
