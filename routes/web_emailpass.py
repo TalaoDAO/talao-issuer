@@ -120,7 +120,6 @@ async def emailpass_enpoint(id, red, mode):
     else :  #POST
         try :
             credential['credentialSubject']['email'] = red.get(id).decode()
-            red.delete(id)
         except :
             logging.error('redis data expired')
             data = json.dumps({"id" : id, "check" : "expired"})
