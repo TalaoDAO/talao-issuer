@@ -41,7 +41,7 @@ def counter_update():
     counter_file.close()
 
     # send data to slack
-    url = "https://hooks.slack.com/services/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"
+    url = "https://hooks.slack.com/services/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"
     payload = {
         "channel": "#issuer_counter",
         "username": "issuer",
