@@ -39,8 +39,9 @@ def counter_update():
     counter_file = open("counter.json", "w")
     counter_file.write(json.dumps(counter))
     counter_file.close()
+
     # send data to slack
-    url = "https://hooks.slack.com/services/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"
+    url = url = "https://hooks.slack.com/services/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"
     payload = {
         "channel": "#issuer_counter",
         "username": "issuer",
@@ -50,7 +51,7 @@ def counter_update():
     data = {
         'payload': json.dumps(payload)
     }
-    r = requests.post(url, data)
+    r = requests.post(url, data=data)
     print("status code slack = ", r.status_code)
     return jsonify('ok')
 
