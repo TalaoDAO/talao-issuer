@@ -3,9 +3,9 @@ import json
 import requests
 
 
-def init_app(app) :
+def init_app(app,mode) :
     app.add_url_rule('/counter/get',  view_func=counter_get, methods = ['GET'])
-    app.add_url_rule('/counter/update',  view_func=counter_update, methods = ['POST'])
+    app.add_url_rule('/counter/update',  view_func=counter_update, methods = ['POST'], defaults = {"mode" : mode})
     return
 
 
@@ -16,7 +16,7 @@ def counter_get() :
     return json.load(open("counter.json", "r"))
 
 
-def counter_update():
+def counter_update(mode):
     """
     this allows teh wallet to update the counter json file
 
@@ -41,7 +41,7 @@ def counter_update():
     counter_file.close()
 
     # send data to slack
-    url = "https://hooks.slack.com/services/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"
+    url = mode.slack_url
     payload = {
         "channel": "#issuer_counter",
         "username": "issuer",

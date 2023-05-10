@@ -82,7 +82,7 @@ bloometa.init_app(app, red, mode)
 oidc4vci_kyc.init_app(app, red, mode)
 polygonid.init_app(app)
 defi.init_app(app, red, mode)
-counter.init_app(app)
+counter.init_app(app, mode)
 
 @babel.localeselector
 def get_locale():
