@@ -137,7 +137,7 @@ async def phonepass_enpoint(id, red, mode):
                 issuer_key)
         
         # update counter
-        data = {"vc" : "emailpass" , "count" : "1" }
+        data = {"vc" : "phonepass" , "count" : "1" }
         requests.post(mode.server + 'counter/update', data=data)
 
         # Success : send event to client agent to go forward

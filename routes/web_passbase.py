@@ -409,7 +409,10 @@ async def passbase_endpoint_over13(id,red,mode):
             didkit_options.__str__().replace("'", '"'),
             key
     )
-        
+    # update counter
+    data = {"vc" : "over13" , "count" : "1" }
+    requests.post(mode.server + 'counter/update', data=data)
+    
     # send event to client agent to go forward
     data = json.dumps({
                     'id' : id,
@@ -520,7 +523,11 @@ async def passbase_endpoint_over15(id,red,mode):
             didkit_options.__str__().replace("'", '"'),
             key
     )
-        
+    
+    # update counter
+    data = {"vc" : "over14" , "count" : "1" }
+    requests.post(mode.server + 'counter/update', data=data)
+    
     # send event to client agent to go forward
     data = json.dumps({
                     'id' : id,
@@ -631,6 +638,9 @@ async def passbase_endpoint_over18(id,red,mode):
             didkit_options.__str__().replace("'", '"'),
             key
     )
+    # update counter
+    data = {"vc" : "over18" , "count" : "1" }
+    requests.post(mode.server + 'counter/update', data=data)
         
     # send event to client agent to go forward
     data = json.dumps({
@@ -723,7 +733,10 @@ async def passbase_endpoint_kyc(id,red,mode):
             didkit_options.__str__().replace("'", '"'),
             key
     )
-        
+    # update counter
+    data = {"vc" : "verifiableid" , "count" : "1" }
+    requests.post(mode.server + 'counter/update', data=data)
+    
     # send event to client agent to go forward
     data = json.dumps({
                     'id' : id,
@@ -818,7 +831,10 @@ async def passbase_endpoint_verifiable_id(id,red,mode):
             didkit_options.__str__().replace("'", '"'),
             key
     )
-        
+    # update counter
+    data = {"vc" : "verifiableid" , "count" : "1" }
+    requests.post(mode.server + 'counter/update', data=data)
+    
     # send event to client agent to go forward
     data = json.dumps({
                     'id' : id,
@@ -1038,6 +1054,10 @@ async def passbase_endpoint_age_range(id,red,mode):
             didkit_options.__str__().replace("'", '"'),
             key
     )
+
+    # update counter
+    data = {"vc" : "agerange" , "count" : "1" }
+    requests.post(mode.server + 'counter/update', data=data)
         
     # send event to client agent to go forward
     data = json.dumps({
@@ -1135,6 +1155,10 @@ async def passbase_endpoint_nationality(id,red,mode):
             didkit_options.__str__().replace("'", '"'),
             key
     )
+
+    # update counter
+    data = {"vc" : "nationality" , "count" : "1" }
+    requests.post(mode.server + 'counter/update', data=data)
         
     # send event to client agent to go forward
     data = json.dumps({
@@ -1410,6 +1434,10 @@ async def passbase_endpoint_liveness(id,red,mode):
             didkit_options.__str__().replace("'", '"'),
             key
     )
+
+    # update counter
+    data = {"vc" : "liveness" , "count" : "1" }
+    requests.post(mode.server + 'counter/update', data=data)
         
     # send event to client agent to go forward
     data = json.dumps({
