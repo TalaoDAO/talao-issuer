@@ -143,6 +143,8 @@ async def phonepass_enpoint(id, red, mode):
         # Success : send event to client agent to go forward
         data = json.dumps({"id" : id, "check" : "success"})
         red.publish('phonepass', data)
+        
+        # send message
         message.message("PhonePass sent", "thierry@altme.io", credential['credentialSubject']['phone'], mode)
         return jsonify(signed_credential)
  

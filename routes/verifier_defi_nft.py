@@ -1,0 +1,313 @@
+import time  
+import math
+from jwcrypto import jwk, jwt
+import json
+from flask import Flask, render_template, request, jsonify, Response, send_file, session, redirect
+from flask_qrcode import QRcode
+import didkit
+import os
+import environment
+import redis
+import uuid
+import base64
+import logging
+import requests
+
+ISSUER_KEY = json.load(open("keys.json", "r"))['talao_Ed25519_private_key']
+TOKEN_LIFE = 15*24*60*60
+SUPPORTED_ADDRESS = ['TezosAssociatedAddress', 'EthereumAssociatedAddress', 'BinanceAssociatedAddress']
+SUPPORTED_CHAIN = ['binance', 'tezos']
+
+
+metadata_tezos = {
+  "name": "DeFi compliance proof",
+  "symbol": "DEFI",
+  "creators": [
+    "Altme.io",
+    "did:web:altme.io:did:web:app.altme.io:issuer"
+  ],
+  "decimals": "0",
+  "identifier": "",
+  "displayUri": "ipfs://QmUDYRnEsCv4vRmSY57PC6wZyc6xqGfZecdSaZmo2wnzDF",
+  "publishers": ["Altme"],
+  "minter": "to be defined",
+  "rights": "No License / All Rights Reserved",
+  "artifactUri": "ipfs://QmUDYRnEsCv4vRmSY57PC6wZyc6xqGfZecdSaZmo2wnzDF",
+  "description": "This NFT is a proof of your DeFi compliance. It is not transferable.You can use it when you need to prove your comliance with services that have already adopted the verifiable and decentralized identity system.",
+  "thumbnailUri": "ipfs://QmZP3od8tRFUhH7yNVuD3zYPGyLZSpp6a6At6kcW2MjsLD",
+  "is_transferable": False,
+  "shouldPreferSymbol": False
+}
+
+metadata_binance = {
+    "name": "DeFi compliance proof",
+    "description": "This NFT is a proof of your DeFi compliance. It is not transferable.You can use it when you need to prove your comliance with services that have already adopted the verifiable and decentralized identity system.",
+    "image": "ipfs://QmUDYRnEsCv4vRmSY57PC6wZyc6xqGfZecdSaZmo2wnzDF",
+     "identifier": "",
+}
+
+
+app = Flask(__name__)
+app.secret_key = "test"
+qrcode = QRcode(app)
+myenv = os.getenv('MYENV')
+if not myenv:
+    myenv = 'local'
+mode = environment.currentMode(myenv)
+red = redis.Redis(host='127.0.0.1', port=6379, db=0)
+
+
+def init_app(app,red, mode) :
+    app.add_url_rule('/verifier/defi/get_link', methods = ['POST', 'GET'], view_func=get_link)
+    app.add_url_rule('/verifier/defi/endpoint/<stream_id>', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
+    return
+
+
+def add_to_ipfs(data_dict: dict, name: str, mode: environment.currentMode) -> str :
+    """
+    add metadata file to IPFS
+    """
+    api_key = mode.pinata_api_key
+    secret = mode.pinata_secret_api_key
+    headers = {
+        'Content-Type': 'application/json',
+		'pinata_api_key': api_key,
+        'pinata_secret_api_key': secret}
+    data = {
+        'pinataMetadata' : {
+            'name' : name
+        },
+        'pinataContent' : data_dict
+    }
+    r = requests.post('https://api.pinata.cloud/pinning/pinJSONToIPFS', data=json.dumps(data), headers=headers)
+    if not 199<r.status_code<300 :
+        logging.warning("POST access to Pinatta refused")
+        return None
+    else :
+	    return r.json()['IpfsHash']
+
+
+def issue_sbt_tezos(address: str, metadata: dict, credential_id: str, mode: environment.currentMode) -> bool:
+    """
+    issue NFT with compellio smart contract on Tezos
+    """
+    metadata_ipfs = add_to_ipfs(metadata, "sbt:" + credential_id , mode)
+    if not metadata_ipfs :
+        logging.error("pinning service failed")
+        return
+    #time.sleep(5)
+    url = 'https://altme-api.dvl.compell.io/mint'
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = {
+        "transfer_to" : address,
+        "ipfs_url" : "ipfs://" + metadata_ipfs
+    }
+    resp = requests.post(url, data=data, headers=headers)
+    if not 199<resp.status_code<300 :
+        logging.warning("Get access refused, SBT not sent %s", resp.status_code)
+        return
+    return True
+
+
+def issue_sbt_binance(address: str, metadata: dict, credential_id: str, mode: environment.currentMode) -> bool:
+    """
+    issue NFT with merenti smart contract on Binance
+    curl --location --request POST ‘https://ssi-sbt.osc-fr1.scalingo.io/mint’ \
+    --header ‘Content-Type: application/x-www-form-urlencoded’ \
+    --data-urlencode ‘transfer_to=0xCdcc3Ae823F05935f0b9c35C1054e5C144401C0a’ \
+    --data-urlencode ‘ipfs_url=ipfs://QmRmmqEFCeCtgyp6xdwHGCKjMcEiQUqA8Q76kP9diN1s5F’
+    """
+    metadata_ipfs = add_to_ipfs(metadata, "sbt:" + credential_id , mode)
+    if not metadata_ipfs :
+        logging.error("pinning service failed")
+        return
+    url = 'https://ssi-sbt.osc-fr1.scalingo.io/mint'
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = {
+        "transfer_to" : address,
+        "ipfs_url" : "ipfs://" + metadata_ipfs
+    }
+    resp = requests.post(url, data=data, headers=headers)
+    if not 199<resp.status_code<300 :
+        logging.warning("Get access refused, SBT not sent %s with reason = %s", resp.status_code, resp.reason)
+        return
+    return True
+
+
+def generate_token(chain: str, test: bool) -> str:
+    """
+    generate an anonymous token with an expîration fixed date every 15 days from 01 jan 1970
+    """
+    if chain not in SUPPORTED_CHAIN :
+        return
+    signer_key = jwk.JWK(**ISSUER_KEY) 
+    header = {
+      'typ' :'JWT',
+      'kid': "did:web:app.altme.io:issuer#key-1",
+      'alg': 'EdDSA'
+    }
+    payload = {
+      'iss' : "did:web:app.altme.io:issuer",
+      'exp': (math.floor(time.time()/TOKEN_LIFE) + 1) * TOKEN_LIFE,
+      'chain' : chain,
+      'test' : test
+    }  
+    token = jwt.JWT(header=header,claims=payload, algs=['EdDSA'])
+    token.make_signed_token(signer_key)
+    return token.serialize()
+
+
+def verif_token(token: str) -> None:
+    """
+    verification of the jwt token signature
+    raise error if problem
+    """
+    a = jwt.JWT.from_jose_token(token)
+    a.validate(jwk.JWK(**ISSUER_KEY))
+    return
+
+
+def get_data_from_token(data: str,  token: str) -> int:
+  """
+  return  attribute of token
+  data = chain, exp, test
+  """
+  payload = token.split('.')[1]
+  payload += "=" * ((4 - len(payload) % 4) % 4) # solve the padding issue of the base64 python lib
+  return json.loads(base64.urlsafe_b64decode(payload).decode())[data]
+
+
+def mint_nft(credential_id:str, address: str, chain:str, test: bool) -> bool:
+    """
+    mint NFT for one token received
+    manage return issue
+    """
+    if chain == "tezos" and test : 
+        metadata_tezos['identifier'] = credential_id
+        logging.info('mint on tezos for test') 
+        return issue_sbt_tezos(address, metadata_tezos, "defi:tezos:test:" + metadata_tezos['identifier'], mode)
+    elif chain == "tezos" and not test : 
+        metadata_tezos['identifier'] = credential_id
+        logging.info('mint on tezos for production') 
+        return issue_sbt_tezos(address, metadata_tezos, "defi:tezos:prod:" + metadata_tezos['identifier'], mode)
+    elif chain == "binance" and test:
+        metadata_binance['identifier'] = credential_id
+        logging.info('mint on binance for test')
+        return issue_sbt_binance(address, metadata_binance, "defi:binance:test:" + metadata_binance['identifier'], mode)
+    elif chain == "binance" and not test:
+        metadata_binance['identifier'] = credential_id
+        logging.info('mint on binance for production')
+        return issue_sbt_binance(address, metadata_binance, "defi:binance:prod:" + metadata_binance['identifier'], mode)
+    else :
+        logging.warning('Blockchain not supported for this DeFi NFT mint')
+        return 
+
+
+def get_link():
+    """
+    This the first call customer side to get its link
+    curl https://issuer.talao.co/verifier/defi/get_link -H "api-key":<your_api_key> -H "client_id":<your_client_id>
+    returns {"link": <link>} 200
+   
+    """
+    client_secret = request.headers.get('api-key')
+    client_id = request.headers.get('client_id')
+    # TODO check the client database
+    chain = request.headers.get('chain', 'binance')
+    test = request.headers.get('test', False)
+    if test == 'True':
+        test = True
+    token = generate_token(chain, test)
+    if not token :
+        return jsonify({"Bad request"}), 400
+    link = mode.server + 'verifier/defi/endpoint/' + str(uuid.uuid1()) + '?token=' + token
+    return jsonify({"link": link})
+
+
+def verifier_endpoint(stream_id, mode, red):
+    """
+    wallet endpoint of the verifier
+    difference is that a token is passed as an argument in the wallet call 
+    """
+    token = request.args.get('token')
+    if not token :
+        return jsonify ('Unauthorized'), 401
+    try :
+        chain = get_data_from_token('chain', token)
+    except :
+        return jsonify ('Unauthorized'), 401
+    try :
+        verif_token(token)
+    except : 
+        logging.error('verif token failed')
+        return jsonify ('Unauthorized'), 401
+    exp = get_data_from_token('exp', token)
+    if time.time() > exp :
+        logging.warning('DeFi token expired')
+        return jsonify ('Unauthorized'), 401
+    test = get_data_from_token('test', token)
+    
+    if request.method == 'GET':
+        pattern = {
+            "type": "VerifiablePresentationRequest",
+            "query": [
+                {
+                    "type": "QueryByExample",
+                    "credentialQuery": [
+                        {
+                            "example" : {"type" : "DefiCompliance"}
+              }]}]}
+        if chain == "tezos" :
+            pattern['query'][0]['credentialQuery'].append({"example" : {"type" : "TezosAssociatedAddress"}})
+        elif chain == "fantom" :
+            pattern['query'][0]['credentialQuery'].append({"example" : {"type" : "FantomAssociatedAddress"}})
+        elif chain == "binance" :
+            pattern['query'][0]['credentialQuery'].append({"example" : {"type" : "BinanceAssociatedAddress"}})
+        elif chain == "ethereum" :
+            pattern['query'][0]['credentialQuery'].append({"example" : {"type" : "EthereumAssociatedAddress"}})
+        pattern['challenge'] = str(uuid.uuid1())
+        pattern['domain'] = mode.server
+        print('pattern = ', pattern)
+        red.setex(stream_id,  180, json.dumps(pattern))
+        return jsonify(pattern)
+    else :
+        try :
+            my_pattern = json.loads(red.get(stream_id).decode())
+            challenge = my_pattern['challenge']
+            domain = my_pattern['domain']
+        except :
+            logging.error('red decode failed')
+            event_data = json.dumps({"stream_id" : stream_id, "message" : "Server error."})
+            red.publish('credible', event_data)
+            return jsonify("URL not found"), 404
+        presentation = json.loads(request.form['presentation'])
+        response_challenge = presentation['proof']['challenge']
+        response_domain = presentation['proof']['domain']
+        verifiable_credential_list = presentation['verifiableCredential']
+        if response_domain != domain or response_challenge != challenge :
+            logging.warning('challenge or domain failed')
+            return jsonify('Credentials refused'), 412
+        # check presentation signature
+        # get address from VC
+        address = credential_id = str()
+        for vc in verifiable_credential_list :
+            if vc['credentialSubject']['type'] in SUPPORTED_ADDRESS :
+                address = vc['credentialSubject']['associatedAddress']
+            elif vc['credentialSubject']['type'] == 'DefiCompliance' :
+                credential_id = vc['id']
+                pass #TODO check DeFiCompliance signatuer and value
+        if not address or not credential_id :
+            return jsonify("Blockchain not supported"), 412
+        # mint
+        print('address = ', address, 'chain = ', chain)
+        if not mint_nft(credential_id, address, chain, test) :
+            return jsonify('NFT DeFi mint failed'), 412
+        
+        return jsonify("NFT for DeFi has been mint")
+
+
+
