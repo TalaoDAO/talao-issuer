@@ -167,10 +167,15 @@ def issue_nft_binance(address: str, metadata: dict, credential_id: str, mode: en
         "ipfs_url" : "ipfs://" + metadata_ipfs
     }
     resp = requests.post(url, data=data, headers=headers)
-    if not 199<resp.status_code<300 :
+    if 199<resp.status_code<300 :
+        return True
+    elif resp.status_code == 430 :
+        logging.info("NFT already minted")
+        return True
+    else :
         logging.warning("Get access refused, SBT not sent %s with reason = %s", resp.status_code, resp.reason)
         return
-    return True
+   
 
 
 def generate_token(chain: str, test: bool) -> str:
@@ -318,12 +323,12 @@ async def verifier_endpoint(mode, red):
         if response_domain != domain or response_challenge != challenge :
             logging.warning('challenge or domain failed')
             return jsonify('Credentials refused'), 412
-        # TODO check presentation signature
-        print(presentation)
+        # check presentation signature
         presentation_result = json.loads(await didkit.verify_presentation(request.form['presentation'], '{}'))
-        print(presentation_result)
         if presentation_result['errors']:  
             logging.warning('presentation signature failed')
+        else :
+            logging.info('presentation signature is Ok')
         # get address from VC
         address = credential_id = str()
         for vc in verifiable_credential_list :
