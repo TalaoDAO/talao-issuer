@@ -12,6 +12,7 @@ import uuid
 import base64
 import logging
 import requests
+import hashlib
 
 ISSUER_KEY = json.load(open("keys.json", "r"))['talao_Ed25519_private_key']
 TOKEN_LIFE = 15*24*60*60
@@ -61,7 +62,7 @@ red = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 def init_app(app,red, mode) :
     app.add_url_rule('/verifier/defi/get_link', methods = ['POST', 'GET'], view_func=get_link)
-    app.add_url_rule('/verifier/defi/endpoint/<stream_id>', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
+    app.add_url_rule('/verifier/defi/endpoint', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
     app.add_url_rule('/verifier/defi/burn/<address>', view_func=burn_nft, methods = ['GET'])
     app.add_url_rule('/verifier/defi/has/<address>', view_func=has_nft, methods = ['GET'])
     return
@@ -253,22 +254,22 @@ def get_link():
     token = generate_token(chain, test)
     if not token :
         return jsonify({"Bad request"}), 400
-    link = mode.server + 'verifier/defi/endpoint/' + str(uuid.uuid1()) + '?token=' + token
+    link = mode.server + 'verifier/defi/endpoint?token=' + token
     return jsonify({"link": link})
 
 
-def verifier_endpoint(stream_id, mode, red):
+async def verifier_endpoint(mode, red):
     """
     wallet endpoint of the verifier
     difference is that a token is passed as an argument in the wallet call 
     """
+    # one takes as the session id the wallet IP hash
+    m = hashlib.sha256()
+    m.update(request.remote_addr.encode())
+    session_id = m.hexdigest()
     token = request.args.get('token')
     if not token :
         return jsonify ('Unauthorized'), 401
-    print('token = ', token)
-    print('chain = ', get_data_from_token('chain', token))
-    print('test = ', get_data_from_token('test', token))
-    print('exp = ', get_data_from_token('exp', token))
     try :
         verif_token(token)
         chain = get_data_from_token('chain', token)
@@ -294,11 +295,11 @@ def verifier_endpoint(stream_id, mode, red):
         pattern['query'][0]['credentialQuery'].append({"example" : {"type" : chain.capitalize() + "AssociatedAddress"}})
         pattern['challenge'] = str(uuid.uuid1())
         pattern['domain'] = mode.server
-        red.setex(stream_id,  180, json.dumps(pattern))
+        red.setex(session_id,  60, json.dumps(pattern))
         return jsonify(pattern)
     else :
         try :
-            my_pattern = json.loads(red.get(stream_id).decode())
+            my_pattern = json.loads(red.get(session_id).decode())
             challenge = my_pattern['challenge']
             domain = my_pattern['domain']
         except :
@@ -313,6 +314,11 @@ def verifier_endpoint(stream_id, mode, red):
             logging.warning('challenge or domain failed')
             return jsonify('Credentials refused'), 412
         # TODO check presentation signature
+        print(presentation)
+        presentation_result = json.loads(await didkit.verify_presentation(request.form['presentation'], '{}'))
+        print(presentation_result)
+        if presentation_result['errors']:  
+            logging.warning('presentation signature failed')
         # get address from VC
         address = credential_id = str()
         for vc in verifiable_credential_list :
@@ -326,9 +332,10 @@ def verifier_endpoint(stream_id, mode, red):
         if not address or not credential_id :
             return jsonify("Blockchain not supported"), 412
         # mint
+        """
         if not mint_nft(credential_id, address, chain, test) :
             return jsonify('NFT DeFi mint failed'), 412
-        
+        """
         logging.info('NFT has been minted for %s on %s', address, chain)
         return jsonify("NFT for DeFi has been mint")
 
