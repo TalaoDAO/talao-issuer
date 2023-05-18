@@ -265,13 +265,17 @@ def verifier_endpoint(stream_id, mode, red):
     token = request.args.get('token')
     if not token :
         return jsonify ('Unauthorized'), 401
+    print('token = ', token)
+    print('chain = ', get_data_from_token('chain', token))
+    print('test = ', get_data_from_token('test', token))
+    print('exp = ', get_data_from_token('exp', token))
     try :
         verif_token(token)
         chain = get_data_from_token('chain', token)
         test = get_data_from_token('test', token)
         exp = get_data_from_token('exp', token)
-    except : 
-        logging.error('verif token failed')
+    except Exception as e: 
+        logging.error('verif token failed %s', e )
         return jsonify ('Unauthorized'), 401
     if time.time() > exp :
         logging.warning('DeFi token expired')
