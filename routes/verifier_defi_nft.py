@@ -61,8 +61,13 @@ red = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 
 def init_app(app,red, mode) :
+    # for DefI site
     app.add_url_rule('/verifier/defi/get_link', methods = ['POST', 'GET'], view_func=get_link)
+    
+    # for wallet
     app.add_url_rule('/verifier/defi/endpoint', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
+    
+    # for admin
     app.add_url_rule('/verifier/defi/burn/<address>', view_func=burn_nft, methods = ['GET'])
     app.add_url_rule('/verifier/defi/has/<address>', view_func=has_nft, methods = ['GET'])
     return
@@ -332,10 +337,8 @@ async def verifier_endpoint(mode, red):
         if not address or not credential_id :
             return jsonify("Blockchain not supported"), 412
         # mint
-        """
         if not mint_nft(credential_id, address, chain, test) :
             return jsonify('NFT DeFi mint failed'), 412
-        """
         logging.info('NFT has been minted for %s on %s', address, chain)
         return jsonify("NFT for DeFi has been mint")
 
