@@ -39,11 +39,13 @@ metadata_tezos = {
   "shouldPreferSymbol": False
 }
 
+
 metadata_binance = {
     "name": "DeFi compliance proof",
-    "description": "This NFT is a proof of your DeFi compliance. It is not transferable.You can use it when you need to prove your comliance with services that have already adopted the verifiable and decentralized identity system.",
+    "symbol": "DEFI",
+    "description": "This NFT is a proof of your KYC-AML compliance. It is not transferable. You can use it when you need to prove your comliance with DeFi services that have adopted decentralized identity to protect user data.",
     "image": "ipfs://QmUDYRnEsCv4vRmSY57PC6wZyc6xqGfZecdSaZmo2wnzDF",
-     "identifier": "",
+    "identifier": "",
 }
 
 
@@ -87,11 +89,11 @@ def add_to_ipfs(data_dict: dict, name: str, mode: environment.currentMode) -> st
 	    return r.json()['IpfsHash']
 
 
-def issue_sbt_tezos(address: str, metadata: dict, credential_id: str, mode: environment.currentMode) -> bool:
+def issue_nft_tezos(address: str, metadata: dict, credential_id: str, mode: environment.currentMode) -> bool:
     """
     issue NFT with compellio smart contract on Tezos
     """
-    metadata_ipfs = add_to_ipfs(metadata, "sbt:" + credential_id , mode)
+    metadata_ipfs = add_to_ipfs(metadata, "nft:" + credential_id , mode)
     if not metadata_ipfs :
         logging.error("pinning service failed")
         return
@@ -111,15 +113,16 @@ def issue_sbt_tezos(address: str, metadata: dict, credential_id: str, mode: envi
     return True
 
 
-def issue_sbt_binance(address: str, metadata: dict, credential_id: str, mode: environment.currentMode) -> bool:
+def issue_nft_binance(address: str, metadata: dict, credential_id: str, mode: environment.currentMode) -> bool:
     """
     issue NFT with merenti smart contract on Binance
+
     curl --location --request POST ‘https://ssi-sbt.osc-fr1.scalingo.io/mint’ \
     --header ‘Content-Type: application/x-www-form-urlencoded’ \
     --data-urlencode ‘transfer_to=0xCdcc3Ae823F05935f0b9c35C1054e5C144401C0a’ \
     --data-urlencode ‘ipfs_url=ipfs://QmRmmqEFCeCtgyp6xdwHGCKjMcEiQUqA8Q76kP9diN1s5F’
     """
-    metadata_ipfs = add_to_ipfs(metadata, "sbt:" + credential_id , mode)
+    metadata_ipfs = add_to_ipfs(metadata, "nft:" + credential_id , mode)
     if not metadata_ipfs :
         logging.error("pinning service failed")
         return
@@ -171,7 +174,7 @@ def verif_token(token: str) -> None:
     return
 
 
-def get_data_from_token(data: str,  token: str) -> int:
+def get_data_from_token(data: str,  token: str) -> any:
   """
   return  attribute of token
   data = chain, exp, test
@@ -189,19 +192,19 @@ def mint_nft(credential_id:str, address: str, chain:str, test: bool) -> bool:
     if chain == "tezos" and test : 
         metadata_tezos['identifier'] = credential_id
         logging.info('mint on tezos for test') 
-        return issue_sbt_tezos(address, metadata_tezos, "defi:tezos:test:" + metadata_tezos['identifier'], mode)
+        return issue_nft_tezos(address, metadata_tezos, "defi:tezos:test:" + metadata_tezos['identifier'], mode)
     elif chain == "tezos" and not test : 
         metadata_tezos['identifier'] = credential_id
         logging.info('mint on tezos for production') 
-        return issue_sbt_tezos(address, metadata_tezos, "defi:tezos:prod:" + metadata_tezos['identifier'], mode)
+        return issue_nft_tezos(address, metadata_tezos, "defi:tezos:prod:" + metadata_tezos['identifier'], mode)
     elif chain == "binance" and test:
         metadata_binance['identifier'] = credential_id
         logging.info('mint on binance for test')
-        return issue_sbt_binance(address, metadata_binance, "defi:binance:test:" + metadata_binance['identifier'], mode)
+        return issue_nft_binance(address, metadata_binance, "defi:binance:test:" + metadata_binance['identifier'], mode)
     elif chain == "binance" and not test:
         metadata_binance['identifier'] = credential_id
         logging.info('mint on binance for production')
-        return issue_sbt_binance(address, metadata_binance, "defi:binance:prod:" + metadata_binance['identifier'], mode)
+        return issue_nft_binance(address, metadata_binance, "defi:binance:prod:" + metadata_binance['identifier'], mode)
     else :
         logging.warning('Blockchain not supported for this DeFi NFT mint')
         return 
@@ -237,19 +240,16 @@ def verifier_endpoint(stream_id, mode, red):
     if not token :
         return jsonify ('Unauthorized'), 401
     try :
-        chain = get_data_from_token('chain', token)
-    except :
-        return jsonify ('Unauthorized'), 401
-    try :
         verif_token(token)
+        chain = get_data_from_token('chain', token)
+        test = get_data_from_token('test', token)
+        exp = get_data_from_token('exp', token)
     except : 
         logging.error('verif token failed')
         return jsonify ('Unauthorized'), 401
-    exp = get_data_from_token('exp', token)
     if time.time() > exp :
         logging.warning('DeFi token expired')
         return jsonify ('Unauthorized'), 401
-    test = get_data_from_token('test', token)
     
     if request.method == 'GET':
         pattern = {
@@ -261,17 +261,9 @@ def verifier_endpoint(stream_id, mode, red):
                         {
                             "example" : {"type" : "DefiCompliance"}
               }]}]}
-        if chain == "tezos" :
-            pattern['query'][0]['credentialQuery'].append({"example" : {"type" : "TezosAssociatedAddress"}})
-        elif chain == "fantom" :
-            pattern['query'][0]['credentialQuery'].append({"example" : {"type" : "FantomAssociatedAddress"}})
-        elif chain == "binance" :
-            pattern['query'][0]['credentialQuery'].append({"example" : {"type" : "BinanceAssociatedAddress"}})
-        elif chain == "ethereum" :
-            pattern['query'][0]['credentialQuery'].append({"example" : {"type" : "EthereumAssociatedAddress"}})
+        pattern['query'][0]['credentialQuery'].append({"example" : {"type" : chain.capitalize() + "AssociatedAddress"}})
         pattern['challenge'] = str(uuid.uuid1())
         pattern['domain'] = mode.server
-        print('pattern = ', pattern)
         red.setex(stream_id,  180, json.dumps(pattern))
         return jsonify(pattern)
     else :
@@ -281,17 +273,16 @@ def verifier_endpoint(stream_id, mode, red):
             domain = my_pattern['domain']
         except :
             logging.error('red decode failed')
-            event_data = json.dumps({"stream_id" : stream_id, "message" : "Server error."})
-            red.publish('credible', event_data)
             return jsonify("URL not found"), 404
         presentation = json.loads(request.form['presentation'])
+        # check authentication
         response_challenge = presentation['proof']['challenge']
         response_domain = presentation['proof']['domain']
         verifiable_credential_list = presentation['verifiableCredential']
         if response_domain != domain or response_challenge != challenge :
             logging.warning('challenge or domain failed')
             return jsonify('Credentials refused'), 412
-        # check presentation signature
+        # TODO check presentation signature
         # get address from VC
         address = credential_id = str()
         for vc in verifiable_credential_list :
@@ -299,14 +290,16 @@ def verifier_endpoint(stream_id, mode, red):
                 address = vc['credentialSubject']['associatedAddress']
             elif vc['credentialSubject']['type'] == 'DefiCompliance' :
                 credential_id = vc['id']
-                pass #TODO check DeFiCompliance signatuer and value
+                if vc['credentialSubject']['amlComplianceCheck'] != 'Succeeded' :
+                    logging.warning('VC compliance is Failed')
+                    #TODO return jsonify('Credentials refused'), 412
         if not address or not credential_id :
             return jsonify("Blockchain not supported"), 412
         # mint
-        print('address = ', address, 'chain = ', chain)
         if not mint_nft(credential_id, address, chain, test) :
             return jsonify('NFT DeFi mint failed'), 412
         
+        logging.info('NFT has been minted for %s on %s', address, chain)
         return jsonify("NFT for DeFi has been mint")
 
 
