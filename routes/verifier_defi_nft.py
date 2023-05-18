@@ -62,6 +62,8 @@ red = redis.Redis(host='127.0.0.1', port=6379, db=0)
 def init_app(app,red, mode) :
     app.add_url_rule('/verifier/defi/get_link', methods = ['POST', 'GET'], view_func=get_link)
     app.add_url_rule('/verifier/defi/endpoint/<stream_id>', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
+    app.add_url_rule('/verifier/defi/burn/<address>', view_func=burn_nft, methods = ['GET'])
+    app.add_url_rule('/verifier/defi/has/<address>', view_func=has_nft, methods = ['GET'])
     return
 
 
@@ -111,6 +113,30 @@ def issue_nft_tezos(address: str, metadata: dict, credential_id: str, mode: envi
         logging.warning("Get access refused, SBT not sent %s", resp.status_code)
         return
     return True
+
+
+def burn_nft(address) :
+    url = 'https://ssi-sbt.osc-fr1.scalingo.io/burn'
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = {
+        "address_for" : address,
+    }
+    resp = requests.post(url, data=data, headers=headers)
+    if not 199<resp.status_code<300 :
+        logging.warning("Get access refused, SBT not sent %s with reason = %s", resp.status_code, resp.reason)
+        return jsonify({'burn' : False})
+    return jsonify({'burn' : True})
+
+
+def has_nft(address) :
+    url = 'https://ssi-sbt.osc-fr1.scalingo.io/has/'
+    resp = requests.get(url + address)
+    if not 199<resp.status_code<300 :
+        logging.warning("Get access refused")
+        return
+    return jsonify(resp.json())
 
 
 def issue_nft_binance(address: str, metadata: dict, credential_id: str, mode: environment.currentMode) -> bool:
