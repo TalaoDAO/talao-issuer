@@ -337,15 +337,20 @@ async def verifier_endpoint(mode, red):
         for vc in verifiable_credential_list :
             if vc['credentialSubject']['type'] in SUPPORTED_ADDRESS :
                 address = vc['credentialSubject']['associatedAddress']
+                logging.info("address = %s", address)
             elif vc['credentialSubject']['type'] == 'DefiCompliance' :
-                credential_id = vc['id']
                 if vc['credentialSubject']['amlComplianceCheck'] != 'Succeeded' :
                     logging.warning('VC compliance is Failed')
-                    #TODO return jsonify('Credentials refused'), 412
+                    return jsonify('Credentials refused'), 412
+                else :
+                    credential_id = vc['id']
+                    logging.info("credential Id = %s", credential_id)
         if not address or not credential_id :
+            logging.warning("Blockchain not supported %s %s", address, credential_id)
             return jsonify("Blockchain not supported"), 412
         # mint
         if not mint_nft(credential_id, address, chain, test) :
+            logging.error("NFT DeFi mint failed")
             return jsonify('NFT DeFi mint failed'), 412
         logging.info('NFT has been minted for %s on %s', address, chain)
         return jsonify("NFT for DeFi has been mint")
