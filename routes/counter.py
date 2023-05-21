@@ -1,3 +1,4 @@
+from typing import ChainMap
 from flask import jsonify, request
 import json
 import requests
@@ -6,9 +7,16 @@ import requests
 def init_app(app,mode) :
     app.add_url_rule('/counter/get',  view_func=counter_get, methods = ['GET'])
     app.add_url_rule('/counter/update',  view_func=counter_update, methods = ['POST'], defaults = {"mode" : mode})
+    app.add_url_rule('/counter/nft/get',  view_func=counter_nft_get, methods = ['GET'])
+    app.add_url_rule('/counter/nft/update',  view_func=counter_nft_update, methods = ['POST'], defaults = {"mode" : mode})
     return
 
 
+
+"""
+For VCs
+
+"""
 def counter_get() :
     """
     to get the values 
@@ -52,6 +60,57 @@ def counter_update(mode):
         'payload': json.dumps(payload)
     }
     r = requests.post(url, data=data)
-    print("status code slack = ", r.status_code)
+    return jsonify('ok')
+
+
+
+"""
+For NFT
+
+"""
+
+def counter_nft_get() :
+    """
+    to get the values 
+    """
+    return json.load(open("counter_defi.json", "r"))
+
+
+def counter_nft_update(mode):
+    """
+    this allows the verifier to update the counter json file
+
+    with a simple request request 
+    # update counter
+    data = {"count" : "1" , "chain" : "binance" }
+    requests.post(mode.server + 'counter/nft/update', data=data)
+    """
+    count = request.form.get('count')
+    that_chain = request.form.get('chain')
+    if not that_chain or not count :
+        return jsonify('update refused'), 404
+    counter = json.load(open("counter_defi.json", "r"))
+    chain_list = list(counter.keys())
+    for chain in chain_list :
+        if chain == that_chain :
+            counter[chain] += int(count)
+            counter["total"] += int(count)
+            break
+    counter_file = open("counter_defi.json", "w")
+    counter_file.write(json.dumps(counter))
+    counter_file.close()
+
+    # send data to slack
+    url = mode.slack_nft_url
+    payload = {
+        "channel": "#defi_nft_counter",
+        "username": "DeFi_verifier",
+        "text": json.dumps(counter),
+        "icon_emoji": ":ghost:"
+        }
+    data = {
+        'payload': json.dumps(payload)
+    }
+    r = requests.post(url, data=data)
     return jsonify('ok')
 

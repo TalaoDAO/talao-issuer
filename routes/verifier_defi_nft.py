@@ -105,7 +105,6 @@ def issue_nft_tezos(address: str, metadata: dict, credential_id: str, mode: envi
     if not metadata_ipfs :
         logging.error("pinning service failed")
         return
-    #time.sleep(5)
     url = 'https://altme-api.dvl.compell.io/mint'
     headers = {
         "Content-Type": "application/x-www-form-urlencoded"
@@ -118,6 +117,8 @@ def issue_nft_tezos(address: str, metadata: dict, credential_id: str, mode: envi
     if not 199<resp.status_code<300 :
         logging.warning("Get access refused, SBT not sent %s", resp.status_code)
         return
+    data = {"count" : "1" , "chain" : "tezos" }
+    requests.post(mode.server + 'counter/nft/update', data=data)
     return True
 
 
@@ -168,12 +169,14 @@ def issue_nft_binance(address: str, metadata: dict, credential_id: str, mode: en
     }
     resp = requests.post(url, data=data, headers=headers)
     if 199<resp.status_code<300 :
+        data = {"count" : "1" , "chain" : "binance" }
+        requests.post(mode.server + 'counter/nft/update', data=data)
         return True
     elif resp.status_code == 430 :
         logging.info("NFT already minted")
         return True
     else :
-        logging.warning("Get access refused, SBT not sent %s with reason = %s", resp.status_code, resp.reason)
+        logging.warning("Get access refused, NFT not mint %s with reason = %s", resp.status_code, resp.reason)
         return
    
 
