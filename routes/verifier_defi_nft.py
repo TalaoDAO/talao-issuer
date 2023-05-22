@@ -13,6 +13,8 @@ import base64
 import logging
 import requests
 import hashlib
+from urllib.parse import urlencode
+
 
 ISSUER_KEY = json.load(open("keys.json", "r"))['talao_Ed25519_private_key']
 TOKEN_LIFE = 15*24*60*60
@@ -69,6 +71,7 @@ def init_app(app,red, mode) :
     
     # for user mint
     app.add_url_rule('/defi/nft', view_func=defi_nft, methods = ['GET'],  defaults={'mode': mode})
+    app.add_url_rule('/nft/defi', view_func=defi_nft, methods = ['GET'],  defaults={'mode': mode})
 
     # for admin
     app.add_url_rule('/verifier/defi/burn/<address>', view_func=burn_nft, methods = ['GET'])
@@ -81,7 +84,8 @@ def init_app(app,red, mode) :
 def defi_nft(mode) :
     token = generate_token('binance')
     link = mode.server + 'verifier/defi/endpoint?token=' + token
-    return render_template('NFT/nft_qrcode.html', url=link)
+    deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
+    return render_template('NFT/nft_qrcode.html', url=link, deeplink_altme=deeplink)
 
 
 def add_to_ipfs(data_dict: dict, name: str, mode: environment.currentMode) -> str :
