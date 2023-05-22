@@ -2,7 +2,7 @@ import time
 import math
 from jwcrypto import jwk, jwt
 import json
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_qrcode import QRcode
 import didkit
 import os
@@ -67,10 +67,21 @@ def init_app(app,red, mode) :
     # for wallet
     app.add_url_rule('/verifier/defi/endpoint', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
     
+    # for user mint
+    app.add_url_rule('/defi/nft', view_func=defi_nft, methods = ['GET'],  defaults={'mode': mode})
+
     # for admin
     app.add_url_rule('/verifier/defi/burn/<address>', view_func=burn_nft, methods = ['GET'])
     app.add_url_rule('/verifier/defi/has/<address>', view_func=has_nft, methods = ['GET'])
+    app.add_url_rule('/verifier/defi/info/<id>', view_func=info_nft, methods = ['GET'])
+
     return
+
+
+def defi_nft(mode) :
+    token = generate_token('binance')
+    link = mode.server + 'verifier/defi/endpoint?token=' + token
+    return render_template('NFT/nft_qrcode.html', url=link)
 
 
 def add_to_ipfs(data_dict: dict, name: str, mode: environment.currentMode) -> str :
@@ -145,6 +156,18 @@ def has_nft(address) :
         return
     return jsonify(resp.json())
 
+
+def info_nft(id) :
+    """
+    curl --location --request GET ‘https://ssi-sbt.osc-fr1.scalingo.io/id/0’
+    """
+    url = 'https://ssi-sbt.osc-fr1.scalingo.io/id/'
+    resp = requests.get(url + id)
+    if not 199<resp.status_code<300 :
+        logging.warning("Get access refused")
+        return
+    return jsonify(resp.json())
+  
 
 def issue_nft_binance(address: str, metadata: dict, credential_id: str, mode: environment.currentMode) -> bool:
     """
@@ -291,7 +314,9 @@ async def verifier_endpoint(mode, red):
                     "credentialQuery": [
                         {
                             "example" : {"type" : "DefiCompliance"}
-              }]}]}
+              }]}
+            ]
+        }
         pattern['query'][0]['credentialQuery'].append({"example" : {"type" : chain.capitalize() + "AssociatedAddress"}})
         pattern['challenge'] = str(uuid.uuid1())
         pattern['domain'] = mode.server
