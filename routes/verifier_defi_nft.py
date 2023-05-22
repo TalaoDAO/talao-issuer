@@ -2,7 +2,7 @@ import time
 import math
 from jwcrypto import jwk, jwt
 import json
-from flask import Flask, render_template, request, jsonify, Response, send_file, session, redirect
+from flask import Flask, request, jsonify
 from flask_qrcode import QRcode
 import didkit
 import os
@@ -339,8 +339,8 @@ async def verifier_endpoint(mode, red):
         if not mint_nft(credential_id, address, chain) :
             logging.error("NFT DeFi mint failed")
             return jsonify('NFT DeFi mint failed'), 412
-        logging.info('NFT has been minted for %s on %s', address, chain)
-        return jsonify("NFT for DeFi has been mint")
+        logging.info('NFT has been minted for %s', chain)
+        return jsonify("ok")
 
 
 
