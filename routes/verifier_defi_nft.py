@@ -51,7 +51,7 @@ metadata_binance = {
 
 
 app = Flask(__name__)
-app.secret_key = "test"
+app.secret_key = "NFT DeFi"
 qrcode = QRcode(app)
 myenv = os.getenv('MYENV')
 if not myenv:
@@ -181,7 +181,7 @@ def issue_nft_binance(address: str, metadata: dict, credential_id: str, mode: en
    
 
 
-def generate_token(chain: str, test: bool) -> str:
+def generate_token(chain: str) -> str:
     """
     generate an anonymous token with an expîration fixed date every 15 days from 01 jan 1970
     """
@@ -196,8 +196,7 @@ def generate_token(chain: str, test: bool) -> str:
     payload = {
       'iss' : "did:web:app.altme.io:issuer",
       'exp': (math.floor(time.time()/TOKEN_LIFE) + 1) * TOKEN_LIFE,
-      'chain' : chain,
-      'test' : test
+      'chain' : chain
     }  
     token = jwt.JWT(header=header,claims=payload, algs=['EdDSA'])
     token.make_signed_token(signer_key)
@@ -217,34 +216,26 @@ def verif_token(token: str) -> None:
 def get_data_from_token(data: str,  token: str) -> any:
   """
   return  attribute of token
-  data = chain, exp, test
+  data = chain, exp
   """
   payload = token.split('.')[1]
   payload += "=" * ((4 - len(payload) % 4) % 4) # solve the padding issue of the base64 python lib
   return json.loads(base64.urlsafe_b64decode(payload).decode())[data]
 
 
-def mint_nft(credential_id:str, address: str, chain:str, test: bool) -> bool:
+def mint_nft(credential_id:str, address: str, chain:str) -> bool:
     """
     mint NFT for one token received
     manage return issue
     """
-    if chain == "tezos" and test : 
+    if chain == "tezos"  : 
         metadata_tezos['identifier'] = credential_id
-        logging.info('mint on tezos for test') 
-        return issue_nft_tezos(address, metadata_tezos, "defi:tezos:test:" + metadata_tezos['identifier'], mode)
-    elif chain == "tezos" and not test : 
-        metadata_tezos['identifier'] = credential_id
-        logging.info('mint on tezos for production') 
-        return issue_nft_tezos(address, metadata_tezos, "defi:tezos:prod:" + metadata_tezos['identifier'], mode)
-    elif chain == "binance" and test:
+        logging.info('mint DeFi NFT on Tezos') 
+        return issue_nft_tezos(address, metadata_tezos, "defi:tezos:" + metadata_tezos['identifier'], mode)
+    elif chain == "binance" :
         metadata_binance['identifier'] = credential_id
-        logging.info('mint on binance for test')
-        return issue_nft_binance(address, metadata_binance, "defi:binance:test:" + metadata_binance['identifier'], mode)
-    elif chain == "binance" and not test:
-        metadata_binance['identifier'] = credential_id
-        logging.info('mint on binance for production')
-        return issue_nft_binance(address, metadata_binance, "defi:binance:prod:" + metadata_binance['identifier'], mode)
+        logging.info('mint DeFi NFT on Binance')
+        return issue_nft_binance(address, metadata_binance, "defi:binance:" + metadata_binance['identifier'], mode)
     else :
         logging.warning('Blockchain not supported for this DeFi NFT mint')
         return 
@@ -261,10 +252,7 @@ def get_link():
     client_id = request.headers.get('client_id')
     # TODO check the client database
     chain = request.headers.get('chain', 'binance')
-    test = request.headers.get('test', False)
-    if test == 'True':
-        test = True
-    token = generate_token(chain, test)
+    token = generate_token(chain)
     if not token :
         return jsonify({"Bad request"}), 400
     link = mode.server + 'verifier/defi/endpoint?token=' + token
@@ -286,7 +274,6 @@ async def verifier_endpoint(mode, red):
     try :
         verif_token(token)
         chain = get_data_from_token('chain', token)
-        test = get_data_from_token('test', token)
         exp = get_data_from_token('exp', token)
     except Exception as e: 
         logging.error('verif token failed %s', e )
@@ -349,7 +336,7 @@ async def verifier_endpoint(mode, red):
             logging.warning("Blockchain not supported %s %s", address, credential_id)
             return jsonify("Blockchain not supported"), 412
         # mint
-        if not mint_nft(credential_id, address, chain, test) :
+        if not mint_nft(credential_id, address, chain) :
             logging.error("NFT DeFi mint failed")
             return jsonify('NFT DeFi mint failed'), 412
         logging.info('NFT has been minted for %s on %s', address, chain)
