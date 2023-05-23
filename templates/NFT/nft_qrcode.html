@@ -38,9 +38,8 @@
         <div id="content_smartphone" class="d-block d-sm-none " style="background-color: {{page_background_color}}" > 
           
           <br><br><br>
-          <div class="mt-5">
+          <div class="mt-1">
             <div class="row">
-
               <div class="col-10 offset-1 mt-2">
               <div class="text-center">  
                 <h4>Clic below and get your NFT to prove your DeFi compliance on BNB Chain</h4>
@@ -84,14 +83,6 @@
 <script src="{{ url_for('static', filename='bs-init.js') }}"></script>
 <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
 
-<script>
-var source = new EventSource('/emailpass/stream');
-source.onmessage = function (event) {
-     const result = JSON.parse(event.data)
-     if (result.id == "{{id}}" ){
-       window.location.href="/emailpass/end?followup=" + result.check;
-     }
-};
-</script>
+
 </body>
 </html>
