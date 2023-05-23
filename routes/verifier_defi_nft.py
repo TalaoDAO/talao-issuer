@@ -334,6 +334,7 @@ async def verifier_endpoint(mode, red):
         except :
             logging.error('red decode failed')
             return jsonify("URL not found"), 404
+        red.delete(session_id)
         presentation = json.loads(request.form['presentation'])
         # check authentication
         response_challenge = presentation['proof']['challenge']
