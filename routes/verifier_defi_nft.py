@@ -20,6 +20,9 @@ ISSUER_KEY = json.load(open("keys.json", "r"))['talao_Ed25519_private_key']
 TOKEN_LIFE = 15*24*60*60
 SUPPORTED_ADDRESS = ['TezosAssociatedAddress', 'EthereumAssociatedAddress', 'BinanceAssociatedAddress']
 SUPPORTED_CHAIN = ['binance', 'tezos']
+URL_BNB = "https://ssi-sbt-altme-bnb-main.osc-fr1.scalingo.io/"
+URL_BNBT = "https://ssi-sbt-altme-bnb-test.osc-fr1.scalingo.io/"
+
 
 
 metadata_tezos = {
@@ -138,7 +141,7 @@ def issue_nft_tezos(address: str, metadata: dict, credential_id: str, mode: envi
 
 
 def burn_nft(address) :
-    url = 'https://ssi-sbt.osc-fr1.scalingo.io/burn'
+    url = URL_BNB + 'burn'
     headers = {
         "Content-Type": "application/x-www-form-urlencoded"
     }
@@ -153,7 +156,7 @@ def burn_nft(address) :
 
 
 def has_nft(address) :
-    url = 'https://ssi-sbt.osc-fr1.scalingo.io/has/'
+    url = URL_BNB + 'has/'
     resp = requests.get(url + address)
     if not 199<resp.status_code<300 :
         logging.warning("Get access refused")
@@ -165,7 +168,7 @@ def info_nft(id) :
     """
     curl --location --request GET ‘https://ssi-sbt.osc-fr1.scalingo.io/id/0’
     """
-    url = 'https://ssi-sbt.osc-fr1.scalingo.io/id/'
+    url = URL_BNB + 'id/'
     resp = requests.get(url + id)
     if not 199<resp.status_code<300 :
         logging.warning("Get access refused")
@@ -186,7 +189,7 @@ def issue_nft_binance(address: str, metadata: dict, credential_id: str, mode: en
     if not metadata_ipfs :
         logging.error("pinning service failed")
         return
-    url = 'https://ssi-sbt.osc-fr1.scalingo.io/mint'
+    url = URL_BNB + 'mint'
     headers = {
         "Content-Type": "application/x-www-form-urlencoded"
     }
