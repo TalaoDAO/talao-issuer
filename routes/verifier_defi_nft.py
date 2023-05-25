@@ -20,10 +20,12 @@ ISSUER_KEY = json.load(open("keys.json", "r"))['talao_Ed25519_private_key']
 #TOKEN_LIFE = 15*24*60*60 # 15 jours
 TOKEN_LIFE = 60*60 # 1 heure
 
-SUPPORTED_ADDRESS = ['TezosAssociatedAddress', 'EthereumAssociatedAddress', 'BinanceAssociatedAddress']
-SUPPORTED_CHAIN = ['binance', 'tezos']
+SUPPORTED_ADDRESS = ['TezosAssociatedAddress', 'EthereumAssociatedAddress', 'BinanceAssociatedAddress', 'PolygonAssociatedAddress']
+SUPPORTED_CHAIN = ['binance', 'tezos', 'ethereum', 'polygon']
 URL_BNB = "https://ssi-sbt-altme-bnb-main.osc-fr1.scalingo.io/"
 URL_BNBT = "https://ssi-sbt-altme-bnb-test.osc-fr1.scalingo.io/"
+
+TEST = False
 
 
 
@@ -67,6 +69,12 @@ mode = environment.currentMode(myenv)
 red = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 
+def test(chain, test, mode) : 
+    if test and chain == "binance" :
+        return URL_BNBT, mode.meranti_test
+    else :
+        return URL_BNB, mode.meranti_main
+
 def init_app(app,red, mode) :
     # for DefI site
     app.add_url_rule('/verifier/defi/get_link', methods = ['POST', 'GET'], view_func=get_link)
@@ -80,8 +88,8 @@ def init_app(app,red, mode) :
 
     # for admin
     #app.add_url_rule('/verifier/defi/burn/<address>', view_func=burn_nft, methods = ['GET'])
-    app.add_url_rule('/verifier/defi/has/<address>', view_func=has_nft, methods = ['GET'])
-    app.add_url_rule('/verifier/defi/info/<id>', view_func=info_nft, methods = ['GET'])
+    app.add_url_rule('/verifier/defi/has/<address>', view_func=has_nft, methods = ['GET'],  defaults={'mode': mode})
+    app.add_url_rule('/verifier/defi/info/<id>', view_func=info_nft, methods = ['GET'],  defaults={'mode': mode})
 
     return
 
@@ -142,10 +150,15 @@ def issue_nft_tezos(address: str, metadata: dict, credential_id: str, mode: envi
     return True
 
 
-def burn_nft(address) :
-    url = URL_BNB + 'burn'
+def burn_nft(address, mode) :
+    """
+    Binance
+    """
+    url, key = test('binance', TEST, mode)
+    url = url + 'burn'
     headers = {
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-API-KEY" : key
     }
     data = {
         "address_for" : address,
@@ -157,21 +170,31 @@ def burn_nft(address) :
     return jsonify({'burn' : True})
 
 
-def has_nft(address) :
-    url = URL_BNB + 'has/'
-    resp = requests.get(url + address)
+def has_nft(address, mode) :
+    url, key = test('binance', TEST, mode)
+    url = url + 'has/'
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-API-KEY" : key
+    }
+    resp = requests.get(url + address, headers=headers)
     if not 199<resp.status_code<300 :
         logging.warning("Get access refused")
         return
     return jsonify(resp.json())
 
 
-def info_nft(id) :
+def info_nft(id, mode) :
     """
     curl --location --request GET ‘https://ssi-sbt.osc-fr1.scalingo.io/id/0’
     """
-    url = URL_BNB + 'id/'
-    resp = requests.get(url + id)
+    url, key = test('binance', TEST, mode)
+    url = url + 'id/'
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-API-KEY" : key
+    }
+    resp = requests.get(url + id, headers=headers)
     if not 199<resp.status_code<300 :
         logging.warning("Get access refused")
         return
@@ -191,9 +214,11 @@ def issue_nft_binance(address: str, metadata: dict, credential_id: str, mode: en
     if not metadata_ipfs :
         logging.error("pinning service failed")
         return
-    url = URL_BNB + 'mint'
+    url, key = test('binance', TEST, mode)
+    url = url + 'mint'
     headers = {
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-API-KEY" : key
     }
     data = {
         "transfer_to" : address,
