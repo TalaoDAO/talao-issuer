@@ -18,7 +18,7 @@ from flask_session import Session
 from flask_pyoidc import OIDCAuthentication
 from flask_pyoidc.provider_configuration import ProviderConfiguration, ClientMetadata
 from flask_pyoidc.user_session import UserSession
-
+from flask_mobility import Mobility
 
 
 # local dependencies
@@ -59,6 +59,7 @@ app.config.update(
     SECRET_KEY = "lkjhlkjh" # your application secret code for session, random
 )
 babel = Babel(app)
+Mobility(app)
 
 """
 https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-xiii-i18n-and-l10n

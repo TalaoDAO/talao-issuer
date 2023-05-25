@@ -5,9 +5,7 @@ import json
 from flask import Flask, request, jsonify, render_template
 from flask_qrcode import QRcode
 import didkit
-import os
 import environment
-import redis
 import uuid
 import base64
 import logging
@@ -26,7 +24,6 @@ URL_BNB = "https://ssi-sbt-altme-bnb-main.osc-fr1.scalingo.io/"
 URL_BNBT = "https://ssi-sbt-altme-bnb-test.osc-fr1.scalingo.io/"
 
 TEST = False
-
 
 
 metadata_tezos = {
@@ -59,21 +56,12 @@ metadata_binance = {
 }
 
 
-app = Flask(__name__)
-app.secret_key = "NFT DeFi"
-qrcode = QRcode(app)
-myenv = os.getenv('MYENV')
-if not myenv:
-    myenv = 'local'
-mode = environment.currentMode(myenv)
-red = redis.Redis(host='127.0.0.1', port=6379, db=0)
-
-
 def test(chain, test, mode) : 
     if test and chain == "binance" :
         return URL_BNBT, mode.meranti_test
     else :
         return URL_BNB, mode.meranti_main
+
 
 def init_app(app,red, mode) :
     # for DefI site
@@ -98,7 +86,10 @@ def defi_nft(mode) :
     token = generate_token('binance')
     link = mode.server + 'verifier/defi/endpoint?token=' + token
     deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
-    return render_template('NFT/nft_qrcode.html', url=link, deeplink_altme=deeplink)
+    if not request.MOBILE:
+        return render_template('NFT/bnb.html', url=link, deeplink_altme=deeplink)
+    else :
+        return render_template('NFT/bnb_mobile.html', url=link, deeplink_altme=deeplink)
 
 
 def add_to_ipfs(data_dict: dict, name: str, mode: environment.currentMode) -> str :
@@ -281,7 +272,7 @@ def get_data_from_token(data: str,  token: str) -> any:
   return json.loads(base64.urlsafe_b64decode(payload).decode())[data]
 
 
-def mint_nft(credential_id:str, address: str, chain:str) -> bool:
+def mint_nft(credential_id:str, address: str, chain:str, mode) -> bool:
     """
     mint NFT for one token received
     manage return issue
@@ -397,7 +388,7 @@ async def verifier_endpoint(mode, red):
             logging.warning("Blockchain not supported %s %s", address, credential_id)
             return jsonify("Blockchain not supported"), 412
         # mint
-        if not mint_nft(credential_id, address, chain) :
+        if not mint_nft(credential_id, address, chain, mode) :
             return jsonify('NFT DeFi mint failed'), 412
         return jsonify("ok")
 

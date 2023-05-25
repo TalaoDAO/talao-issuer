@@ -1,0 +1,86 @@
+<html>
+
+<head>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <link rel="stylesheet" href="/static/styleBNB.css">
+
+</head>
+
+<body>
+    <nav class=" nav-02 ">
+        <div class="nav-02__box">
+            <div class="nav-02__logo"><a class="nav-02__link" href="https://altme.io/" target="_self">
+                    <img loading="lazy" class="nav-02__logo_img" src="/static/img/newLogoAltme.png" height="70"
+                        alt="Logo" />
+                </a></div>
+
+            <div class="nav-02__list_wrapper  ">
+                <div class="nav-02__list nav-02__list--desktop">
+                
+                    <div class="nav-02__item" id="faqNav">
+                        <a class="button   button--black-outline  button--empty " href="https://altme.io/" target="_self">
+                            <p class="linkP">Home</p>
+                        </a>
+                    </div>
+                    <div class="nav-02__item">
+
+                        <a data-stripe-product-id="" data-stripe-mode="payment" data-successful-payment-url=""
+                            data-cancel-payment-url="" class="button button--accent-bg "
+                            href="mailto:contact@altme.io?cc=hugo@altme.io&subject=Altme" target="_blank">
+                            <div class="contactSpan">
+                                <p class="contactP">Contact</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </nav>
+    <div id="mainBox">
+        <p id="getYourNFT">Get your NFT to prove your DeFi compliance on Chain</p>
+        <div id="mainDiv">
+            <img id="bnbIMG" src="/static/img/bnb.png">
+            <p id="bnbP">BNB Chain</p>
+            <img id="qrcode" src="{{ qrcode(url) }}">
+            <p id="scanP">Scan the QR Code with your Altme wallet</p>
+        </div>
+    </div>
+    <!--<div id="qrcode"></div>-->
+    <div class="bg-white-color ">
+        <footer class="footer-02" id="footer">
+            <div class="container">
+                <div class="footer-02__wrapper">
+                    <div class="footer-02__text content_box">
+                        <p id="line1Footer">&copy; 2023&nbsp; TALAO - Altme All rights reserved, <a
+                                href="https://altme.io/cgu/" target="_blank">CGU</a>, <a
+                                href="https://altme.io/privacy/" target="_blank">Privacy</a></p>
+                        <p id="line2Footer" hidden><strong>Built with TzKT API, Spruce Didkit 0.4.0</strong>&nbsp;</p>
+                    </div>
+                    <div class="social-buttons  ">
+
+                        <div class="social-buttons__item"><a class="social-buttons__link social-buttons__link--twitter"
+                                href="https://twitter.com/Altme_io" target="_blank"><img loading="lazy"
+                                    class="social-buttons__icon" alt="twitter icon"
+                                    src="https://dvzvtsvyecfyp.cloudfront.net/static/img/icons/social/black/twitter.svg" /></a>
+                        </div>
+                        <div class="social-buttons__item"><a class="social-buttons__link social-buttons__link--linkedin"
+                                href="https://www.linkedin.com/company/altme-web3/" target="_blank"><img loading="lazy"
+                                    class="social-buttons__icon" alt="linkedin icon"
+                                    src="https://dvzvtsvyecfyp.cloudfront.net/static/img/icons/social/black/linkedin.svg" /></a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <script>
+        
+    </script>
+</body>
+
+</html>
