@@ -2,6 +2,15 @@ from typing import ChainMap
 from flask import jsonify, request
 import json
 import requests
+import logging
+logging.basicConfig(level=logging.INFO)
+
+VC_LIST = [ "emailpass", "phonepass", "agerange",
+            "over18", "over15", "over15", "verifiableid",
+             "liveness", "diploma", "chainborn", "natioality",
+              "tezotopia", "bloometa", "twitter", "defi",
+               "tezosassociatedaddress", "binanceassociatedaddress", "fantomassociatedaddress",
+                "polygonassociatedaddress", "ethereumassociatedaddress" ]
 
 
 def init_app(app,mode) :
@@ -34,6 +43,9 @@ def counter_update(mode):
     requests.post(mode.server + 'counter/update', data=data)
     """
     vc = request.form.get('vc')
+    if vc not in VC_LIST :
+        logging.warning("%s not in VC LIST", vc)
+        return('KO', 404)
     count = request.form.get('count')
     if not count or not vc :
         return jsonify('update refused'), 404

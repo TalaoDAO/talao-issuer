@@ -17,7 +17,9 @@ from urllib.parse import urlencode
 
 
 ISSUER_KEY = json.load(open("keys.json", "r"))['talao_Ed25519_private_key']
-TOKEN_LIFE = 15*24*60*60
+#TOKEN_LIFE = 15*24*60*60 # 15 jours
+TOKEN_LIFE = 60*60 # 1 heure
+
 SUPPORTED_ADDRESS = ['TezosAssociatedAddress', 'EthereumAssociatedAddress', 'BinanceAssociatedAddress']
 SUPPORTED_CHAIN = ['binance', 'tezos']
 URL_BNB = "https://ssi-sbt-altme-bnb-main.osc-fr1.scalingo.io/"
@@ -77,7 +79,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/nft/defi', view_func=defi_nft, methods = ['GET'],  defaults={'mode': mode})
 
     # for admin
-    app.add_url_rule('/verifier/defi/burn/<address>', view_func=burn_nft, methods = ['GET'])
+    #app.add_url_rule('/verifier/defi/burn/<address>', view_func=burn_nft, methods = ['GET'])
     app.add_url_rule('/verifier/defi/has/<address>', view_func=has_nft, methods = ['GET'])
     app.add_url_rule('/verifier/defi/info/<id>', view_func=info_nft, methods = ['GET'])
 
