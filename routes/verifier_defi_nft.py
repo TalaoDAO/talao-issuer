@@ -200,10 +200,11 @@ def issue_nft_binance(address: str, metadata: dict, credential_id: str, mode: en
     resp = requests.post(url, data=data, headers=headers)
     if 199<resp.status_code<300 :
         data = {"count" : "1" , "chain" : "binance" }
+        logging.info("NFT has been minted")
         requests.post(mode.server + 'counter/nft/update', data=data)
         return True
     elif resp.status_code == 430 :
-        logging.info("NFT already minted")
+        logging.info("NFT was already minted")
         return True
     else :
         logging.warning("Get access refused, NFT not mint %s with reason = %s", resp.status_code, resp.reason)
@@ -370,9 +371,7 @@ async def verifier_endpoint(mode, red):
             return jsonify("Blockchain not supported"), 412
         # mint
         if not mint_nft(credential_id, address, chain) :
-            logging.error("NFT DeFi mint failed")
             return jsonify('NFT DeFi mint failed'), 412
-        logging.info('NFT has been minted for %s', chain)
         return jsonify("ok")
 
 
