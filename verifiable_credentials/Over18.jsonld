@@ -9,16 +9,16 @@
                     "schema" : "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
-                    "kycProvider" : "https://github.com/TalaoDAO/context#provider",
-                    "kycMethod" : "https://github.com/TalaoDAO/context#kycMethod",
-                    "ageOver" : "https://github.com/TalaoDAO/context#ageover",
-                    "kycId" : "https://github.com/TalaoDAO/context#kycid",
+                    "kycProvider" : "schema:legalName",
+                    "kycMethod" : "schema:identifier",
+                    "ageOver" : "schema:suggestedMinAge",
+                    "kycId" : "schema:identifier",
                     "issuedBy" : {
                         "@id" : "schema:issuedBy",
                         "@context" : {
                             "@protected": true,
                             "logo": {"@id" : "schema:image", "@type" : "@id"},
-                            "name" : "schema:name"
+                            "name" : "schema:legalName"
                         }
                     }
                    

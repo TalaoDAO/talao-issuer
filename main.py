@@ -140,8 +140,8 @@ def test() :
 ### SITE X
 
 client_metadata = ClientMetadata(
-        client_id='cxltfjraph',
-        client_secret= "d5aa3daa-dacd-11ed-b76d-0a1628958560",
+        client_id='dybgruness',
+        client_secret='fd68c095-0300-11ee-9341-0a1628958560',
         post_logout_redirect_uris=[mode.server + 'site_x/logout']) # your post logout uri (optional)
 
 provider_config = ProviderConfiguration(issuer= 'https://talao.co/sandbox/op',
