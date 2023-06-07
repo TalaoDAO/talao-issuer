@@ -117,7 +117,7 @@ def assetlinks():
 # Apple universal link
 @app.route('/.well-known/apple-app-site-association' , methods=['GET']) 
 def apple_app_site_association(): 
-    document = json.load(open('apple-app-site-association', 'r'))
+    document = json.load(open('apple-app-site-association.json', 'r'))
     return jsonify(document)
 
 
