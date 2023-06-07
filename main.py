@@ -9,6 +9,7 @@ import didkit
 import redis
 import os
 import sys
+import json
 from flask_babel import Babel, _, refresh
 from datetime import timedelta
 import markdown
@@ -48,10 +49,10 @@ qrcode = QRcode(app)
 app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_COOKIE_NAME'] = 'altme_issuer'
 app.config['SESSION_TYPE'] = 'redis' # Redis server side session
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=360) # cookie lifetime
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60) # session lifetime
 app.config['SESSION_FILE_THRESHOLD'] = 100
 app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "4.8"
+app.jinja_env.globals['Version'] = "1.4.8"
 
 # site X
 app.config.update(
@@ -103,6 +104,22 @@ def user_language(mode) :
 	#refresh()
 	#return redirect (request.referrer)
 	return 'en'
+
+
+
+# Google universal link
+@app.route('/.well-known/assetlinks.json' , methods=['GET']) 
+def assetlinks(): 
+    document = json.load(open('assetlinks.json', 'r'))
+    return jsonify(document)
+
+
+# Apple universal link
+@app.route('/.well-known/apple-app-site-association' , methods=['GET']) 
+def apple_app_site_association(): 
+    document = json.load(open('apple-app-site-association', 'r'))
+    return jsonify(document)
+
 
 
 @app.route('/md_file', methods = ['GET', 'POST'])
