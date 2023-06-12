@@ -1,0 +1,144 @@
+            {
+              "id":"ProofOfTwitterStats",
+              "spec_version": "https://identity.foundation/credential-manifest/spec/v1.0.0/",
+              "issuer":{
+                "id":"clique:issuer_1",
+                "name":"Clique social issuer"
+              },
+              "output_descriptors":[                       
+                        {
+                          "id": "ProofOfTwitterStats_1",
+                          "schema": "https://cliquedrpepperprod.blob.core.windows.net/polygonid/polygonid.twitter.schema.json",
+                          "styles": {
+                            "background": {
+                              "color": "#baaaad"
+                            },
+                            "text": {
+                              "color": "#ffffff"
+                            }
+                          },
+                          "display": {
+                            "title": {
+                                "path": [],
+                                "schema": {
+                                  "type": "string"
+                                },
+                                "fallback": "Proof of your Twitter stats"
+                              },
+                              "subtitle": {
+                                "path": [],
+                                "schema": {
+                                  "type": "string"
+                                },
+                                "fallback": "Clique Social credential"
+                              },
+                            "description": {
+                              "path": [],
+                              "schema": {
+                                "type": "string"
+                              },
+                              "fallback": "This card is a proof of your Twitter engagement and stats. You can use it when you need to prove your Twitter data with services that have already adopted the PolygonID decentralized identity system."
+                            },
+                            "properties": [
+                                { 
+                                    "path" : ["$.credentialSubject.timeCreatedTwitter"],
+                                    "schema": {
+                                        "type": "integer"
+                                      },
+                                      "fallback": "Unknown",
+                                      "label": ""
+                                },
+                                { 
+                                    "path" : ["$.credentialSubject.numFollowersTwitter"],
+                                    "schema": {
+                                        "type": "integer"
+                                      },
+                                      "fallback": "Unknown",
+                                      "label": "# of Twitter Followers"
+                                },
+                                { 
+                                    "path" : ["$.credentialSubject.sumLikesTwitter"],
+                                    "schema": {
+                                        "type": "integer"
+                                      },
+                                      "fallback": "Unknown",
+                                      "label": "# of Twitter Likes"
+                                },
+                                { 
+                                    "path" : ["$.credentialSubject.sumRetweetsTwitter"],
+                                    "schema": {
+                                        "type": "integer"
+                                      },
+                                      "fallback": "Unknown",
+                                      "label": "# of Twitter Retweets"
+                                },
+                                { 
+                                    "path" : ["$.credentialSubject.sumCommentsTwitter"],
+                                    "schema": {
+                                        "type": "integer"
+                                      },
+                                      "fallback": "Unknown",
+                                      "label": "# of Twitter Comments"
+                                },
+                                { 
+                                    "path" : ["$.credentialSubject.sumProjectPostImpressionsTwitter"],
+                                    "schema": {
+                                        "type": "integer"
+                                      },
+                                      "fallback": "Unknown",
+                                      "label": "# of Twitter Impressions"
+                                },
+                                { 
+                                    "path" : ["$.credentialSubject.numProjectPostsTwitter"],
+                                    "schema": {
+                                        "type": "integer"
+                                      },
+                                      "fallback": "Unknown",
+                                      "label": "# of Twitter Posts by the Project You Have Liked"
+                                },
+                                { 
+                                    "path" : ["$.credentialSubject.avgFollowersD2Twitter"],
+                                    "schema": {
+                                        "type": "integer"
+                                      },
+                                      "fallback": "Unknown",
+                                      "label": "Avg # of Followers of Your Followers"
+                                },
+                                { 
+                                    "path" : ["$.credentialSubject.avgPostImpressionsTwitter"],
+                                    "schema": {
+                                        "type": "integer"
+                                      },
+                                      "fallback": "Unknown",
+                                      "label": ""
+                                },
+                                { 
+                                    "path" : ["$.credentialSubject.isFollowingTwitter"],
+                                    "schema": {
+                                        "type": "boolean"
+                                      },
+                                      "fallback": "Unknown",
+                                      "label": ""
+                                },
+                              {
+                                "path": ["$.issuanceDate"],
+                                "schema": {
+                                  "type": "string",
+                                  "format" : "date"
+                                },
+                                "fallback": "",
+                                "label": "Issue date"
+                              },
+                              {
+                                "path": ["$.issuer"],
+                                "schema": {
+                                  "type": "string"
+                                },
+                                "fallback": "Unknown",
+                                "label": "Issuer DID"
+                              }
+                            ]
+                          }
+                        }
+              ]
+            }
