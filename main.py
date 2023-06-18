@@ -23,9 +23,9 @@ from flask_mobility import Mobility
 
 
 # local dependencies
-from routes import web_emailpass, web_phonepass, web_passbase, vc_issuer, yoti, dapp_register_gamer_pass
+from routes import web_emailpass, web_phonepass, vc_issuer, yoti, dapp_register_gamer_pass
 from routes import tezotopia, twitter, chainborn, bloometa, oidc4vci_kyc, polygonid, counter
-from routes import verifier_defi_nft
+from routes import verifier_defi_nft, verifier_defi_tezid
 import environment
 
 import logging
@@ -75,7 +75,7 @@ sess.init_app(app)
 web_emailpass.init_app(app, red, mode)
 web_phonepass.init_app(app, red, mode)
 vc_issuer.init_app(app, red, mode)
-web_passbase.init_app(app, red, mode)
+#web_passbase.init_app(app, red, mode)
 dapp_register_gamer_pass.init_app(app, red, mode)
 yoti.init_app(app, red, mode)
 tezotopia.init_app(app, red, mode)
@@ -86,6 +86,8 @@ oidc4vci_kyc.init_app(app, red, mode)
 polygonid.init_app(app)
 counter.init_app(app, mode)
 verifier_defi_nft.init_app(app, red, mode)
+verifier_defi_tezid.init_app(app, red, mode)
+
 
 @babel.localeselector
 def get_locale():
@@ -106,7 +108,6 @@ def user_language(mode) :
 	return 'en'
 
 
-
 # Google universal link
 @app.route('/.well-known/assetlinks.json' , methods=['GET']) 
 def assetlinks(): 
@@ -119,7 +120,6 @@ def assetlinks():
 def apple_app_site_association(): 
     document = json.load(open('apple-app-site-association.json', 'r'))
     return jsonify(document)
-
 
 
 @app.route('/md_file', methods = ['GET', 'POST'])

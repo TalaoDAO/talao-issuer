@@ -46,7 +46,7 @@
                                         "type": "integer"
                                       },
                                       "fallback": "Unknown",
-                                      "label": ""
+                                      "label": "Date Twitter Created"
                                 },
                                 { 
                                     "path" : ["$.credentialSubject.numFollowersTwitter"],
@@ -110,7 +110,7 @@
                                         "type": "integer"
                                       },
                                       "fallback": "Unknown",
-                                      "label": ""
+                                      "label": "Avg # impressions of Your Posts"
                                 },
                                 { 
                                     "path" : ["$.credentialSubject.isFollowingTwitter"],

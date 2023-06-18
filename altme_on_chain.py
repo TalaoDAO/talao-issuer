@@ -13,6 +13,7 @@ curl -XPOST https://tezid.net/api/mainnet/issuer/altme -H 'tezid-issuer-key:p3hM
 
 
 def register_tezid(address, id, network,  mode) :
+    # Ghostnet controller contrat is KT1K2i7gcbM9YY4ih8urHBDbmYHLUXTWvDYj
     # check if proof already registered
     url = 'https://tezid.net/api/' + network + '/proofs/' + address
     r = requests.get(url)
@@ -27,7 +28,7 @@ def register_tezid(address, id, network,  mode) :
         for proof in r.json() :
             if proof['id'] == id and proof['verified'] :
                 proof_registered = True
-                logging.info('Proof already exists on TezID')
+                logging.warning('Proof already exists on TezID')
                 break
     if not proof_registered :
         return True if register_proof_type(address, id, network, mode) else False
@@ -62,7 +63,7 @@ def issue_sbt(address, metadata, credential_id, mode) :
         metadata_ipfs_url = "ipfs://" + metadata_ipfs
     else :
         return
-    print("metadata_ipfs_url = ", metadata_ipfs_url)
+    logging.info("metadata_ipfs_url = %s", metadata_ipfs_url)
     url = 'https://altme-api.dvl.compell.io/mint'
     headers = {
         "Content-Type": "application/x-www-form-urlencoded"
