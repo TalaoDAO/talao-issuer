@@ -102,15 +102,14 @@ async def verifier_defi_tezid_endpoint(session_id, red):
         if not address or not credential_id :
             logging.warning("Process failed")
             return jsonify("Process failed"), 412
-        """
+        
         # register in whitelist 
         if register_tezid(address, 'defi_compliance', "ghostnet", mode) :
             logging.info("address whitelisted for DeFi compliance %s", address)
             message.message("DeFi compliance address whitelisted", "thierry@altme.io", address, mode)
         else :
             logging.error("address NOT whitelisted for DeFi compliance %s", address)
-        """
-
+    
         # Success : send event to client agent to go forward
         data = json.dumps({"id" : session_id, "check" : "success"})
         red.publish('defi_tezid', data)
