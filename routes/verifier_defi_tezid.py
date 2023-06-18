@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 def init_app(app,red, mode) :  
     # for wallet
-    app.add_url_rule('/verifier/defi/tezid/endpoint/<session_id>', view_func=verifier_defi_tezid_endpoint, methods = ['POST', 'GET'], defaults={'red' : red})
+    app.add_url_rule('/verifier/defi/tezid/endpoint/<session_id>', view_func=verifier_defi_tezid_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
     # for user
     app.add_url_rule('/verifier/defi/tezid', view_func=defi_tezid, methods = ['GET'],  defaults={'mode': mode, 'red' : red})
     app.add_url_rule('/verifier/tezid/defi', view_func=defi_tezid, methods = ['GET'],  defaults={'mode': mode, 'red' : red})
@@ -51,7 +51,7 @@ def defi_tezid(mode, red) :
         return render_template('tezid/tezos_mobile.html', url=link, id=session_id, deeplink_altme=deeplink)
 
 
-async def verifier_defi_tezid_endpoint(session_id, red):
+async def verifier_defi_tezid_endpoint(session_id, red, mode):
     """
     wallet endpoint of the verifier
     difference is that a token is passed as an argument in the wallet call 
