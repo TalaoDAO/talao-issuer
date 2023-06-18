@@ -1,6 +1,5 @@
 import json
-from flask import Flask, request, jsonify, render_template
-from flask_qrcode import QRcode
+from flask import request, session, jsonify, render_template, redirect, Response
 import didkit
 import uuid
 import logging
@@ -8,18 +7,24 @@ from components import message
 from urllib.parse import urlencode
 from altme_on_chain import register_tezid
 
+logging.basicConfig(level=logging.INFO)
+
 
 def init_app(app,red, mode) :  
     # for wallet
-    app.add_url_rule('/verifier/defi/tezid/endpoint/<session_id>', view_func=verifier_defi_tezid_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
+    app.add_url_rule('/verifier/defi/tezid/endpoint/<session_id>', view_func=verifier_defi_tezid_endpoint, methods = ['POST', 'GET'], defaults={'red' : red})
     # for user
-    app.add_url_rule('/defi/tezid', view_func=defi_tezid, methods = ['GET'],  defaults={'mode': mode, 'red' : red})
-    app.add_url_rule('/nft/tezid', view_func=defi_tezid, methods = ['GET'],  defaults={'mode': mode, 'red' : red})
+    app.add_url_rule('/verifier/defi/tezid', view_func=defi_tezid, methods = ['GET'],  defaults={'mode': mode, 'red' : red})
+    app.add_url_rule('/verifier/tezid/defi', view_func=defi_tezid, methods = ['GET'],  defaults={'mode': mode, 'red' : red})
+    app.add_url_rule('/verifier/defi/tezid/stream',  view_func=tezid_stream, methods = ['GET', 'POST'], defaults={'red' : red})
+    app.add_url_rule('/verifier/defi/tezid/end',  view_func=tezid_end, methods = ['GET', 'POST'])
+
     return
 
 
 def defi_tezid(mode, red) :
     session_id = str(uuid.uuid1())
+    session['tezid'] = True
     link = mode.server + 'verifier/defi/tezid/endpoint/' + session_id
     deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
     pattern = {
@@ -41,12 +46,12 @@ def defi_tezid(mode, red) :
     pattern['domain'] = mode.server
     red.setex(session_id,  60, json.dumps(pattern))
     if not request.MOBILE:
-        return render_template('tezid/tezos.html', url=link, deeplink_altme=deeplink)
+        return render_template('tezid/tezos.html', url=link, id=session_id, deeplink_altme=deeplink)
     else :
-        return render_template('tezid/tezos_mobile.html', url=link, deeplink_altme=deeplink)
+        return render_template('tezid/tezos_mobile.html', url=link, id=session_id, deeplink_altme=deeplink)
 
 
-async def verifier_defi_tezid_endpoint(session_id, mode, red):
+async def verifier_defi_tezid_endpoint(session_id, red):
     """
     wallet endpoint of the verifier
     difference is that a token is passed as an argument in the wallet call 
@@ -97,14 +102,43 @@ async def verifier_defi_tezid_endpoint(session_id, mode, red):
         if not address or not credential_id :
             logging.warning("Process failed")
             return jsonify("Process failed"), 412
-        
+        """
         # register in whitelist 
         if register_tezid(address, 'defi_compliance', "ghostnet", mode) :
             logging.info("address whitelisted for DeFi compliance %s", address)
             message.message("DeFi compliance address whitelisted", "thierry@altme.io", address, mode)
         else :
             logging.error("address NOT whitelisted for DeFi compliance %s", address)
+        """
+
+        # Success : send event to client agent to go forward
+        data = json.dumps({"id" : session_id, "check" : "success"})
+        red.publish('defi_tezid', data)
         return jsonify("ok")
 
 
+def tezid_end() :
+    if not session.get('tezid') :
+        return redirect ('/verifier/tezid/defi')
+    if request.args['followup'] == "success" :
+        message = 'Great ! your address is now listed by TezID'
+    elif request.args['followup'] == 'expired' :
+        message = 'Sorry ! session expired.'
+    else :
+        message = 'Sorry ! there is a server problem, try again later.'
+    session.clear()
+    return render_template('tezid/tezid_end.html', message=message)
 
+
+# server event
+def tezid_stream(red):
+    def event_stream(red):
+        pubsub = red.pubsub()
+        pubsub.subscribe('defi_tezid')
+        for message in pubsub.listen():
+            if message['type']=='message':
+                yield 'data: %s\n\n' % message['data'].decode()
+    headers = { "Content-Type" : "text/event-stream",
+                "Cache-Control" : "no-cache",
+                "X-Accel-Buffering" : "no"}
+    return Response(event_stream(red), headers=headers)

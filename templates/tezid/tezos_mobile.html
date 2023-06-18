@@ -116,6 +116,16 @@
     </footer>
   </div>
 
+  <script>
+    var source = new EventSource('/verifier/defi/tezid/stream');
+    source.onmessage = function (event) {
+         const result = JSON.parse(event.data)
+         if (result.id == "{{id}}" ){
+          window.location.href="/verifier/defi/tezid/end?followup=" + result.check;
+         }
+    };
+    </script>
+
 </body>
 
 </html>

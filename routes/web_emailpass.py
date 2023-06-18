@@ -4,13 +4,13 @@ from components import message
 import uuid
 from datetime import timedelta, datetime
 import logging
-logging.basicConfig(level=logging.INFO)
 from flask_babel import _
 from urllib.parse import urlencode
 import didkit
 from random import randint
 import requests
 
+logging.basicConfig(level=logging.INFO)
 OFFER_DELAY = timedelta(seconds= 10*60)
 CODE_DELAY = timedelta(seconds= 180)
 QRCODE_DELAY = 60
