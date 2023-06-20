@@ -384,9 +384,11 @@ async def verifier_endpoint(mode, red):
                 else :
                     credential_id = vc['id']
                     logging.info("credential Id = %s", credential_id)
+        """
         if not address or not credential_id :
             logging.warning("Blockchain not supported")
             return jsonify("Blockchain not supported"), 412
+        """
         # mint
         if not mint_nft(credential_id, address, chain, mode) :
             return jsonify('NFT DeFi mint failed'), 412
