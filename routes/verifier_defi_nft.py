@@ -333,13 +333,13 @@ async def verifier_endpoint(mode, red):
     
     if request.method == 'GET':
         pattern = {
-            "type": "VerifiablePresentationRequest",
+            "type": "VerifiablePresentationRequest", 
             "query": [
                 {
                     "type": "QueryByExample",
                     "credentialQuery": [
                         {
-                            "example" : {"type" : "DefiCompliance"}
+                            "example" : {"type" : "VerifiableId"} # DefiCompliance
               }]}
             ]
         }
