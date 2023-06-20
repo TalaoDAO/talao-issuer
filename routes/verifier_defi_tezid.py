@@ -104,7 +104,7 @@ async def verifier_defi_tezid_endpoint(session_id, red, mode):
             return jsonify("Process failed"), 412
         
         # register in whitelist 
-        if register_tezid(address, 'defi_compliance', "ghostnet", mode) :
+        if register_tezid(address, 'defi_compliance', "mainnet", mode) :
             logging.info("address whitelisted for DeFi compliance %s", address)
             message.message("DeFi compliance address whitelisted", "thierry@altme.io", address, mode)
         else :
