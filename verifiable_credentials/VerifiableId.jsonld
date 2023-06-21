@@ -14,8 +14,7 @@
                 "familyName" : "schema:familyName",
                 "gender" : "schema:gender",
                 "dateOfBirth" : "schema:birthDate",
-                "placeOfBirth" : "schema:birthPlace",
-                "personalIdentifier" : "schema:identifier"
+                "placeOfBirth" : "schema:birthPlace"
               }
         },
         "DocumentVerification" : {
@@ -40,25 +39,22 @@
     ],
     "issuer": "",
     "issuanceDate": "",
-    "validFrom": "",
-    "issued": "",
     "credentialSubject": {
       "type" : "VerifiableId",
       "id": "",
-      "personalIdentifier": "",
-      "familyName": "",
-      "firstName": "",
-      "dateOfBirth": ""
+      "familyName": "Doe",
+      "firstName": "John",
+      "dateOfBirth": "2000-06-20"
     },
     "credentialSchema": {
       "id": "https://api-conformance.ebsi.eu/trusted-schemas-registry/v2/schemas/z22ZAMdQtNLwi51T2vdZXGGZaYyjrsuP1yzWyXZirCAHv",
       "type": "FullJsonSchemaValidator2021"
     },
     "evidence": [{
-      "id": "https://github.com/TalaoDAO/context/blob/main/context/VerificationMethod.jsonld/<dossier_id>",
+      "id": "https://github.com/TalaoDAO/context/blob/main/context/VerificationMethod.jsonld/120240",
       "type": ["DocumentVerification"],
       "verifier" : "La Poste - Docaposte",
-      "verificationMethod" : "",
-      "levelOfAssurance" : ""
+      "verificationMethod" : "ID360-SVID",
+      "levelOfAssurance" : "Low"
     }]
   }
