@@ -161,7 +161,7 @@ client_metadata = ClientMetadata(
         client_secret='fd68c095-0300-11ee-9341-0a1628958560',
         post_logout_redirect_uris=[mode.server + 'site_x/logout']) # your post logout uri (optional)
 
-provider_config = ProviderConfiguration(issuer= 'https://talao.co/sandbox/op',
+provider_config = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/sandbox/op',
                                         client_metadata=client_metadata)
 auth = OIDCAuthentication({'default': provider_config}, app)
 
