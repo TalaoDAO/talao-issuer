@@ -3,17 +3,17 @@
 <head>
   <link rel="stylesheet" href="/static/style_bnb_mobile.css">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/png" href="https://ucarecdn.com/0212c9a8-6d56-4a2e-acc3-9c637965206e/" sizes="16x16">
+
 </head>
 
 
 <body>
   <div id="page">
     <div id="large">
-      
+
       <div id="menuDiv" class="nav-02__list_wrapper  ">
         <div class="nav-02__list nav-02__list--desktop">
-          
+
           <div class="nav-02__item">
             <a class="button   button--black-outline  button--empty " href="https://altme.io/#slider-07-879531"
               target="_self">
@@ -66,7 +66,7 @@
 
         </div>
 
-<!--
+        <!--
         <button id="buttonMenu">
           <div id="buttonMenuLogo">
             <img id="imageButtonMenu" class="imgButtonMenuInactive" src="/static/img/div.png">
@@ -75,16 +75,18 @@
       -->
       </div>
 
-        <div id="mainBox">
-          <p id="getYourNFT">Get your NFT to prove your DeFi compliance on Chain</p>
-          <div id="mainDiv">
-              <img id="bnbIMG" src="/static/img/bnb.png">
-              <p id="bnbP">BNB Chain</p>
-              <a id="bnbA" href="{{deeplink_altme}}">CLICK HERE TO MINT</a>
-              <p id="scanP">Scan the QR Code with your Altme wallet</p>
-          </div>
-
+      <div id="mainBox">
+        <p id="getYourNFT">Get your NFT to prove your DeFi compliance on Chain</p>
+        <div id="mainDiv">
+          <img id="bnbIMG" src="/static/img/bnb.png">
+          <p id="bnbP">BNB Chain</p>
+          <a id="bnbA" href="{{deeplink_altme}}">CLICK HERE TO MINT</a>
+          <p id="scanP">Scan the QR Code with your Altme wallet</p>
         </div>
+
+      </div>
+      {% include 'faq_bnb.html' %}
+
     </div>
 
 
@@ -115,7 +117,280 @@
 
     </footer>
   </div>
+<script>
+  document.getElementById('buttonGeneral').addEventListener('click', () => {
+      document.getElementById('divButtonGeneral').setAttribute("class", "activeButtonFAQ");
+      document.getElementById('divButtonSecurity').setAttribute("class", "inactiveButtonFAQ");
+      document.getElementById('divButtonSSI').setAttribute("class", "inactiveButtonFAQ");
+      document.getElementById('generalQuestions').setAttribute("class", "activeQuestions");
+      document.getElementById('securityQuestions').setAttribute("class", "inactiveQuestions");
+      document.getElementById('SSIQuestions').setAttribute("class", "inactiveQuestions");
+    })
+    document.getElementById('buttonSecurity').addEventListener('click', () => {
+      document.getElementById('divButtonGeneral').setAttribute("class", "inactiveButtonFAQ");
+      document.getElementById('divButtonSecurity').setAttribute("class", "activeButtonFAQ");
+      document.getElementById('divButtonSSI').setAttribute("class", "inactiveButtonFAQ");
+      document.getElementById('generalQuestions').setAttribute("class", "inactiveQuestions");
+      document.getElementById('securityQuestions').setAttribute("class", "activeQuestions");
+      document.getElementById('SSIQuestions').setAttribute("class", "inactiveQuestions");
+    })
+    document.getElementById('buttonSSI').addEventListener('click', () => {
+      document.getElementById('divButtonGeneral').setAttribute("class", "inactiveButtonFAQ");
+      document.getElementById('divButtonSecurity').setAttribute("class", "inactiveButtonFAQ");
+      document.getElementById('divButtonSSI').setAttribute("class", "activeButtonFAQ");
+      document.getElementById('generalQuestions').setAttribute("class", "inactiveQuestions");
+      document.getElementById('securityQuestions').setAttribute("class", "inactiveQuestions");
+      document.getElementById('SSIQuestions').setAttribute("class", "activeQuestions");
+    })
 
+    document.getElementById('showAnswer11').addEventListener('click', () => {
+      console.log(document.getElementById('answer11').getAttribute("class"))
+      if (document.getElementById('answer11').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer11').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow11').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer11').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer11').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow11').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer12').addEventListener('click', () => {
+      console.log(document.getElementById('answer12').getAttribute("class"))
+      if (document.getElementById('answer12').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer12').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow12').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer12').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer12').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow12').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer13').addEventListener('click', () => {
+      console.log(document.getElementById('answer13').getAttribute("class"))
+      if (document.getElementById('answer13').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer13').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow13').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer13').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer13').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow13').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer14').addEventListener('click', () => {
+      console.log(document.getElementById('answer14').getAttribute("class"))
+      if (document.getElementById('answer14').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer14').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow14').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer14').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer14').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow14').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer15').addEventListener('click', () => {
+      console.log(document.getElementById('answer15').getAttribute("class"))
+      if (document.getElementById('answer15').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer15').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow15').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer15').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer15').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow15').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer16').addEventListener('click', () => {
+      console.log(document.getElementById('answer16').getAttribute("class"))
+      if (document.getElementById('answer16').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer16').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow16').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer16').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer16').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow16').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer17').addEventListener('click', () => {
+      console.log(document.getElementById('answer17').getAttribute("class"))
+      if (document.getElementById('answer17').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer17').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow17').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer17').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer17').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow17').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer21').addEventListener('click', () => {
+      console.log(document.getElementById('answer21').getAttribute("class"))
+      if (document.getElementById('answer21').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer21').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow21').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer21').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer21').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow21').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer22').addEventListener('click', () => {
+      console.log(document.getElementById('answer22').getAttribute("class"))
+      if (document.getElementById('answer22').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer22').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow22').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer22').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer22').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow22').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer23').addEventListener('click', () => {
+      console.log(document.getElementById('answer23').getAttribute("class"))
+      if (document.getElementById('answer23').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer23').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow23').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer23').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer23').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow23').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer24').addEventListener('click', () => {
+      console.log(document.getElementById('answer24').getAttribute("class"))
+      if (document.getElementById('answer24').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer24').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow24').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer24').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer24').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow24').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer25').addEventListener('click', () => {
+      console.log(document.getElementById('answer25').getAttribute("class"))
+      if (document.getElementById('answer25').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer25').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow25').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer25').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer25').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow25').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    /*document.getElementById('showAnswer26').addEventListener('click', () => {
+      console.log(document.getElementById('answer26').getAttribute("class"))
+      if (document.getElementById('answer26').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer26').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow26').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer26').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer26').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow26').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })*/
+    document.getElementById('showAnswer31').addEventListener('click', () => {
+      console.log(document.getElementById('answer31').getAttribute("class"))
+      if (document.getElementById('answer31').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer31').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow31').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer31').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer31').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow31').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer32').addEventListener('click', () => {
+      console.log(document.getElementById('answer32').getAttribute("class"))
+      if (document.getElementById('answer32').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer32').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow32').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer32').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer32').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow32').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer34').addEventListener('click', () => {
+      console.log(document.getElementById('answer34').getAttribute("class"))
+      if (document.getElementById('answer34').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer34').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow34').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer34').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer34').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow34').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer35').addEventListener('click', () => {
+      console.log(document.getElementById('answer35').getAttribute("class"))
+      if (document.getElementById('answer35').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer35').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow35').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer35').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer35').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow35').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('showAnswer36').addEventListener('click', () => {
+      console.log(document.getElementById('answer36').getAttribute("class"))
+      if (document.getElementById('answer36').getAttribute("class") === "inactiveAnswer") {
+        document.getElementById('answer36').setAttribute("class", "activeAnswer");
+        document.getElementById('arrow36').setAttribute("src", "/static/img/arrow-circle-up.png")
+      }
+      else if (document.getElementById('answer36').getAttribute("class") === "activeAnswer") {
+        document.getElementById('answer36').setAttribute("class", "inactiveAnswer");
+        document.getElementById('arrow36').setAttribute("src", "/static/img/arrow-circle-down.png")
+
+      }
+    })
+    document.getElementById('buttonMenu').addEventListener('click', () => {
+      //console.log(document.getElementById('buttonMenu').getAttribute("class"))
+      if (document.getElementById('imageButtonMenu').getAttribute("class") === "imgButtonMenuInactive") {
+        document.documentElement.setAttribute("class", "noScroll");
+        document.getElementById('bigBox').setAttribute("class", "toHide");
+        document.getElementById('superFaq').setAttribute("class", "toHide");
+        document.getElementById('footer').setAttribute("class", "toHide");
+
+        document.getElementById('menuDiv').setAttribute("class", "menuActive");
+        document.getElementById('generalQuestions').setAttribute("class", "inactiveQuestions");
+        document.getElementById('securityQuestions').setAttribute("class", "inactiveQuestions");
+        document.getElementById('SSIQuestions').setAttribute("class", "inactiveQuestions");
+
+        document.getElementById('imageButtonMenu').setAttribute("class", "imgButtonMenuActive");
+        document.getElementById('imageButtonMenu').setAttribute("src", "/static/crossMenu.png")
+      }
+      else if (document.getElementById('imageButtonMenu').getAttribute("class") === "imgButtonMenuActive") {
+        document.documentElement.setAttribute("class", "");
+        document.getElementById('bigBox').setAttribute("class", "");
+        document.getElementById('superFaq').setAttribute("class", "");
+        document.getElementById('footer').setAttribute("class", "");
+        document.getElementById('menuDiv').setAttribute("class", "nav-02__list_wrapper");
+        document.getElementById('generalQuestions').setAttribute("class", "activeQuestions");
+        document.getElementById('securityQuestions').setAttribute("class", "inactiveQuestions");
+        document.getElementById('SSIQuestions').setAttribute("class", "inactiveQuestions");
+
+        document.getElementById('imageButtonMenu').setAttribute("class", "imgButtonMenuInactive");
+        document.getElementById('imageButtonMenu').setAttribute("src", "/static/div.png")
+
+      }
+    })
+</script>
 </body>
 
 </html>
