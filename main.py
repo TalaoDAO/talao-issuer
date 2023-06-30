@@ -108,18 +108,21 @@ def user_language(mode) :
 	return 'en'
 
 
-# Google universal link
+"""
+# Google universal link for jpma
 @app.route('/.well-known/assetlinks.json' , methods=['GET']) 
 def assetlinks(): 
-    document = json.load(open('assetlinks.json', 'r'))
+    document = json.load(open('jpma_assetlinks.json', 'r'))
     return jsonify(document)
 
 
-# Apple universal link
+# Apple universal link for jpma
 @app.route('/.well-known/apple-app-site-association' , methods=['GET']) 
 def apple_app_site_association(): 
-    document = json.load(open('apple-app-site-association.json', 'r'))
+    document = json.load(open('jpma_apple-app-site-association.json', 'r'))
     return jsonify(document)
+"""
+
 
 
 @app.route('/md_file', methods = ['GET', 'POST'])
@@ -154,16 +157,37 @@ def test() :
    return jsonify("Hello")
 
 
-### SITE X
 
-client_metadata = ClientMetadata(
+
+
+
+### SITE X a retirer des que possible
+
+
+# +18
+client_metadata_18 = ClientMetadata(
         client_id='dybgruness',
         client_secret='fd68c095-0300-11ee-9341-0a1628958560',
         post_logout_redirect_uris=[mode.server + 'site_x/logout']) # your post logout uri (optional)
 
-provider_config = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/sandbox/op',
-                                        client_metadata=client_metadata)
-auth = OIDCAuthentication({'default': provider_config}, app)
+provider_config_18 = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/sandbox/op',
+                                        client_metadata=client_metadata_18)
+
+
+# 15
+client_metadata_15 = ClientMetadata(
+        client_id='ddoyrkbtrg',
+        client_secret='b3404d62-1720-11ee-a6b4-0a1628958560',
+        post_logout_redirect_uris=[mode.server + 'site_x/logout']) # your post logout uri (optional)
+
+provider_config_15 = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/sandbox/op',
+                                        client_metadata=client_metadata_15)
+
+
+#auth = OIDCAuthentication({'default': provider_config}, app)
+
+
+auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_15': provider_config_15}, app)
 
 
 """ 
@@ -177,11 +201,30 @@ def site_x():
 		return render_template('site_x.html')
 	else :
 		return redirect('/pornhub/login') 
-   
+
+
+@app.route('/pornhub15',  methods = ['GET', 'POST'])
+def site_x_15():
+	if request.method == "GET" :
+		session.clear()
+		return render_template('site_x_15.html')
+	else :
+		return redirect('/pornhub15/login') 
+
+
 
 @app.route('/pornhub/login')
-@auth.oidc_auth('default')
+@auth.oidc_auth('provider_18')
 def index():
+    user_session = UserSession(session)    
+    return jsonify(access_token=user_session.access_token,
+                   id_token=user_session.id_token,
+                   userinfo=user_session.userinfo) # this is the user credential
+
+
+@app.route('/pornhub15/login')
+@auth.oidc_auth('provider_15')
+def index_15():
     user_session = UserSession(session)    
     return jsonify(access_token=user_session.access_token,
                    id_token=user_session.id_token,
