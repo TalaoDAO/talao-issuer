@@ -14,7 +14,7 @@ from flask_babel import Babel, _, refresh
 from datetime import timedelta
 import markdown
 import markdown.extensions.fenced_code
-
+from components import message
 from flask_session import Session
 from flask_pyoidc import OIDCAuthentication
 from flask_pyoidc.provider_configuration import ProviderConfiguration, ClientMetadata
@@ -52,7 +52,7 @@ app.config['SESSION_TYPE'] = 'redis' # Redis server side session
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60) # session lifetime
 app.config['SESSION_FILE_THRESHOLD'] = 100
 app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "1.4.8"
+app.jinja_env.globals['Version'] = "1.5.0"
 
 # site X
 app.config.update(
@@ -87,6 +87,12 @@ polygonid.init_app(app)
 counter.init_app(app, mode)
 verifier_defi_nft.init_app(app, red, mode)
 verifier_defi_tezid.init_app(app, red, mode)
+
+
+@app.errorhandler(500)
+def error_500(e):
+    message.message("Error 500 on issuer", 'thierry.thevenet@talao.io', str(e) , mode)
+    return redirect('https://altme.io')
 
 
 @babel.localeselector

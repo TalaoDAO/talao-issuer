@@ -1,45 +1,53 @@
 {
-    "@context": ["https://www.w3.org/2018/credentials/v1",
+    "@context": [
+        "https://www.w3.org/2018/credentials/v1",
         {
-            "AgeOver18" : {
+            "AgeOver18": {
                 "@id": "https://github.com/TalaoDAO/context/blob/main/context/AgeOver18.jsonld",
                 "@context": {
                     "@version": 1.1,
                     "@protected": true,
-                    "schema" : "https://schema.org/",
+                    "schema": "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
-                    "ageOver" : "schema:suggestedMinAge"
+                    "ageOver": "schema:suggestedMinAge"
                 }
             },
-            "DocumentVerification" : {
+            "DocumentVerification": {
                 "@id": "https://github.com/TalaoDAO/context/blob/main/context/VerificationMethod.jsonld",
                 "@context": {
                     "@version": 1.1,
                     "@protected": true,
-                    "schema" : "https://schema.org/",
+                    "schema": "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
-                    "verifier" : "schema:legalName",
-                    "verificationMethod" : "schema:identifier",
-                    "levelOfAssurance" : "https://ec.europa.eu/digital-building-blocks/wikis/display/DIGITAL/eIDAS+Levels+of+Assurance"
+                    "verifier": "schema:legalName",
+                    "verificationMethod": "schema:identifier",
+                    "levelOfAssurance": "https://ec.europa.eu/digital-building-blocks/wikis/display/DIGITAL/eIDAS+Levels+of+Assurance"
                 }
             }
         }
     ],
     "id": "",
-    "type": ["VerifiableCredential", "AgeOver18"],
+    "type": [
+        "VerifiableCredential",
+        "AgeOver18"
+    ],
     "issuer": "",
     "issuanceDate": "",
-    "credentialSubject" : {
-        "type" : "AgeOver18",
-        "ageOver" : 18
+    "credentialSubject": {
+        "type": "AgeOver18",
+        "ageOver": 18
     },
-    "evidence": [{
-        "id": "https://id36docaposte.com/jpma/evidence/<dossier_id>",
-        "type": ["DocumentVerification"],
-        "verifier" : "La Poste",
-        "verificationMethod" : "",
-        "levelOfAssurance" : ""
-      }]
+    "evidence": [
+        {
+            "id": "",
+            "type": [
+                "DocumentVerification"
+            ],
+            "verifier": "La Poste",
+            "verificationMethod": "",
+            "levelOfAssurance": ""
+        }
+    ]
 }
