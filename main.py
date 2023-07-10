@@ -203,7 +203,7 @@ provider_config_15 = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/sa
 
 
 
-auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_18_talao': provider_config_18_talao,'provider_15': provider_config_15}, app)
+#auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_18_talao': provider_config_18_talao,'provider_15': provider_config_15}, app)
 auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_15': provider_config_15}, app)
 
 
