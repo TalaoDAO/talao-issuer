@@ -251,10 +251,10 @@ def index_15():
                    userinfo=user_session.userinfo) # this is the user credential
 
 # jeprouvemonage.talao.co
-
+"""
 
 @app.route('/pornhub_talao',  methods = ['GET', 'POST'])
-def site_x():
+def site_x_talao():
 	if request.method == "GET" :
 		session.clear()
 		return render_template('site_x_talao.html')
@@ -263,13 +263,13 @@ def site_x():
 	
 @app.route('/pornhub_talao/login')
 @auth.oidc_auth('provider_18_talao')
-def index():
+def index_talao():
     user_session = UserSession(session)    
     return jsonify(access_token=user_session.access_token,
                    id_token=user_session.id_token,
                    userinfo=user_session.userinfo) # this is the user credential
 
-
+"""
 
 # MAIN entry point. Flask test server
 if __name__ == '__main__':
