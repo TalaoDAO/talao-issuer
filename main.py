@@ -179,7 +179,7 @@ client_metadata_18 = ClientMetadata(
 provider_config_18 = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/sandbox/op',
                                         client_metadata=client_metadata_18)
 
-"""
+
 # +18 Talao
 client_metadata_18_talao = ClientMetadata(
         client_id='dybgruness',
@@ -189,7 +189,7 @@ client_metadata_18_talao = ClientMetadata(
 provider_config_18_talao = ProviderConfiguration(issuer= 'https://jeprouvemonage.talao.co/api/1.0',
                                         client_metadata=client_metadata_18_talao)
 
-"""
+
 
 # 15
 client_metadata_15 = ClientMetadata(
@@ -203,8 +203,8 @@ provider_config_15 = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/sa
 
 
 
-#auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_18_talao': provider_config_18_talao,'provider_15': provider_config_15}, app)
-auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_15': provider_config_15}, app)
+auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_18_talao': provider_config_18_talao,'provider_15': provider_config_15}, app)
+#auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_15': provider_config_15}, app)
 
 
 """ 
@@ -251,7 +251,7 @@ def index_15():
                    userinfo=user_session.userinfo) # this is the user credential
 
 # jeprouvemonage.talao.co
-"""
+
 
 @app.route('/pornhub_talao',  methods = ['GET', 'POST'])
 def site_x_talao():
@@ -269,7 +269,7 @@ def index_talao():
                    id_token=user_session.id_token,
                    userinfo=user_session.userinfo) # this is the user credential
 
-"""
+
 
 # MAIN entry point. Flask test server
 if __name__ == '__main__':
