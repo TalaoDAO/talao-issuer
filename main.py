@@ -179,6 +179,16 @@ client_metadata_18 = ClientMetadata(
 provider_config_18 = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/sandbox/op',
                                         client_metadata=client_metadata_18)
 
+# +18
+client_metadata_18_talao = ClientMetadata(
+        client_id='dybgruness',
+        client_secret='fd68c095-0300-11ee-9341-0a1628958560',
+        post_logout_redirect_uris=[mode.server + 'site_x/logout']) # your post logout uri (optional)
+
+provider_config_18_talao = ProviderConfiguration(issuer= 'https://jeprouvemonage.talao.co/api/1.0',
+                                        client_metadata=client_metadata_18_talao)
+
+
 
 # 15
 client_metadata_15 = ClientMetadata(
@@ -193,7 +203,7 @@ provider_config_15 = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/sa
 #auth = OIDCAuthentication({'default': provider_config}, app)
 
 
-auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_15': provider_config_15}, app)
+auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_18_talao': provider_config_18_talao,'provider_15': provider_config_15}, app)
 
 
 """ 
@@ -209,6 +219,15 @@ def site_x():
 		return redirect('/pornhub/login') 
 
 
+@app.route('/pornhub_talao',  methods = ['GET', 'POST'])
+def site_x():
+	if request.method == "GET" :
+		session.clear()
+		return render_template('site_x_talao.html')
+	else :
+		return redirect('/pornhub_talao/login') 
+
+
 @app.route('/pornhub15',  methods = ['GET', 'POST'])
 def site_x_15():
 	if request.method == "GET" :
@@ -221,6 +240,15 @@ def site_x_15():
 
 @app.route('/pornhub/login')
 @auth.oidc_auth('provider_18')
+def index():
+    user_session = UserSession(session)    
+    return jsonify(access_token=user_session.access_token,
+                   id_token=user_session.id_token,
+                   userinfo=user_session.userinfo) # this is the user credential
+
+
+@app.route('/pornhub_talao/login')
+@auth.oidc_auth('provider_18_talao')
 def index():
     user_session = UserSession(session)    
     return jsonify(access_token=user_session.access_token,
