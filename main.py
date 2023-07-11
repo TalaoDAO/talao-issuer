@@ -186,7 +186,7 @@ client_metadata_18_talao = ClientMetadata(
         client_secret='fd68c095-0300-11ee-9341-0a1628958560',
         post_logout_redirect_uris=[mode.server + 'site_x/logout']) # your post logout uri (optional)
 
-provider_config_18_talao = ProviderConfiguration(issuer= 'https://jeprouvemonage.talao.co/api/1.0',
+provider_config_18_talao = ProviderConfiguration(issuer= 'https://jeprouvemonage.talao.co/api/v1.0',
                                         client_metadata=client_metadata_18_talao)
 
 
