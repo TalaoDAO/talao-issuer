@@ -318,7 +318,7 @@ def mint_nft(credential_id:str, address: str, chain:str, mode) -> bool:
     else :
         metadata = metadata_tezos
     metadata['identifier'] = credential_id
-     logging.info('mint DeFi NFT on %s with metadata = %s', chain, metadata)
+    logging.info('mint DeFi NFT on %s with metadata = %s', chain, metadata)
     return issue_nft(chain, address, metadata, "defi:" + chain + ":" + metadata['identifier'], mode)
    
 
