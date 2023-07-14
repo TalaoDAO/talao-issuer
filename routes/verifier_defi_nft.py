@@ -22,7 +22,7 @@ SUPPORTED_CHAIN = ['binance', 'tezos']
 URL_MAIN = "https://ssi-sbt-altme-bnb-main.osc-fr1.scalingo.io/"
 URL_TEST = "https://ssi-sbt-altme-bnb-test.osc-fr1.scalingo.io/"
 
-TEST = True
+TEST = False
 
 
 metadata_tezos = {
@@ -229,7 +229,6 @@ def issue_nft(chain: str, address: str, metadata: dict, credential_id: str, mode
         "X-API-KEY" : key,
         "X-BLOCKCHAIN" : chain.upper()
     }
-    print('header = ', headers)
     data = {
         "transfer_to" : address,
         "ipfs_url" : "ipfs://" + metadata_ipfs
@@ -319,8 +318,7 @@ def mint_nft(credential_id:str, address: str, chain:str, mode) -> bool:
     else :
         metadata = metadata_tezos
     metadata['identifier'] = credential_id
-    print('metadata = ', metadata)
-    logging.info('mint DeFi NFT on %s with metadata = %s', chain, metadata)
+     logging.info('mint DeFi NFT on %s with metadata = %s', chain, metadata)
     return issue_nft(chain, address, metadata, "defi:" + chain + ":" + metadata['identifier'], mode)
    
 
@@ -434,7 +432,6 @@ async def verifier_endpoint(stream_id, mode, red):
             return jsonify("Blockchain not supported"), 400
         
         # mint
-        
         if not mint_nft(credential_id, address, chain, mode) :
             data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
             red.publish('defi_nft', data)
