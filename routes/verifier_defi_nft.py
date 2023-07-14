@@ -65,7 +65,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/verifier/defi/get_link', methods = ['POST', 'GET'], view_func=get_link, defaults={'mode': mode})
     
     # for wallet
-    app.add_url_rule('/verifier/defi/endpoint/<stream_id>', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
+    app.add_url_rule('/verifier/defi/endpoint/<chain>/<stream_id>', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
     
     # for user mint
     app.add_url_rule('/defi/nft', view_func=defi_nft_binance, methods = ['GET'],  defaults={'mode': mode})
@@ -89,7 +89,7 @@ def defi_nft_binance(mode) :
     token = generate_token('binance')
     session['is_connected'] = True
     session['chain'] = 'binance'
-    link = mode.server + 'verifier/defi/endpoint/' + stream_id +'?token=' + token
+    link = mode.server + 'verifier/defi/endpoint/binance/' + stream_id #+'?token=' + token
     deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
     if not request.MOBILE:
         return render_template(
@@ -112,7 +112,7 @@ def defi_nft_tezos(mode) :
     session['is_connected'] = True
     session['chain'] = 'tezos'
     token = generate_token('tezos')
-    link = mode.server + 'verifier/defi/endpoint/' + stream_id + '?token=' + token
+    link = mode.server + 'verifier/defi/endpoint/tezos/' + stream_id #+ '?token=' + token
     deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
     if not request.MOBILE:
         return render_template(
@@ -340,10 +340,12 @@ def get_link(mode):
     return jsonify({"link": link})
 
 
-async def verifier_endpoint(stream_id, mode, red):
+async def verifier_endpoint(chain, stream_id, mode, red):
     """
     wallet endpoint of the verifier
     difference is that a token is passed as an argument in the wallet call 
+    """
+
     """
     # one takes as the session id the wallet IP hash
     m = hashlib.sha256()
@@ -366,7 +368,7 @@ async def verifier_endpoint(stream_id, mode, red):
         data = json.dumps({"stream_id" : stream_id, "check" : "expired"})
         red.publish('defi_nft', data)
         return jsonify ('Unauthorized'), 401
-    
+    """
     if request.method == 'GET':
         pattern = {
             "type": "VerifiablePresentationRequest", 
@@ -382,11 +384,11 @@ async def verifier_endpoint(stream_id, mode, red):
         pattern['query'][0]['credentialQuery'].append({"example" : {"type" : chain.capitalize() + "AssociatedAddress"}})
         pattern['challenge'] = str(uuid.uuid1())
         pattern['domain'] = mode.server
-        red.setex(session_id,  60, json.dumps(pattern))
+        red.setex(stream_id,  60, json.dumps(pattern))
         return jsonify(pattern)
     else :
         try :
-            my_pattern = json.loads(red.get(session_id).decode())
+            my_pattern = json.loads(red.get(stream_id).decode())
             challenge = my_pattern['challenge']
             domain = my_pattern['domain']
         except :
@@ -394,7 +396,7 @@ async def verifier_endpoint(stream_id, mode, red):
             data = json.dumps({"stream_id" : stream_id, "check" : "expired"})
             red.publish('defi_nft', data)
             return jsonify("URL not found"), 404
-        red.delete(session_id)
+        red.delete(stream_id)
         presentation = json.loads(request.form['presentation'])
         # check authentication
         response_challenge = presentation['proof']['challenge']
