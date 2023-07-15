@@ -1,6 +1,4 @@
-import time  
-import math
-from jwcrypto import jwk, jwt
+
 import json
 from flask import request, jsonify, render_template, session, redirect, Response
 from flask_qrcode import QRcode
@@ -20,7 +18,7 @@ SUPPORTED_CHAIN = ['binance', 'tezos']
 URL_MAIN = "https://ssi-sbt-altme-bnb-main.osc-fr1.scalingo.io/"
 URL_TEST = "https://ssi-sbt-altme-bnb-test.osc-fr1.scalingo.io/"
 
-TEST = True
+TEST = False
 
 
 metadata_tezos = {
