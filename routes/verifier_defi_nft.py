@@ -7,10 +7,8 @@ from flask_qrcode import QRcode
 import didkit
 import environment
 import uuid
-import base64
 import logging
 import requests
-import hashlib
 from urllib.parse import urlencode
 
 
@@ -22,7 +20,7 @@ SUPPORTED_CHAIN = ['binance', 'tezos']
 URL_MAIN = "https://ssi-sbt-altme-bnb-main.osc-fr1.scalingo.io/"
 URL_TEST = "https://ssi-sbt-altme-bnb-test.osc-fr1.scalingo.io/"
 
-TEST = False
+TEST = True
 
 
 metadata_tezos = {
@@ -61,8 +59,6 @@ def test(test, mode) :
     return url, secret
 
 def init_app(app,red, mode) :
-    # for DefI site
-    app.add_url_rule('/verifier/defi/get_link', methods = ['POST', 'GET'], view_func=get_link, defaults={'mode': mode})
     
     # for wallet
     app.add_url_rule('/verifier/defi/endpoint/<chain>/<stream_id>', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
@@ -86,10 +82,9 @@ def init_app(app,red, mode) :
 
 def defi_nft_binance(mode) :
     stream_id = str(uuid.uuid1())
-    token = generate_token('binance')
     session['is_connected'] = True
     session['chain'] = 'binance'
-    link = mode.server + 'verifier/defi/endpoint/binance/' + stream_id #+'?token=' + token
+    link = mode.server + 'verifier/defi/endpoint/binance/' + stream_id 
     deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
     if not request.MOBILE:
         return render_template(
@@ -111,8 +106,7 @@ def defi_nft_tezos(mode) :
     stream_id = str(uuid.uuid1())
     session['is_connected'] = True
     session['chain'] = 'tezos'
-    token = generate_token('tezos')
-    link = mode.server + 'verifier/defi/endpoint/tezos/' + stream_id #+ '?token=' + token
+    link = mode.server + 'verifier/defi/endpoint/tezos/' + stream_id 
     deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
     if not request.MOBILE:
         return render_template(
@@ -171,6 +165,21 @@ def burn_nft(address, chain, mode) :
         logging.warning("Get access refused, SBT not sent %s with reason = %s", resp.status_code, resp.reason)
         return jsonify({'burn' : False})
     return jsonify({'burn' : True})
+
+
+def does_nft_exist(address, chain, mode) :
+    url, key = test(TEST, mode)
+    url = url + 'has/'
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-API-KEY" : key,
+        "X-BLOCKCHAIN" : chain.upper()
+    }
+    resp = requests.get(url + address, headers=headers)
+    if not 199<resp.status_code<300 :
+        logging.warning("Get access refused")
+        return
+    return resp.json()['has_token']
 
 
 def has_nft(address, chain, mode) :
@@ -237,75 +246,11 @@ def issue_nft(chain: str, address: str, metadata: dict, credential_id: str, mode
     resp = requests.post(url, data=data, headers=headers)
     if 199<resp.status_code<300 :
         data = {"count" : "1" , "chain" : chain }
-        logging.info("NFT has been minted")
         requests.post(mode.server + 'counter/nft/update', data=data)
-        return True
-    elif resp.status_code == 430 :
-        logging.info("NFT was already minted on %s", chain)
         return True
     else :
         logging.warning("Get access refused, NFT not mint %s with reason = %s", resp.status_code, resp.reason)
         return
-   
-
-def generate_token(chain: str) -> str:
-    """
-    generate an anonymous token with an expîration fixed date every 15 days from 01 jan 1970
-    """
-    if chain not in SUPPORTED_CHAIN :
-        return
-    signer_key = jwk.JWK(**ISSUER_KEY) 
-    header = {
-      'typ' :'JWT',
-      'kid': "did:web:app.altme.io:issuer#key-1",
-      'alg': 'EdDSA'
-    }
-    payload = {
-      'iss' : "did:web:app.altme.io:issuer",
-      'exp': (math.floor(time.time()/TOKEN_LIFE) + 1) * TOKEN_LIFE,
-      'chain' : chain
-    }  
-    token = jwt.JWT(header=header,claims=payload, algs=['EdDSA'])
-    token.make_signed_token(signer_key)
-    return token.serialize()
-
-
-def verif_token(token: str) -> None:
-    """
-    verification of the jwt token signature
-    raise error if problem
-    """
-    a = jwt.JWT.from_jose_token(token)
-    a.validate(jwk.JWK(**ISSUER_KEY))
-    return
-
-
-def get_data_from_token(data: str,  token: str) -> any:
-  """
-  return  attribute of token
-  data = chain, exp
-  """
-  payload = token.split('.')[1]
-  payload += "=" * ((4 - len(payload) % 4) % 4) # solve the padding issue of the base64 python lib
-  return json.loads(base64.urlsafe_b64decode(payload).decode())[data]
-
-
-"""
-def mint_nft(credential_id:str, address: str, chain:str, mode) -> bool:
-    if chain == "tezos"  : 
-        metadata_tezos['identifier'] = credential_id
-        metadata = metadata_tezos
-        logging.info('mint DeFi NFT on Tezos with metadata = %s', metadata)
-        return issue_nft(chain, address, metadata, "defi:" + chain + ":" + metadata['identifier'], mode)
-    elif chain == "binance" :
-        metadata_binance['identifier'] = credential_id
-        metadata = metadata_binance
-        logging.info('mint DeFi NFT on Binance with metadata = %s', metadata)
-        return issue_nft(chain, address, metadata, "defi:" + chain + ":" + metadata['identifier'], mode)
-    else :
-        logging.warning('Blockchain not supported for this DeFi NFT mint')
-        return 
-"""
 
 
 def mint_nft(credential_id:str, address: str, chain:str, mode) -> bool:
@@ -318,56 +263,13 @@ def mint_nft(credential_id:str, address: str, chain:str, mode) -> bool:
     else :
         metadata = metadata_tezos
     metadata['identifier'] = credential_id
-    logging.info('mint DeFi NFT on %s with metadata = %s', chain, metadata)
     return issue_nft(chain, address, metadata, "defi:" + chain + ":" + metadata['identifier'], mode)
-   
-
-def get_link(mode):
-    """
-    This the first call customer side to get its link
-    curl https://issuer.talao.co/verifier/defi/get_link -H "api-key":<your_api_key> -H "client_id":<your_client_id>
-    returns {"link": <link>} 200
-   
-    """
-    client_secret = request.headers.get('api-key')
-    client_id = request.headers.get('client_id')
-    # TODO check the client database
-    chain = request.headers.get('chain', 'binance')
-    token = generate_token(chain)
-    if not token :
-        return jsonify({"Bad request"}), 400
-    link = mode.server + 'verifier/defi/endpoint?token=' + token
-    return jsonify({"link": link})
 
 
 async def verifier_endpoint(chain, stream_id, mode, red):
     """
     wallet endpoint of the verifier
     difference is that a token is passed as an argument in the wallet call 
-    """
-
-    """
-    # one takes as the session id the wallet IP hash
-    m = hashlib.sha256()
-    m.update(request.remote_addr.encode())
-    session_id = m.hexdigest()
-    token = request.args.get('token')
-    if not token :
-        return jsonify ('Unauthorized'), 401
-    try :
-        verif_token(token)
-        chain = get_data_from_token('chain', token)
-        exp = get_data_from_token('exp', token)
-    except Exception as e: 
-        logging.error('verif token failed %s', e )
-        data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
-        red.publish('defi_nft', data)
-        return jsonify ('Unauthorized'), 401
-    if time.time() > exp :
-        logging.warning('DeFi token expired')
-        data = json.dumps({"stream_id" : stream_id, "check" : "expired"})
-        red.publish('defi_nft', data)
-        return jsonify ('Unauthorized'), 401
     """
     if request.method == 'GET':
         pattern = {
@@ -384,7 +286,7 @@ async def verifier_endpoint(chain, stream_id, mode, red):
         pattern['query'][0]['credentialQuery'].append({"example" : {"type" : chain.capitalize() + "AssociatedAddress"}})
         pattern['challenge'] = str(uuid.uuid1())
         pattern['domain'] = mode.server
-        red.setex(stream_id,  60, json.dumps(pattern))
+        red.setex(stream_id,  180, json.dumps(pattern))
         return jsonify(pattern)
     else :
         try :
@@ -395,7 +297,7 @@ async def verifier_endpoint(chain, stream_id, mode, red):
             logging.error('red decode failed')
             data = json.dumps({"stream_id" : stream_id, "check" : "expired"})
             red.publish('defi_nft', data)
-            return jsonify("URL not found"), 404
+            return jsonify("URL not found"), 400
         red.delete(stream_id)
         presentation = json.loads(request.form['presentation'])
         # check authentication
@@ -406,7 +308,7 @@ async def verifier_endpoint(chain, stream_id, mode, red):
             logging.warning('challenge or domain failed')
             data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
             red.publish('defi_nft', data)
-            return jsonify('Credentials refused'), 412
+            return jsonify('Credentials refused'), 400
         # check presentation signature
         presentation_result = json.loads(await didkit.verify_presentation(request.form['presentation'], '{}'))
         if presentation_result['errors']:  
@@ -422,7 +324,7 @@ async def verifier_endpoint(chain, stream_id, mode, red):
             elif vc['credentialSubject']['type'] == 'DefiCompliance' :
                 if vc['credentialSubject']['amlComplianceCheck'] != 'Succeeded' :
                     logging.warning('VC compliance is Failed')
-                    return jsonify('Credentials refused'), 412
+                    return jsonify('Credentials refused'), 400
                 else :
                     credential_id = vc['id']
                     logging.info("credential Id = %s", credential_id)
@@ -433,17 +335,24 @@ async def verifier_endpoint(chain, stream_id, mode, red):
             red.publish('defi_nft', data)
             return jsonify("Blockchain not supported"), 400
         
-        # mint
-        if not mint_nft(credential_id, address, chain, mode) :
-            data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
+        # test if NFT already exists for this address and chain
+        if not  does_nft_exist(address, chain, mode) :
+            # mint
+            if not mint_nft(credential_id, address, chain, mode) :
+                logging.warning("NFT mint failed")
+                data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
+                red.publish('defi_nft', data)
+                return jsonify('NFT DeFi mint failed'), 400
+            else :
+                logging.info("NFT mint succeed")
+                data = json.dumps({"stream_id" : stream_id, "check" : "success"})
+                red.publish('defi_nft', data)
+                return jsonify("NFT minted !")
+        else :
+            data = json.dumps({"stream_id" : stream_id, "check" : "already_exists"})
             red.publish('defi_nft', data)
-            return jsonify('NFT DeFi mint failed'), 400
-        
-        data = json.dumps({"stream_id" : stream_id, "check" : "success"})
-        red.publish('defi_nft', data)
-
-        logging.info("Back to wallet")
-        return jsonify("ok")
+            logging.info("The compliance NFT alreday exist")
+            return jsonify("The compliance NFT alreday exist")
 
 
 def defi_nft_end() :
@@ -453,6 +362,8 @@ def defi_nft_end() :
         message = 'Great ! you have now a NFT as a proof of DeFi compliance.'
     elif request.args['check'] == 'expired' :
         message = 'Sorry ! session expired.'
+    elif request.args['check'] == 'already_exists' :
+        message = 'An NFT already exists.'
     else :
         message = 'Sorry ! there is a server problem, try again later.'
     chain = session['chain']
