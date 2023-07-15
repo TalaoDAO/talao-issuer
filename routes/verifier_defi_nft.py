@@ -331,7 +331,7 @@ async def verifier_endpoint(chain, stream_id, mode, red):
             logging.warning("Blockchain not supported")
             data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
             red.publish('defi_nft', data)
-            return jsonify("Blockchain not supported"), 400
+            return jsonify("ok"), 400
         
         # test if NFT already exists for this address and chain
         if not  does_nft_exist(address, chain, mode) :
@@ -340,17 +340,17 @@ async def verifier_endpoint(chain, stream_id, mode, red):
                 logging.warning("NFT mint failed")
                 data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
                 red.publish('defi_nft', data)
-                return jsonify('NFT DeFi mint failed'), 400
+                return jsonify('ok'), 400
             else :
                 logging.info("NFT mint succeed")
                 data = json.dumps({"stream_id" : stream_id, "check" : "success"})
                 red.publish('defi_nft', data)
-                return jsonify("NFT minted !")
+                return jsonify("ok")
         else :
             data = json.dumps({"stream_id" : stream_id, "check" : "already_exists"})
             red.publish('defi_nft', data)
             logging.info("The compliance NFT alreday exist")
-            return jsonify("The compliance NFT alreday exist")
+            return jsonify("ok")
 
 
 def defi_nft_end() :
