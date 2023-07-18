@@ -284,6 +284,8 @@ async def verifier_endpoint(chain, stream_id, mode, red):
         pattern['query'][0]['credentialQuery'].append({"example" : {"type" : chain.capitalize() + "AssociatedAddress"}})
         pattern['challenge'] = str(uuid.uuid1())
         pattern['domain'] = mode.server
+        print("GET domain = ", pattern['domain'])
+        print('Get challenge =', pattern['challenge'])
         red.setex(stream_id,  180, json.dumps(pattern))
         return jsonify(pattern)
     else :
@@ -301,16 +303,18 @@ async def verifier_endpoint(chain, stream_id, mode, red):
         # check authentication
         response_challenge = presentation['proof']['challenge']
         response_domain = presentation['proof']['domain']
+        print('POST domain = ', response_domain)
+        print('Post challenge = ', response_challenge)
         verifiable_credential_list = presentation['verifiableCredential']
         if response_domain != domain or response_challenge != challenge :
             logging.warning('challenge or domain failed')
             data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
             red.publish('defi_nft', data)
-            return jsonify('Credentials refused'), 400
+            return jsonify('Credentials refused'), 412
         # check presentation signature
         presentation_result = json.loads(await didkit.verify_presentation(request.form['presentation'], '{}'))
         if presentation_result['errors']:  
-            logging.warning('presentation signature failed')
+            logging.warning('presentation signature failed = %s', presentation_result)
         else :
             logging.info('presentation signature is Ok')
         # get address from VC
@@ -322,7 +326,7 @@ async def verifier_endpoint(chain, stream_id, mode, red):
             elif vc['credentialSubject']['type'] == 'DefiCompliance' :
                 if vc['credentialSubject']['amlComplianceCheck'] != 'Succeeded' :
                     logging.warning('VC compliance is Failed')
-                    return jsonify('Credentials refused'), 400
+                    return jsonify('Compliance credential refused'), 412
                 else :
                     credential_id = vc['id']
                     logging.info("credential Id = %s", credential_id)
@@ -331,7 +335,7 @@ async def verifier_endpoint(chain, stream_id, mode, red):
             logging.warning("Blockchain not supported")
             data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
             red.publish('defi_nft', data)
-            return jsonify("ok"), 400
+            return jsonify("Blockchain not supported"), 412
         
         # test if NFT already exists for this address and chain
         if not  does_nft_exist(address, chain, mode) :
@@ -340,17 +344,17 @@ async def verifier_endpoint(chain, stream_id, mode, red):
                 logging.warning("NFT mint failed")
                 data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
                 red.publish('defi_nft', data)
-                return jsonify('ok'), 400
+                return jsonify('NFT mint failed'), 412
             else :
                 logging.info("NFT mint succeed")
                 data = json.dumps({"stream_id" : stream_id, "check" : "success"})
                 red.publish('defi_nft', data)
-                return jsonify("ok")
+                return jsonify("NFT mint succeeded"), 212
         else :
             data = json.dumps({"stream_id" : stream_id, "check" : "already_exists"})
             red.publish('defi_nft', data)
             logging.info("The compliance NFT alreday exist")
-            return jsonify("ok")
+            return jsonify("An NFT alreday exists"), 212
 
 
 def defi_nft_end() :
