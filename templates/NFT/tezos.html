@@ -81,11 +81,11 @@
         </footer>
     </div>
     <script>
-    var source = new EventSource('/defi/nft/stream');
+    var source = new EventSource('/defi/stream');
     source.onmessage = function (event) {
     const result = JSON.parse(event.data)
     if (result.stream_id == '{{stream_id}}' ){
-      window.location.href='/defi/nft/end?stream_id=' + result.stream_id + '&check='+ result.check;
+      window.location.href='/defi/end?stream_id=' + result.stream_id + '&check='+ result.check;
       }
     };
   </script>

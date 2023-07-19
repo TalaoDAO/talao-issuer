@@ -13,8 +13,8 @@ from urllib.parse import urlencode
 ISSUER_KEY = json.load(open("keys.json", "r"))['talao_Ed25519_private_key']
 TOKEN_LIFE = 60*60 # 1 heure
 
-SUPPORTED_ADDRESS = ['TezosAssociatedAddress', 'BinanceAssociatedAddress']
-SUPPORTED_CHAIN = ['binance', 'tezos']
+SUPPORTED_ADDRESS = ['TezosAssociatedAddress', 'BinanceAssociatedAddress', 'PolygonAssociatedAddress', 'EthereumAssociatedAddress']
+SUPPORTED_CHAIN = ['binance', 'tezos', 'polygon', 'ethereum']
 URL_MAIN = "https://ssi-sbt-altme-bnb-main.osc-fr1.scalingo.io/"
 URL_TEST = "https://ssi-sbt-altme-bnb-test.osc-fr1.scalingo.io/"
 
@@ -62,14 +62,9 @@ def init_app(app,red, mode) :
     app.add_url_rule('/verifier/defi/endpoint/<chain>/<stream_id>', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
     
     # for user mint
-    app.add_url_rule('/defi/nft', view_func=defi_nft_binance, methods = ['GET'],  defaults={'mode': mode})
-    app.add_url_rule('/defi/nft/binance', view_func=defi_nft_binance, methods = ['GET'],  defaults={'mode': mode})
-    app.add_url_rule('/nft/defi', view_func=defi_nft_binance, methods = ['GET'],  defaults={'mode': mode})
-    
-    app.add_url_rule('/defi/nft/tezos', view_func=defi_nft_tezos, methods = ['GET'],  defaults={'mode': mode})
-
-    app.add_url_rule('/defi/nft/stream',  view_func=defi_nft_stream, methods = ['GET', 'POST'], defaults={'red' : red})
-    app.add_url_rule('/defi/nft/end',  view_func=defi_nft_end, methods = ['GET', 'POST'])
+    app.add_url_rule('/defi/nft/<chain>', view_func=defi_nft, methods = ['GET'],  defaults={'mode': mode})
+    app.add_url_rule('/defi/stream',  view_func=defi_nft_stream, methods = ['GET', 'POST'], defaults={'red' : red})
+    app.add_url_rule('/defi/end',  view_func=defi_nft_end, methods = ['GET', 'POST'])
 
     # for admin
     #app.add_url_rule('/verifier/defi/burn/<address>', view_func=burn_nft, methods = ['GET'])
@@ -78,47 +73,21 @@ def init_app(app,red, mode) :
     return
 
 
-def defi_nft_binance(mode) :
+def defi_nft(chain, mode) :
     stream_id = str(uuid.uuid1())
     session['is_connected'] = True
-    session['chain'] = 'binance'
-    link = mode.server + 'verifier/defi/endpoint/binance/' + stream_id 
+    session['chain'] = chain
+    link = mode.server + 'verifier/defi/endpoint/' + chain + '/' + stream_id 
     deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
-    if not request.MOBILE:
-        return render_template(
-            'NFT/bnb.html',
-            url=deeplink,
-            deeplink_altme=deeplink,
-            stream_id=stream_id
-        )
-    else :
-        return render_template(
-            'NFT/bnb_mobile.html',
-            url=link,
-            deeplink_altme=deeplink,
-            stream_id=stream_id
+    prefix = 'bnb' if chain == 'binance' else chain
+    page = 'NFT/' + prefix + '.html' if not request.MOBILE else 'NFT/' + prefix + '_mobile.html'
+    return render_template(
+        page,
+        url=deeplink,
+        deeplink_altme=deeplink,
+        stream_id=stream_id
         )
 
-
-def defi_nft_tezos(mode) :
-    stream_id = str(uuid.uuid1())
-    session['is_connected'] = True
-    session['chain'] = 'tezos'
-    link = mode.server + 'verifier/defi/endpoint/tezos/' + stream_id 
-    deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
-    if not request.MOBILE:
-        return render_template(
-            'NFT/tezos.html',
-            url=deeplink,
-            deeplink_altme=deeplink,
-            stream_id=stream_id)
-    else :
-        return render_template(
-            'NFT/tezos_mobile.html',
-            url=link,
-            deeplink_altme=deeplink,
-            stream_id=stream_id)
-    
 
 def add_to_ipfs(data_dict: dict, name: str, mode: environment.currentMode) -> str :
     """
@@ -145,9 +114,6 @@ def add_to_ipfs(data_dict: dict, name: str, mode: environment.currentMode) -> st
 
 
 def burn_nft(address, chain, mode) :
-    """
-    Binance
-    """
     url, key = test(TEST, mode)
     url = url + 'burn'
     headers = {
@@ -256,10 +222,7 @@ def mint_nft(credential_id:str, address: str, chain:str, mode) -> bool:
     mint NFT for one token received
     manage return issue
     """
-    if chain == 'binance' :
-        metadata = metadata_binance
-    else :
-        metadata = metadata_tezos
+    metadata = metadata_binance if chain in ['binance', 'ethereum', 'polygon'] else metadata_tezos
     metadata['identifier'] = credential_id
     return issue_nft(chain, address, metadata, "defi:" + chain + ":" + metadata['identifier'], mode)
 
@@ -284,8 +247,6 @@ async def verifier_endpoint(chain, stream_id, mode, red):
         pattern['query'][0]['credentialQuery'].append({"example" : {"type" : chain.capitalize() + "AssociatedAddress"}})
         pattern['challenge'] = str(uuid.uuid1())
         pattern['domain'] = mode.server
-        print("GET domain = ", pattern['domain'])
-        print('Get challenge =', pattern['challenge'])
         red.setex(stream_id,  180, json.dumps(pattern))
         return jsonify(pattern)
     else :
@@ -303,8 +264,6 @@ async def verifier_endpoint(chain, stream_id, mode, red):
         # check authentication
         response_challenge = presentation['proof']['challenge']
         response_domain = presentation['proof']['domain']
-        print('POST domain = ', response_domain)
-        print('Post challenge = ', response_challenge)
         verifiable_credential_list = presentation['verifiableCredential']
         if response_domain != domain or response_challenge != challenge :
             logging.warning('challenge or domain failed')
