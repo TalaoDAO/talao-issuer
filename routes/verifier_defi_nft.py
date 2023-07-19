@@ -62,6 +62,7 @@ def init_app(app,red, mode) :
     app.add_url_rule('/verifier/defi/endpoint/<chain>/<stream_id>', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
     
     # for user mint
+    app.add_url_rule('/defi/nft', view_func=defi_nft_binance, methods = ['GET'],  defaults={'mode': mode})
     app.add_url_rule('/defi/nft/<chain>', view_func=defi_nft, methods = ['GET'],  defaults={'mode': mode})
     app.add_url_rule('/defi/stream',  view_func=defi_nft_stream, methods = ['GET', 'POST'], defaults={'red' : red})
     app.add_url_rule('/defi/end',  view_func=defi_nft_end, methods = ['GET', 'POST'])
@@ -71,6 +72,11 @@ def init_app(app,red, mode) :
     app.add_url_rule('/verifier/defi/has/<address>', view_func=has_nft, methods = ['GET'],  defaults={'mode': mode})
     app.add_url_rule('/verifier/defi/info/<id>', view_func=info_nft, methods = ['GET'],  defaults={'mode': mode})
     return
+
+
+# patch
+def defi_nft_binance(mode) :
+    return redirect('/defi/nft/binance')
 
 
 def defi_nft(chain, mode) :
