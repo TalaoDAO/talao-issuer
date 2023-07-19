@@ -77,6 +77,8 @@ def defi_nft(chain, mode) :
     stream_id = str(uuid.uuid1())
     session['is_connected'] = True
     session['chain'] = chain
+    if chain not in SUPPORTED_CHAIN :
+        return render_template('NFT/defi_nft_end.html', message='This chain is not supported', chain="unknown")
     link = mode.server + 'verifier/defi/endpoint/' + chain + '/' + stream_id 
     deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
     prefix = 'bnb' if chain == 'binance' else chain
