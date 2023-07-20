@@ -25,7 +25,7 @@ from flask_mobility import Mobility
 # local dependencies
 from routes import web_emailpass, web_phonepass, yoti, dapp_register_gamer_pass
 from routes import tezotopia, twitter, chainborn, bloometa, oidc4vci_kyc, polygonid, counter
-from routes import verifier_defi_nft, verifier_defi_tezid
+from routes import verifier_defi_nft, verifier_defi_tezid, vc_issuer
 import environment
 
 import logging
@@ -74,7 +74,7 @@ sess.init_app(app)
 # init routes 
 web_emailpass.init_app(app, red, mode)
 web_phonepass.init_app(app, red, mode)
-#vc_issuer.init_app(app, red, mode)
+vc_issuer.init_app(app, red, mode)
 #web_passbase.init_app(app, red, mode)
 dapp_register_gamer_pass.init_app(app, red, mode)
 yoti.init_app(app, red, mode)
