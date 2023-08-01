@@ -243,7 +243,7 @@ def site_x():
 def site_x():
 	if request.method == "GET" :
 		session.clear()
-		return render_template('site_x.html')
+		return render_template('site_x_pokemi.html')
 	else :
 		return redirect('/pokemi/login') 
 
