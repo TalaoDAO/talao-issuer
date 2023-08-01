@@ -267,7 +267,7 @@ def index():
                    userinfo=user_session.userinfo) # this is the user credential
 """
 
-@app.route('/porkemi/login')
+@app.route('/pokemi/login')
 @auth.oidc_auth('provider_pokemi')
 def index():
     user_session = UserSession(session)    
