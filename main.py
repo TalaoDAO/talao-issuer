@@ -169,7 +169,7 @@ def test() :
 
 ### SITE X a retirer des que possible
 
-
+"""
 # +18
 client_metadata_18 = ClientMetadata(
         client_id='dybgruness',
@@ -178,7 +178,7 @@ client_metadata_18 = ClientMetadata(
 
 provider_config_18 = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/api/v1.0',
                                         client_metadata=client_metadata_18)
-
+"""
 
 # +18 Talao
 client_metadata_18_talao = ClientMetadata(
@@ -203,12 +203,30 @@ provider_config_15 = ProviderConfiguration(issuer= 'https://preprod.jeprouvemona
 
 
 
-auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_18_talao': provider_config_18_talao,'provider_15': provider_config_15}, app)
+# pokemi
+client_metadata_pokemi = ClientMetadata(
+        client_id='zewhjkqsbg',
+        client_secret='ghj5c0bc-0466-11ee-af1c-0a1628955454',
+        post_logout_redirect_uris=[mode.server + 'site_x/logout']) # your post logout uri (optional)
+
+provider_config_pokemi = ProviderConfiguration(issuer= 'https://preprod.jeprouvemonage.fr/api/v1.0',
+                                        client_metadata=client_metadata_pokemi)
+
+
+
+
+auth = OIDCAuthentication({
+	#'provider_18': provider_config_18,
+	'provider_18_talao': provider_config_18_talao,
+	'provider_pokemi' : provider_config_pokemi,
+	'provider_15': provider_config_15}, app)
 #auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_15': provider_config_15}, app)
 
 
 """ 
 Verifiable Credential presented by user is transfered through vp_token in OAuth2 userinfo endpoint
+
+"""
 
 """
 @app.route('/pornhub',  methods = ['GET', 'POST'])
@@ -218,8 +236,16 @@ def site_x():
 		return render_template('site_x.html')
 	else :
 		return redirect('/pornhub/login') 
+"""
 
 
+@app.route('/pokemi',  methods = ['GET', 'POST'])
+def site_x():
+	if request.method == "GET" :
+		session.clear()
+		return render_template('site_x.html')
+	else :
+		return redirect('/pokemi/login') 
 
 
 @app.route('/pornhub15',  methods = ['GET', 'POST'])
@@ -231,7 +257,7 @@ def site_x_15():
 		return redirect('/pornhub15/login') 
 
 
-
+"""
 @app.route('/pornhub/login')
 @auth.oidc_auth('provider_18')
 def index():
@@ -239,7 +265,15 @@ def index():
     return jsonify(access_token=user_session.access_token,
                    id_token=user_session.id_token,
                    userinfo=user_session.userinfo) # this is the user credential
+"""
 
+@app.route('/porkemi/login')
+@auth.oidc_auth('provider_pokemi')
+def index():
+    user_session = UserSession(session)    
+    return jsonify(access_token=user_session.access_token,
+                   id_token=user_session.id_token,
+                   userinfo=user_session.userinfo) # this is the user credential
 
 
 @app.route('/pornhub15/login')
