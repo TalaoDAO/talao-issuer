@@ -284,7 +284,12 @@ def index_15():
                    id_token=user_session.id_token,
                    userinfo=user_session.userinfo) # this is the user credential
 
-# jeprouvemonage.talao.co
+
+
+
+
+
+
 
 
 @app.route('/pornhub_talao',  methods = ['GET', 'POST'])
@@ -295,6 +300,7 @@ def site_x_talao():
 	else :
 		return redirect('/pornhub_talao/login') 
 	
+
 @app.route('/pornhub_talao/login')
 @auth.oidc_auth('provider_18_talao')
 def index_talao():
