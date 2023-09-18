@@ -205,11 +205,11 @@ provider_config_15 = ProviderConfiguration(issuer= 'https://preprod.jeprouvemona
 
 # pokemi
 client_metadata_pokemi = ClientMetadata(
-        client_id='zewhjkqsbg',
-        client_secret='ghj5c0bc-0466-11ee-af1c-0a1628955454',
+        client_id='100',
+        client_secret='KlZ876NPuX7XOzEdIIwboRB1uNJSVb',
         post_logout_redirect_uris=[mode.server + 'site_x/logout']) # your post logout uri (optional)
 
-provider_config_pokemi = ProviderConfiguration(issuer= 'https://preprod.jeprouvemonage.fr/api/v1.0',
+provider_config_pokemi = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/api/v1.0',
                                         client_metadata=client_metadata_pokemi)
 
 
