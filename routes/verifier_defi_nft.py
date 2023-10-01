@@ -22,23 +22,23 @@ TEST = False
 
 
 metadata_tezos = {
-  "name": "DeFi compliance proof",
-  "symbol": "DEFI",
-  "creators": [
-    "Altme.io",
-    "did:web:altme.io:did:web:app.altme.io:issuer"
-  ],
-  "decimals": "0",
-  "identifier": "",
-  "displayUri": "ipfs://QmUDYRnEsCv4vRmSY57PC6wZyc6xqGfZecdSaZmo2wnzDF",
-  "publishers": ["Altme"],
-  "minter": "Meranti",
-  "rights": "No License / All Rights Reserved",
-  "artifactUri": "ipfs://QmUDYRnEsCv4vRmSY57PC6wZyc6xqGfZecdSaZmo2wnzDF",
-  "description": "This NFT is a proof of your DeFi compliance. It is not transferable.You can use it when you need to prove your comliance with services that have already adopted the verifiable and decentralized identity system.",
-  "thumbnailUri": "ipfs://QmZP3od8tRFUhH7yNVuD3zYPGyLZSpp6a6At6kcW2MjsLD",
-  "is_transferable": False,
-  "shouldPreferSymbol": False
+    "name": "DeFi compliance proof",
+    "symbol": "DEFI",
+    "creators": [
+        "Altme.io",
+        "did:web:altme.io:did:web:app.altme.io:issuer"
+    ],
+    "decimals": "0",
+    "identifier": "",
+    "displayUri": "ipfs://QmUDYRnEsCv4vRmSY57PC6wZyc6xqGfZecdSaZmo2wnzDF",
+    "publishers": ["Altme"],
+    "minter": "Meranti",
+    "rights": "No License / All Rights Reserved",
+    "artifactUri": "ipfs://QmUDYRnEsCv4vRmSY57PC6wZyc6xqGfZecdSaZmo2wnzDF",
+    "description": "This NFT is a proof of your DeFi compliance. It is not transferable.You can use it when you need to prove your comliance with services that have already adopted the verifiable and decentralized identity system.",
+    "thumbnailUri": "ipfs://QmZP3od8tRFUhH7yNVuD3zYPGyLZSpp6a6At6kcW2MjsLD",
+    "is_transferable": False,
+    "shouldPreferSymbol": False
 }
 
 
@@ -51,55 +51,63 @@ metadata_binance = {
 }
 
 
-def test(test, mode) : 
+def test(test, mode): 
     url = URL_TEST if test else URL_MAIN
     secret = mode.meranti_test if test else mode.meranti_main  
     return url, secret
 
-def init_app(app,red, mode) :
-    
+
+def init_app(app,red, mode):
     # for wallet
-    app.add_url_rule('/verifier/defi/endpoint/<chain>/<stream_id>', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red' : red})
+    app.add_url_rule('/verifier/defi/endpoint/<chain>/<stream_id>', view_func=verifier_endpoint, methods = ['POST', 'GET'], defaults={'mode': mode, 'red': red})
     
     # for user mint
-    app.add_url_rule('/nft/defi', view_func=defi_nft_binance, methods = ['GET'],  defaults={'mode': mode})
+    app.add_url_rule('/nft/defi', view_func=defi_nft, methods=['GET'], defaults={'mode': mode})
+    app.add_url_rule('/defi/nft', view_func=defi_nft, methods=['GET'], defaults={'mode': mode})
+    
+    # to be removed below
+    app.add_url_rule('/defi/nft/polygon', view_func=defi_nft, methods=['GET'], defaults={'mode': mode})
+    app.add_url_rule('/defi/nft/tezos', view_func=defi_nft, methods=['GET'], defaults={'mode': mode})
+    app.add_url_rule('/defi/nft/binance', view_func=defi_nft, methods=['GET'], defaults={'mode': mode})
+    app.add_url_rule('/defi/nft/ethereum', view_func=defi_nft, methods=['GET'], defaults={'mode': mode})
 
-    app.add_url_rule('/defi/nft', view_func=defi_nft_binance, methods = ['GET'],  defaults={'mode': mode})
-    app.add_url_rule('/defi/nft/<chain>', view_func=defi_nft, methods = ['GET'],  defaults={'mode': mode})
-    app.add_url_rule('/defi/stream',  view_func=defi_nft_stream, methods = ['GET', 'POST'], defaults={'red' : red})
-    app.add_url_rule('/defi/end',  view_func=defi_nft_end, methods = ['GET', 'POST'])
+    app.add_url_rule('/defi/stream',  view_func=defi_nft_stream, methods=['GET', 'POST'], defaults={'red': red})
+    app.add_url_rule('/defi/end',  view_func=defi_nft_end, methods=['GET', 'POST'])
 
     # for admin
     #app.add_url_rule('/verifier/defi/burn/<address>', view_func=burn_nft, methods = ['GET'])
-    app.add_url_rule('/verifier/defi/has/<address>', view_func=has_nft, methods = ['GET'],  defaults={'mode': mode})
-    app.add_url_rule('/verifier/defi/info/<id>', view_func=info_nft, methods = ['GET'],  defaults={'mode': mode})
+    app.add_url_rule('/verifier/defi/has/<address>', view_func=has_nft, methods=['GET'],  defaults={'mode': mode})
+    app.add_url_rule('/verifier/defi/info/<id>', view_func=info_nft, methods=['GET'],  defaults={'mode': mode})
     return
 
 
 # patch
-def defi_nft_binance(mode) :
+def defi_nft_binance(mode):
     return redirect('/defi/nft/binance')
 
 
-def defi_nft(chain, mode) :
+def defi_nft(mode):
     stream_id = str(uuid.uuid1())
     session['is_connected'] = True
-    session['chain'] = chain
-    if chain not in SUPPORTED_CHAIN :
-        return render_template('NFT/defi_nft_end.html', message='This chain is not supported', chain="unknown")
-    link = mode.server + 'verifier/defi/endpoint/' + chain + '/' + stream_id 
-    deeplink =  mode.deeplink_altme + 'app/download?' + urlencode({'uri' : link })
-    prefix = 'bnb' if chain == 'binance' else chain
-    page = 'NFT/' + prefix + '.html' if not request.MOBILE else 'NFT/' + prefix + '_mobile.html'
+    tezos_url = f'{mode.server}verifier/defi/endpoint/tezos/{stream_id}'
+    polygon_url = f'{mode.server}verifier/defi/endpoint/polygon/{stream_id}'
+    binance_url = f'{mode.server}verifier/defi/endpoint/binance/{stream_id}'
+    ethereum_url = f'{mode.server}verifier/defi/endpoint/ethereum/{stream_id}'
     return render_template(
-        page,
-        url=deeplink,
-        deeplink_altme=deeplink,
+        'NFT/defi.html',
+        tezos_url=tezos_url,
+        binance_url=binance_url,
+        polygon_url=polygon_url,
+        ethereum_url=ethereum_url,
+        tezos_deeplink=mode.deeplink_altme + 'app/download?' + urlencode({'uri': tezos_url }),
+        binance_deeplink=mode.deeplink_altme + 'app/download?' + urlencode({'uri': binance_url }),
+        polygon_deeplink=mode.deeplink_altme + 'app/download?' + urlencode({'uri': polygon_url }),
+        ethereum_deeplink=mode.deeplink_altme + 'app/download?' + urlencode({'uri': ethereum_url }),
         stream_id=stream_id
         )
 
 
-def add_to_ipfs(data_dict: dict, name: str, mode: environment.currentMode) -> str :
+def add_to_ipfs(data_dict: dict, name: str, mode: environment.currentMode) -> str:
     """
     add metadata file to IPFS
     """
@@ -110,85 +118,84 @@ def add_to_ipfs(data_dict: dict, name: str, mode: environment.currentMode) -> st
 		'pinata_api_key': api_key,
         'pinata_secret_api_key': secret}
     data = {
-        'pinataMetadata' : {
-            'name' : name
+        'pinataMetadata': {
+            'name': name
         },
-        'pinataContent' : data_dict
+        'pinataContent': data_dict
     }
     r = requests.post('https://api.pinata.cloud/pinning/pinJSONToIPFS', data=json.dumps(data), headers=headers)
-    if not 199<r.status_code<300 :
-        logging.warning("POST access to Pinatta refused")
-        return None
-    else :
-	    return r.json()['IpfsHash']
+    if 199 < r.status_code < 300:
+        return r.json()['IpfsHash']
+    logging.warning("POST access to Pinatta refused")
+    return
 
 
-def burn_nft(address, chain, mode) :
+def burn_nft(address, chain, mode):
     url, key = test(TEST, mode)
-    url = url + 'burn'
+    url = f'{url}burn'
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "X-API-KEY" : key,
-        "X-BLOCKCHAIN" : chain.upper()
+        "X-API-KEY": key,
+        "X-BLOCKCHAIN": chain.upper()
     }
     data = {
-        "address_for" : address,
+        "address_for": address,
     }
     resp = requests.post(url, data=data, headers=headers)
-    if not 199<resp.status_code<300 :
+    if not 199 < resp.status_code < 300:
         logging.warning("Get access refused, SBT not sent %s with reason = %s", resp.status_code, resp.reason)
-        return jsonify({'burn' : False})
-    return jsonify({'burn' : True})
+        return jsonify({'burn': False})
+    return jsonify({'burn': True})
 
 
-def does_nft_exist(address, chain, mode) :
+def does_nft_exist(address, chain, mode):
     url, key = test(TEST, mode)
-    url = url + 'has/'
+    url = f'{url}has/'
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "X-API-KEY" : key,
-        "X-BLOCKCHAIN" : chain.upper()
+        "X-API-KEY": key,
+        "X-BLOCKCHAIN": chain.upper()
     }
     resp = requests.get(url + address, headers=headers)
-    if not 199<resp.status_code<300 :
+    if not 199 < resp.status_code < 300:
         logging.warning("Get access refused")
         return
     return resp.json()['has_token']
 
 
-def has_nft(address, chain, mode) :
+def has_nft(address, chain, mode):
     url, key = test(TEST, mode)
-    url = url + 'has/'
+    url = f'{url}has/'
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "X-API-KEY" : key,
-        "X-BLOCKCHAIN" : chain.upper()
+        "X-API-KEY": key,
+        "X-BLOCKCHAIN": chain.upper()
     }
     resp = requests.get(url + address, headers=headers)
-    if not 199<resp.status_code<300 :
+    if not 199 < resp.status_code < 300:
         logging.warning("Get access refused")
         return
     return jsonify(resp.json())
 
 
-def info_nft(id, chain, mode) :
+def info_nft(id, chain, mode):
     """
     curl --location --request GET ‘https://ssi-sbt.osc-fr1.scalingo.io/id/0’
     """
     url, key = test(TEST, mode)
-    url = url + 'id/'
+    url = f'{url}id/'
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "X-API-KEY" : key,
-        "X-BLOCKCHAIN" : chain.upper()
+        "X-API-KEY": key,
+        "X-BLOCKCHAIN": chain.upper()
     }
     
     resp = requests.get(url + id, headers=headers)
-    if not 199<resp.status_code<300 :
+    if not 199 < resp.status_code < 300:
         logging.warning("Get access refused")
         return
     return jsonify(resp.json())
-  
+
 
 def issue_nft(chain: str, address: str, metadata: dict, credential_id: str, mode: environment.currentMode) -> bool:
     """
@@ -197,32 +204,29 @@ def issue_nft(chain: str, address: str, metadata: dict, credential_id: str, mode
     curl --location --request POST ‘https://ssi-sbt.osc-fr1.scalingo.io/mint’ \
     --header ‘Content-Type: application/x-www-form-urlencoded’ \
     --header 'X-BLOCKCHAIN: BINANCE'\
-    --header 'X-API-KEY' : hhhhh'\
+    --header 'X-API-KEY': hhhhh'\
     --data-urlencode ‘transfer_to=0xCdcc3Ae823F05935f0b9c35C1054e5C144401C0a’ \
     --data-urlencode ‘ipfs_url=ipfs://QmRmmqEFCeCtgyp6xdwHGCKjMcEiQUqA8Q76kP9diN1s5F’
     """
-    metadata_ipfs = add_to_ipfs(metadata, "nft:" + credential_id , mode)
-    if not metadata_ipfs :
+    metadata_ipfs = add_to_ipfs(metadata, f'nft:{credential_id}', mode)
+    if not metadata_ipfs:
         logging.error("pinning service failed")
         return
     url, key = test(TEST, mode)
-    url = url + 'mint'
+    url = f'{url}mint'
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "X-API-KEY" : key,
-        "X-BLOCKCHAIN" : chain.upper()
+        "X-API-KEY": key,
+        "X-BLOCKCHAIN": chain.upper()
     }
-    data = {
-        "transfer_to" : address,
-        "ipfs_url" : "ipfs://" + metadata_ipfs
-    }
+    data = {"transfer_to": address, "ipfs_url": f"ipfs://{metadata_ipfs}"}
     logging.info('url de mint = %s', url)
     resp = requests.post(url, data=data, headers=headers)
-    if 199<resp.status_code<300 :
-        data = {"count" : "1" , "chain" : chain }
-        requests.post(mode.server + 'counter/nft/update', data=data)
+    if 199 < resp.status_code < 300:
+        data = {"count": "1", "chain": chain}
+        requests.post(f'{mode.server}counter/nft/update', data=data)
         return True
-    else :
+    else:
         logging.warning("Get access refused, NFT not mint %s with reason = %s", resp.status_code, resp.reason)
         return
 
@@ -250,23 +254,25 @@ async def verifier_endpoint(chain, stream_id, mode, red):
                     "type": "QueryByExample",
                     "credentialQuery": [
                         {
-                            "example" : {"type" : "DefiCompliance"} # DefiCompliance
-              }]}
+                            "example": {"type": "DefiCompliance"}
+                        }
+                    ]
+                }
             ]
         }
-        pattern['query'][0]['credentialQuery'].append({"example" : {"type" : chain.capitalize() + "AssociatedAddress"}})
+        pattern['query'][0]['credentialQuery'].append({"example": {"type": chain.capitalize() + "AssociatedAddress"}})
         pattern['challenge'] = str(uuid.uuid1())
         pattern['domain'] = mode.server
         red.setex(stream_id,  180, json.dumps(pattern))
         return jsonify(pattern)
-    else :
-        try :
+    else:
+        try:
             my_pattern = json.loads(red.get(stream_id).decode())
             challenge = my_pattern['challenge']
             domain = my_pattern['domain']
-        except :
+        except Exception:
             logging.error('red decode failed')
-            data = json.dumps({"stream_id" : stream_id, "check" : "expired"})
+            data = json.dumps({"stream_id": stream_id, "check": "expired"})
             red.publish('defi_nft', data)
             return jsonify("URL not found"), 400
         red.delete(stream_id)
@@ -275,71 +281,70 @@ async def verifier_endpoint(chain, stream_id, mode, red):
         response_challenge = presentation['proof']['challenge']
         response_domain = presentation['proof']['domain']
         verifiable_credential_list = presentation['verifiableCredential']
-        if response_domain != domain or response_challenge != challenge :
+        if response_domain != domain or response_challenge != challenge:
             logging.warning('challenge or domain failed')
-            data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
+            data = json.dumps({"stream_id": stream_id, "check": "failed"})
             red.publish('defi_nft', data)
             return jsonify('Credentials refused'), 412
         # check presentation signature
         presentation_result = json.loads(await didkit.verify_presentation(request.form['presentation'], '{}'))
         if presentation_result['errors']:  
             logging.warning('presentation signature failed = %s', presentation_result)
-        else :
+        else:
             logging.info('presentation signature is Ok')
         # get address from VC
         address = credential_id = str()
-        for vc in verifiable_credential_list :
-            if vc['credentialSubject']['type'] in SUPPORTED_ADDRESS :
+        for vc in verifiable_credential_list:
+            if vc['credentialSubject']['type'] in SUPPORTED_ADDRESS:
                 address = vc['credentialSubject']['associatedAddress']
                 logging.info("address = %s", address)
-            elif vc['credentialSubject']['type'] == 'DefiCompliance' :
-                if vc['credentialSubject']['amlComplianceCheck'] != 'Succeeded' :
+            elif vc['credentialSubject']['type'] == 'DefiCompliance':
+                if vc['credentialSubject']['amlComplianceCheck'] != 'Succeeded':
                     logging.warning('VC compliance is Failed')
                     return jsonify('Compliance credential refused'), 412
-                else :
+                else:
                     credential_id = vc['id']
                     logging.info("credential Id = %s", credential_id)
         
-        if not address or not credential_id :
+        if not address or not credential_id:
             logging.warning("Blockchain not supported")
-            data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
+            data = json.dumps({"stream_id": stream_id, "check": "failed"})
             red.publish('defi_nft', data)
             return jsonify("Blockchain not supported"), 412
         
         # test if NFT already exists for this address and chain
-        if not  does_nft_exist(address, chain, mode) :
+        if not does_nft_exist(address, chain, mode):
             # mint
-            if not mint_nft(credential_id, address, chain, mode) :
+            if not mint_nft(credential_id, address, chain, mode):
                 logging.warning("NFT mint failed")
-                data = json.dumps({"stream_id" : stream_id, "check" : "failed"})
+                data = json.dumps({"stream_id": stream_id, "check": "failed"})
                 red.publish('defi_nft', data)
                 return jsonify('NFT mint failed'), 412
-            else :
+            else:
                 logging.info("NFT mint succeed")
-                data = json.dumps({"stream_id" : stream_id, "check" : "success"})
+                data = json.dumps({"stream_id": stream_id, "check": "success"})
                 red.publish('defi_nft', data)
                 return jsonify("NFT mint succeeded"), 212
-        else :
-            data = json.dumps({"stream_id" : stream_id, "check" : "already_exists"})
+        else:
+            data = json.dumps({"stream_id": stream_id, "check": "already_exists"})
             red.publish('defi_nft', data)
             logging.info("The compliance NFT alreday exist")
             return jsonify("An NFT alreday exists"), 212
 
 
-def defi_nft_end() :
-    if not session.get('is_connected') :
-        return redirect ('https://altme.io')
-    if request.args['check'] == "success" :
+def defi_nft_end():
+    if not session.get('is_connected'):
+        return redirect('https://altme.io')
+    if request.args['check'] == "success":
         message = 'Great ! you have now a NFT as a proof of DeFi compliance.'
-    elif request.args['check'] == 'expired' :
+    elif request.args['check'] == 'expired':
         message = 'Sorry ! session expired.'
-    elif request.args['check'] == 'already_exists' :
+    elif request.args['check'] == 'already_exists':
         message = 'An NFT already exists.'
-    else :
+    else:
         message = 'Sorry ! there is a server problem, try again later.'
-    chain = session['chain']
     session.clear()
-    return render_template('NFT/defi_nft_end.html', message=message, chain=chain)
+    return render_template('NFT/defi_nft_end.html', message=message)
 
 
 # server event
@@ -350,7 +355,9 @@ def defi_nft_stream(red):
         for message in pubsub.listen():
             if message['type']=='message':
                 yield 'data: %s\n\n' % message['data'].decode()
-    headers = { "Content-Type" : "text/event-stream",
-                "Cache-Control" : "no-cache",
-                "X-Accel-Buffering" : "no"}
+    headers = { 
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no"
+    }
     return Response(event_stream(red), headers=headers)
