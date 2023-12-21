@@ -35,7 +35,7 @@ def emailpass(mode) :
     # request email to user and send a secret code
     if request.method == 'GET' :
         return render_template('emailpass/emailpass.html')
-    if request.method == 'POST' :
+    elif request.method == 'POST' :
         session['email'] = request.form['email'].lower()
         logging.info("email = %s", session['email'])
         session['code'] = str(randint(10000, 99999))
@@ -49,6 +49,9 @@ def emailpass(mode) :
             flash(_("Email failed."), 'danger')
             return render_template('emailpass/emailpass.html')
         return redirect ('emailpass/authentication')
+    else:
+        return jsonify(),404
+
 
 
 def emailpass_authentication(mode) :
@@ -62,7 +65,7 @@ def emailpass_authentication(mode) :
         session['try_number'] +=1
         logging.info('code received = %s', code)
         if code == session['code'] and datetime.now().timestamp() < session['code_delay'] :
-    	    # success exit, lets display a a QR code or an universal link in same session
+        # success exit, lets display a a QR code or an universal link in same session
             return redirect(mode.server + 'emailpass/qrcode')
         elif session['code_delay'] < datetime.now().timestamp() :
             flash(_("Code expired."), "warning")
@@ -96,7 +99,7 @@ def emailpass_qrcode(red, mode) :
                                 deeplink_talao=deeplink_talao,
                                 deeplink_altme=deeplink_altme)
 
-   
+
 async def emailpass_enpoint(id, red, mode):
     credential = json.load(open('./verifiable_credentials/EmailPass.jsonld', 'r'))
     credential["issuer"] = issuer_did 
@@ -116,9 +119,8 @@ async def emailpass_enpoint(id, red, mode):
             "credential_manifest" : credential_manifest
         }
         return jsonify(credential_offer)
-
-    else :  #POST
-        try :
+    else:  # POST
+        try:
             credential['credentialSubject']['email'] = red.get(id).decode()
         except :
             logging.error('redis data expired')

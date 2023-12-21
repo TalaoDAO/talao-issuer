@@ -9,7 +9,6 @@ import didkit
 import redis
 import os
 import sys
-import json
 from flask_babel import Babel, _, refresh
 from datetime import timedelta
 import markdown
@@ -52,7 +51,7 @@ app.config['SESSION_TYPE'] = 'redis' # Redis server side session
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60) # session lifetime
 app.config['SESSION_FILE_THRESHOLD'] = 100
 app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "1.5.1"
+app.jinja_env.globals['Version'] = "1.5.2"
 
 # site X
 app.config.update(
@@ -112,24 +111,6 @@ def user_language(mode) :
 	#refresh()
 	#return redirect (request.referrer)
 	return 'en'
-
-
-"""
-# Google universal link for jpma
-@app.route('/.well-known/assetlinks.json' , methods=['GET']) 
-def assetlinks(): 
-    document = json.load(open('jpma_assetlinks.json', 'r'))
-    return jsonify(document)
-
-
-# Apple universal link for jpma
-@app.route('/.well-known/apple-app-site-association' , methods=['GET']) 
-def apple_app_site_association(): 
-    document = json.load(open('jpma_apple-app-site-association.json', 'r'))
-    return jsonify(document)
-"""
-
-
 
 @app.route('/md_file', methods = ['GET', 'POST'])
 def md_file() :
@@ -225,26 +206,15 @@ auth = OIDCAuthentication({
 
 """ 
 Verifiable Credential presented by user is transfered through vp_token in OAuth2 userinfo endpoint
-
-"""
-
-"""
-@app.route('/pornhub',  methods = ['GET', 'POST'])
-def site_x():
-	if request.method == "GET" :
-		session.clear()
-		return render_template('site_x.html')
-	else :
-		return redirect('/pornhub/login') 
 """
 
 
 @app.route('/pokemi',  methods = ['GET', 'POST'])
 def site_x():
-	if request.method == "GET" :
+	if request.method == "GET":
 		session.clear()
 		return render_template('site_x_pokemi.html')
-	else :
+	else:
 		return redirect('/pokemi/login') 
 
 
@@ -257,15 +227,6 @@ def site_x_15():
 		return redirect('/pornhub15/login') 
 
 
-"""
-@app.route('/pornhub/login')
-@auth.oidc_auth('provider_18')
-def index():
-    user_session = UserSession(session)    
-    return jsonify(access_token=user_session.access_token,
-                   id_token=user_session.id_token,
-                   userinfo=user_session.userinfo) # this is the user credential
-"""
 
 @app.route('/pokemi/login')
 @auth.oidc_auth('provider_pokemi')
@@ -285,13 +246,6 @@ def index_15():
                    userinfo=user_session.userinfo) # this is the user credential
 
 
-
-
-
-
-
-
-
 @app.route('/pornhub_talao',  methods = ['GET', 'POST'])
 def site_x_talao():
 	if request.method == "GET" :
@@ -308,7 +262,6 @@ def index_talao():
     return jsonify(access_token=user_session.access_token,
                    id_token=user_session.id_token,
                    userinfo=user_session.userinfo) # this is the user credential
-
 
 
 # MAIN entry point. Flask test server
