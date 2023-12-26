@@ -35,7 +35,8 @@ class currentMode() :
 		self.slack_url = passwords['slack_url'] 
 		self.slack_nft_url = passwords['slack_nft_url']   
 		self.meranti_test = passwords['meranti_test']
-		self.meranti_main = passwords['meranti_main']                   # sms.py		
+		self.meranti_main = passwords['meranti_main'] 
+		self.wallet_provider = passwords['wallet-provider']                  # sms.py		
 	
 		# En Prod chez AWS 
 		if self.myenv == 'aws':
