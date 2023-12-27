@@ -42,7 +42,8 @@ def emailpass(mode) :
         session['code_delay'] = (datetime.now() + CODE_DELAY).timestamp()
         subject = _('Altme pending email verification ')
         if session['email'].split('@')[1] == "wallet-provider.io":
-            pass
+            session['try_number'] = 1
+            logging.info("wallet provider email request")
         elif message.messageHTML(subject, session['email'], 'code_auth_en', {'code' : session['code']}, mode) :
             logging.info('secret code sent = %s', session['code'])
             flash(_("Secret code sent to your email."), 'success')
