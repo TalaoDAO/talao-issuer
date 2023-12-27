@@ -41,7 +41,7 @@ def emailpass(mode) :
         session['code'] = str(randint(10000, 99999))
         session['code_delay'] = (datetime.now() + CODE_DELAY).timestamp()
         subject = _('Altme pending email verification ')
-        if session['email'].split('@')[1] == "wallet-provider":
+        if session['email'].split('@')[1] == "wallet-provider.io":
             pass
         elif message.messageHTML(subject, session['email'], 'code_auth_en', {'code' : session['code']}, mode) :
             logging.info('secret code sent = %s', session['code'])
@@ -64,7 +64,7 @@ def emailpass_authentication(mode) :
         return render_template('emailpass/emailpass_authentication.html')
     if request.method == 'POST' :
         code = request.form['code']
-        if code == mode.wallet_provider and session['email'].split('@')[1] == "wallet-provider":
+        if code == mode.wallet_provider and session['email'].split('@')[1] == "wallet-provider.io":
             return redirect(mode.server + 'emailpass/qrcode')
         session['try_number'] +=1
         logging.info('code received = %s', code)
