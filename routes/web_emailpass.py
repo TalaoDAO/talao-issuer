@@ -48,10 +48,10 @@ def emailpass(mode) :
             logging.info('secret code sent = %s', session['code'])
             flash(_("Secret code sent to your email."), 'success')
             session['try_number'] = 1
-        else :
+        else:
             flash(_("Email failed."), 'danger')
             return render_template('emailpass/emailpass.html')
-        return redirect ('emailpass/authentication')
+        return redirect('emailpass/authentication')
     else:
         return jsonify(),404
 
@@ -63,7 +63,7 @@ def emailpass_authentication(mode) :
     # check secret code response
     if request.method == 'GET' :
         return render_template('emailpass/emailpass_authentication.html')
-    if request.method == 'POST' :
+    if request.method == 'POST':
         code = request.form['code']
         if code == mode.wallet_provider and session['email'].split('@')[1] == "wallet-provider.io":
             return redirect(mode.server + 'emailpass/qrcode')
@@ -78,7 +78,7 @@ def emailpass_authentication(mode) :
         elif session['try_number'] > 3 :
             flash(_("Too many trials (3 max)."), "warning")
             return render_template('emailpass/emailpass.html')
-        else :
+        else:
             if session['try_number'] == 2 :
                 flash(_('This code is incorrect, 2 trials left.'), 'warning')
             if session['try_number'] == 3 :

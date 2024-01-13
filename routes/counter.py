@@ -6,7 +6,7 @@ logging.basicConfig(level=logging.INFO)
 
 VC_LIST = [
     "emailpass", "phonepass", "agerange",
-    "over18", "over13", "over15", "verifiableid",
+    "over18", "over13", "over15", "over21", "over50", "over65", "verifiableid",
     "liveness", "diploma", "chainborn", "nationality",
     "tezotopia", "bloometa", "twitter", "defi",
     "tezosassociatedaddress", "binanceassociatedaddress", "fantomassociatedaddress",
@@ -14,20 +14,15 @@ VC_LIST = [
 ]
 
 
-def init_app(app,mode) :
-    app.add_url_rule('/counter/get',  view_func=counter_get, methods = ['GET'])
-    app.add_url_rule('/counter/update',  view_func=counter_update, methods = ['POST'], defaults = {"mode" : mode})
-    app.add_url_rule('/counter/nft/get',  view_func=counter_nft_get, methods = ['GET'])
-    app.add_url_rule('/counter/nft/update',  view_func=counter_nft_update, methods = ['POST'], defaults = {"mode" : mode})
+def init_app(app, mode):
+    app.add_url_rule('/counter/get',  view_func=counter_get, methods=['GET'])
+    app.add_url_rule('/counter/update',  view_func=counter_update, methods=['POST'], defaults={"mode": mode})
+    app.add_url_rule('/counter/nft/get',  view_func=counter_nft_get, methods=['GET'])
+    app.add_url_rule('/counter/nft/update',  view_func=counter_nft_update, methods=['POST'], defaults={"mode": mode})
     return
 
 
-
-"""
-For VCs
-
-"""
-def counter_get() :
+def counter_get():
     """
     to get the values 
     """
@@ -44,7 +39,7 @@ def counter_update(mode):
     requests.post(mode.server + 'counter/update', data=data)
     """
     vc = request.form.get('vc').lower()
-    if vc not in VC_LIST :
+    if vc not in VC_LIST:
         logging.warning("%s not in VC LIST", vc)
         return jsonify('Bad request'), 400
     count = request.form.get('count')
@@ -52,7 +47,7 @@ def counter_update(mode):
         return jsonify('Bad request'), 400
     counter = json.load(open("counter.json", "r"))
     credential_list = list(counter.keys())
-    for credential in credential_list :
+    for credential in credential_list:
         if credential == vc :
             counter[credential] += int(count)
             counter["total"] += int(count)

@@ -25,12 +25,24 @@ PATHS = {
     "AGE_LIVENESS": '/age-antispoofing'
 }
 
-def init_app(app,red, mode) :
-    app.add_url_rule('/ai/over13',  view_func=ai_over13, methods = ['POST'], defaults ={'mode' : mode, 'red' : red})
-    app.add_url_rule('/ai/over18',  view_func=ai_over18, methods = ['POST'], defaults ={'mode' : mode, 'red' : red})
-    app.add_url_rule('/ai/over15',  view_func=ai_over15, methods = ['POST'], defaults ={'mode' : mode, 'red' : red})
-    app.add_url_rule('/ai/agerange',  view_func=ai_agerange, methods = ['POST'], defaults ={'mode' : mode, 'red' : red})
-    app.add_url_rule('/ai/ageestimate',  view_func=ai_ageestimate, methods = ['POST'], defaults ={'mode' : mode, 'red' : red})
+
+def update_counter(vc_for_counter, mode):
+    data = {
+            "vc": vc_for_counter,
+            "count": "1"
+        }
+    requests.post(mode.server + 'counter/update', data=data)
+
+
+def init_app(app, red, mode):
+    app.add_url_rule('/ai/over13',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 13})
+    app.add_url_rule('/ai/over18',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 18})
+    app.add_url_rule('/ai/over15',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 15})
+    app.add_url_rule('/ai/over21',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 21})
+    app.add_url_rule('/ai/over50',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 50})
+    app.add_url_rule('/ai/over65',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 65})
+    app.add_url_rule('/ai/agerange',  view_func=ai_agerange, methods=['POST'], defaults={'mode': mode, 'red': red})
+    app.add_url_rule('/ai/ageestimate',  view_func=ai_ageestimate, methods=['POST'], defaults ={'mode': mode, 'red': red})
     return
 
 
@@ -41,10 +53,10 @@ def execute(request):
 
 
 def generate_session(encoded_string, mode):
-    img = {"img" : encoded_string.decode("utf-8"),
-            "img_validation_level": "low"
+    img = {
+        "img": encoded_string.decode("utf-8"),
+        "img_validation_level": "low"
     }
-   
     payload_string = json.dumps(img).encode()
 
     signed_request = (
@@ -64,97 +76,97 @@ def generate_session(encoded_string, mode):
     return response_payload
 
 
-def sha256 (x) :
+def sha256(x):
     return hashlib.sha256(x).digest().hex()
 
 
 # credential endpoint
-async def ai_ageestimate(red, mode) :
-    try : 
+async def ai_ageestimate(red, mode):
+    try: 
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()    
-    except :
+    except Exception:
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
+        endpoint_response = {"error": "invalid_request", "error_description": "request is not correctly formated"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    try :  
+    try:  
         wallet_did = wallet_request['did']
         did_authn = wallet_request["vp"]
         encoded_string = wallet_request["base64_encoded_string"].encode()
         challenge = json.loads(did_authn)['proof']['challenge']
-    except :
+    except Exception:
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "data sent are not correctly formated"}
+        endpoint_response = {"error": "invalid_request", "error_description": "data sent are not correctly formated"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    if  x_api_key != mode.altme_ai_token :
+    if x_api_key != mode.altme_ai_token:
         logging.warning('api key is incorrect')
-        endpoint_response= {"error": "unauthorized_client"}
+        endpoint_response = {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    if  sha256(encoded_string) != challenge :
+    if sha256(encoded_string) != challenge:
         logging.warning("Proof challenge does not match")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Challeng does not match"}
+        endpoint_response = {"error": "invalid_request", "error_description": "Challeng does not match"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
-    if result :
+    if result:
         logging.warning("Verify presentation  error %s", result)
-        #headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        #endpoint_response = {"error" : "invalid_proof", "error_description" : "The proof check fails"}
         # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     # test if age estimate has already been done recently
-    try :
+    try:
         data = json.loads(red.get(challenge).decode())
         age = data['age']
         st_dev = data['st_dev']
         prediction = data['prediction']
         logging.info("age is available in redis")
-    except :   
+    except Exception:
         logging.info("call Yoti server")
         result = generate_session(encoded_string, mode)
-        try :
+        try:
             message.message_html("New request to Yoti", "thierry@altme.io", "", mode)
-        except :
+        except Exception:
             logging.warning("failed to send message")
-        try :
+        try:
             age = result['age']['age']
             st_dev = result['age']['st_dev']
             prediction = result['antispoofing']['prediction']
-            data = {'age' : age,
-                     'st_dev' : st_dev,
-                     'prediction' : prediction}
+            data = {
+                'age': age,
+                'st_dev': st_dev,
+                'prediction': prediction
+            }
             red.setex(challenge, 240, json.dumps(data))
             logging.info("age is now stored in redis for 240s")
-        except :
+        except Exception:
             logging.error(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_request", "error_description" : json.dumps(result)}
+            endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     logging.info("age estimate by AI is %s", age)
     logging.info("estimate quality by AI is %s", st_dev)
     logging.info("prediction is %s", prediction)
     
-    #if prediction != 'real' :
+    #if prediction != 'real':
     #    logging.warning('prediction = %s', prediction)
     
-    if st_dev > 6  :
+    if st_dev > 6:
         logging.warning(json.dumps(result))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Uncertain estimate"}
+        endpoint_response = {"error": "invalid_request", "error_description": "Uncertain estimate"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     credential = json.loads(open("./verifiable_credentials/AgeEstimate.jsonld", 'r').read())
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
     credential['issuer'] = issuer_did
-    credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+    credential['id'] = "urn:uuid:" + str(uuid.uuid1())
     credential['credentialSubject']['id'] = wallet_did
     credential['credentialSubject']['ageEstimate'] = str(age)
     credential['credentialSubject']['kycId'] =  'AI age estimate'
@@ -171,82 +183,85 @@ async def ai_ageestimate(red, mode) :
     return jsonify(credential_signed)
 
 
-# credential endpoint
-async def ai_over13(red, mode) :
-    try : 
+# credential endpoint General
+async def ai_over(red, mode, age_over):
+    try:
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()    
-    except :
+    except Exception:
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
+        endpoint_response = {"error": "invalid_request", "error_description": "request is not correctly formated"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    try :  
+    try:  
         wallet_did = wallet_request['did']
         did_authn = wallet_request["vp"]
         encoded_string = wallet_request["base64_encoded_string"].encode()
         challenge = json.loads(did_authn)['proof']['challenge']
-    except :
+    except Exception:
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "data sent are not correctly formated"}
+        endpoint_response = {"error": "invalid_request", "error_description": "data sent are not correctly formated"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    if  x_api_key != mode.altme_ai_token :
+    if x_api_key != mode.altme_ai_token:
         logging.warning('api key is incorrect')
-        endpoint_response= {"error": "unauthorized_client"}
+        endpoint_response = {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    if  sha256(encoded_string) != challenge :
+    if sha256(encoded_string) != challenge:
         logging.warning("Proof challenge does not match")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Challeng does not match"}
+        endpoint_response = {"error": "invalid_request", "error_description": "Challeng does not match"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
-    if result :
+    if result:
         logging.warning("Verify presentation  error %s", result)
         #headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        #endpoint_response = {"error" : "invalid_proof", "error_description" : "The proof check fails"}
+        #endpoint_response = {"error": "invalid_proof", "error_description": "The proof check fails"}
         # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     # test if age estimate has already been done recently
-    try :
+    try:
         data = json.loads(red.get(challenge).decode())
         age = data['age']
         st_dev = data['st_dev']
         prediction = data['prediction']
         logging.info("age is available in redis")
-    except :   
+    except Exception:   
         logging.info("call Yoti server, age not available")
         result = generate_session(encoded_string, mode)
-        try :
+        try:
             age = result['age']['age']
             st_dev = result['age']['st_dev']
             prediction = result['antispoofing']['prediction']
-            data = {'age' : age,
-                     'st_dev' : st_dev,
-                     'prediction' : prediction}
+            data = {
+                'age': age,
+                'st_dev': st_dev,
+                'prediction': prediction
+            }
             red.setex(challenge, 240, json.dumps(data))
             logging.info("age is stored in redis for 240 sec")
-        except :
+        except Exception:
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_request", "error_description" : json.dumps(result)}
+            endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    #logging.info("age estimate by AI is %s", age)
-    #logging.info("estimate quality by AI is %s", st_dev)
-    
-    if st_dev > 6  :
+    if st_dev > 6:
         logging.warning(json.dumps(result))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Uncertain estimate"}
+        endpoint_response = {"error": "invalid_request", "error_description": "Uncertain estimate"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
-    if age >= 15 :
-        credential = json.loads(open("./verifiable_credentials/Over13.jsonld", 'r').read())
+    credential_filename = '/Over' + str(age_over) + '.jsonld'
+    vc_for_counter = 'over' + str(age_over)
+    if age_over in [13, 15, 18]:
+        age_over = age_over + 2       
+    if age >= age_over:
+        credential = json.loads(open("./verifiable_credentials/" + credential_filename , 'r').read())
         credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
         credential['issuer'] = issuer_did
@@ -265,298 +280,91 @@ async def ai_over13(red, mode) :
                 key)
         
         # update counter
-        data = {"vc" : "over13" , "count" : "1" }
-        requests.post(mode.server + 'counter/update', data=data)
+        update_counter(vc_for_counter, mode)
         
-        logging.info("VC Over13 is sent to wallet")
+        logging.info("VC %s is sent to wallet", vc_for_counter)
         return jsonify(credential_signed)
-    else :
-        logging.warning("Age is estimated under 13")
+    else:
+        logging.warning("Age is estimated under %s", str(age_over))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_over13", "error_description" : "User is estimated under 13"}
-        return Response(response=json.dumps(endpoint_response), status=403, headers=headers)  
-
-
-
-# credential endpoint
-async def ai_over15(red, mode) :
-    try : 
-        x_api_key = request.headers['X-API-KEY']
-        wallet_request = request.get_json()    
-    except :
-        logging.warning("Invalid request")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    try :  
-        wallet_did = wallet_request['did']
-        did_authn = wallet_request["vp"]
-        encoded_string = wallet_request["base64_encoded_string"].encode()
-        challenge = json.loads(did_authn)['proof']['challenge']
-    except :
-        logging.warning("Invalid request")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "data sent are not correctly formated"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    if  x_api_key != mode.altme_ai_token :
-        logging.warning('api key is incorrect')
-        endpoint_response= {"error": "unauthorized_client"}
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    if  sha256(encoded_string) != challenge :
-        logging.warning("Proof challenge does not match")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Challeng does not match"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
-    if result :
-        logging.warning("Verify presentation  error %s", result)
-        #headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        #endpoint_response = {"error" : "invalid_proof", "error_description" : "The proof check fails"}
-        # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    
-    # test if age estimate has already been done recently
-    try :
-        data = json.loads(red.get(challenge).decode())
-        age = data['age']
-        st_dev = data['st_dev']
-        prediction = data['prediction']
-        logging.info("age is available in redis")
-    except :   
-        logging.info("call Yoti server, age not available")
-        result = generate_session(encoded_string, mode)
-        try :
-            age = result['age']['age']
-            st_dev = result['age']['st_dev']
-            prediction = result['antispoofing']['prediction']
-            data = {'age' : age,
-                     'st_dev' : st_dev,
-                     'prediction' : prediction}
-            red.setex(challenge, 240, json.dumps(data))
-            logging.info("age is stored in redis for 240 sec")
-        except :
-            logging.warning(json.dumps(result))
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_request", "error_description" : json.dumps(result)}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    if st_dev > 6  :
-        logging.warning(json.dumps(result))
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Uncertain estimate"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    
-    if age >= 17 :
-        credential = json.loads(open("./verifiable_credentials/Over15.jsonld", 'r').read())
-        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
-        credential['issuer'] = issuer_did
-        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
-        credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['kycId'] =  'AI age estimate'
-        credential['credentialSubject']['kycProvider'] = 'Yoti'
-        credential['credentialSubject']['kycMethod'] = 'Yoti artificial intelligence engine'
-        didkit_options = {
-                "proofPurpose": "assertionMethod",
-                "verificationMethod": issuer_vm
-        }
-        credential_signed =  await didkit.issue_credential(
-                json.dumps(credential),
-                didkit_options.__str__().replace("'", '"'),
-                key)
-        
-        # update counter
-        data = {"vc" : "over15" , "count" : "1" }
-        requests.post(mode.server + 'counter/update', data=data)
-
-        logging.info("VC Over15 is sent to wallet")
-        return jsonify(credential_signed)
-    else :
-        logging.warning("Age is estimated under 15")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_over13", "error_description" : "User is estimated under 13"}
-        return Response(response=json.dumps(endpoint_response), status=403, headers=headers)  
-
-
-# credential endpoint
-async def ai_over18(red,mode) :
-    try : 
-        x_api_key = request.headers['X-API-KEY']
-        wallet_request = request.get_json()    
-    except :
-        logging.warning("Invalid request")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    try :  
-        wallet_did = wallet_request['did']
-        did_authn = wallet_request["vp"]
-        encoded_string = wallet_request["base64_encoded_string"].encode()
-        challenge = json.loads(did_authn)['proof']['challenge']
-    except :
-        logging.warning("Invalid data sent")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "data sent are not correctly formated"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    
-    if  x_api_key != mode.altme_ai_token :
-        logging.warning('api key does not match')
-        endpoint_response= {"error": "unauthorized_client"}
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    if  sha256(encoded_string) != challenge :
-        logging.warning("Challenge does not match")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Challeng does not match"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
-    if result :
-        logging.warning("Verify presentation  error %s", result)
-        #headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        #endpoint_response = {"error" : "invalid_proof", "error_description" : "The proof check fails"}
-        # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-   
-    #test if age estimate has already been done recently
-    try :
-        data = json.loads(red.get(challenge).decode())
-        age = data['age']
-        st_dev = data['st_dev']
-        prediction = data['prediction']
-        logging.info("age is available in redis")
-    except :   
-        logging.info("call Yoti server, age not available")
-        result = generate_session(encoded_string, mode)
-        try :
-            age = result['age']['age']
-            st_dev = result['age']['st_dev']
-            prediction = result['antispoofing']['prediction']
-            data = {'age' : age,
-                    'st_dev' : st_dev,
-                    'prediction' : prediction}
-            red.setex(challenge, 240, json.dumps(data))
-            logging.info("age is stored in redis for 240 sec")
-        except :
-            logging.warning(json.dumps(result))
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_request", "error_description" : json.dumps(result)}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    
-    if st_dev > 6 :
-        logging.warning(json.dumps(result))
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Uncertain estimate"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    if age >= 20.3 :
-        credential = json.loads(open("./verifiable_credentials/Over18.jsonld", 'r').read())
-        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
-        credential['issuer'] = issuer_did
-        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
-        credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['kycId'] =  'AI age estimate'
-        credential['credentialSubject']['kycProvider'] = 'Yoti'
-        credential['credentialSubject']['kycMethod'] = 'Yoti artificial intelligence engine'
-        didkit_options = {
-                "proofPurpose": "assertionMethod",
-                "verificationMethod": issuer_vm
-        }
-        credential_signed =  await didkit.issue_credential(
-                json.dumps(credential),
-                didkit_options.__str__().replace("'", '"'),
-                key)
-        
-        # update counter
-        data = {"vc" : "over18" , "count" : "1" }
-        requests.post(mode.server + 'counter/update', data=data)
-
-        logging.info("VC Over18 is sent to wallet")
-        return jsonify(credential_signed)
-    else :
-        logging.warning("Age is estimated under 18")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_over18", "error_description" : "User is estimated under 18"}
+        endpoint_response = {"error": "invalid_over13", "error_description": "User is estimated under 13"}
         return Response(response=json.dumps(endpoint_response), status=403, headers=headers)  
 
 
     # credential endpoint
-async def ai_agerange(red, mode) :
-    try : 
+async def ai_agerange(red, mode):
+    try:
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()    
-    except :
+    except Exception:
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "request is not correctly formated"}
+        endpoint_response = {"error": "invalid_request", "error_description": "request is not correctly formated"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    try :  
+    try:
         wallet_did = wallet_request['did']
         did_authn = wallet_request["vp"]
         encoded_string = wallet_request["base64_encoded_string"].encode()
         challenge = json.loads(did_authn)['proof']['challenge']
-    except :
+    except Exception:
         logging.warning("Invalid data sent")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "data sent are not correctly formated"}
+        endpoint_response = {"error": "invalid_request", "error_description": "data sent are not correctly formated"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
-    if  x_api_key != mode.altme_ai_token :
+    if x_api_key != mode.altme_ai_token:
         logging.warning('api key does not match')
-        endpoint_response= {"error": "unauthorized_client"}
+        endpoint_response = {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    if  sha256(encoded_string) != challenge :
+    if sha256(encoded_string) != challenge:
         logging.warning("Challenge does not match")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Challeng does not match"}
+        endpoint_response = {"error": "invalid_request", "error_description": "Challeng does not match"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
-    if result :
+    if result:
         logging.warning("Verify presentation  error %s", result)
         #headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        #endpoint_response = {"error" : "invalid_proof", "error_description" : "The proof check fails"}
+        #endpoint_response = {"error": "invalid_proof", "error_description": "The proof check fails"}
         # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-   
-     #test if age estimate has already been done recently
-    try :
+        #test if age estimate has already been done recently
+    try:
         data = json.loads(red.get(challenge).decode())
         age = data['age']
         st_dev = data['st_dev']
         prediction = data['prediction']
         logging.info("age is available in redis")
-    except :   
+    except Exception:  
         logging.info("call Yoti server, age not available")
         result = generate_session(encoded_string, mode)
-        try :
+        try:
             age = result['age']['age']
             st_dev = result['age']['st_dev']
             prediction = result['antispoofing']['prediction']
-            data = {'age' : age,
-                     'st_dev' : st_dev,
-                     'prediction' : prediction}
+            data = {
+                'age': age,
+                'st_dev': st_dev,
+                'prediction': prediction
+            }
             red.setex(challenge, 240, json.dumps(data))
             logging.info("age is stored in redis for 240 sec")
-        except :
+        except Exception:
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error" : "invalid_request", "error_description" : json.dumps(result)}
+            endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     #logging.info("age estimate by AI is %s", age)
     #logging.info("estimate quality by AI is %s", st_dev)
     
-    if st_dev > 6  :
+    if st_dev > 6 :
         logging.warning(json.dumps(result))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error" : "invalid_request", "error_description" : "Uncertain estimate"}
+        endpoint_response = {"error": "invalid_request", "error_description": "Uncertain estimate"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-  
+
     credential = json.loads(open("./verifiable_credentials/AgeRange.jsonld", 'r').read())
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
@@ -567,22 +375,22 @@ async def ai_agerange(red, mode) :
     credential['credentialSubject']['kycProvider'] = 'Yoti'
     credential['credentialSubject']['kycMethod'] = 'Yoti artificial intelligence engine'
 
-    #age range : "-13" or "14-17” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
-    if age < 15 :
+    #age range: "-13" or "14-17” or “18-24”, “25-34”, “35-44”, “45-54”, “55-64”, “65+”.
+    if age < 15:
         credential['credentialSubject']['ageRange'] = "-13"
-    if age < 18 :
+    if age < 18:
         credential['credentialSubject']['ageRange'] = "14-17"
-    elif age < 25 :
+    elif age < 25:
         credential['credentialSubject']['ageRange'] = "18-24"
-    elif age < 35 :
+    elif age < 35:
         credential['credentialSubject']['ageRange'] = "25-34"
-    elif age < 45 :
+    elif age < 45:
         credential['credentialSubject']['ageRange'] = "35-44"
-    elif age < 55 :
+    elif age < 55:
         credential['credentialSubject']['ageRange'] = "45-54"
-    elif age < 65 :
+    elif age < 65:
         credential['credentialSubject']['ageRange'] = "55-64"
-    else :
+    else:
         credential['credentialSubject']['ageRange'] = "65+"
     
     expiration = datetime.now() + timedelta(weeks=52)
@@ -598,8 +406,7 @@ async def ai_agerange(red, mode) :
             key
     )
     # update counter
-    data = {"vc" : "agerange" , "count" : "1" }
-    requests.post(mode.server + 'counter/update', data=data)
+    update_counter("agerange", mode)
     
     logging.info("VC AgeRange is sent to wallet")
     return jsonify(signed_credential)

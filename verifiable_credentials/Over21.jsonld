@@ -1,0 +1,43 @@
+{
+    "@context": ["https://www.w3.org/2018/credentials/v1",
+        {
+            "Over21" : {
+                "@id": "https://github.com/TalaoDAO/context#over21",
+                "@context": {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "schema" : "https://schema.org/",
+                    "id": "@id",
+                    "type": "@type",
+                    "kycProvider" : "schema:legalName",
+                    "kycMethod" : "schema:identifier",
+                    "ageOver" : "schema:suggestedMinAge",
+                    "kycId" : "schema:identifier",
+                    "issuedBy" : {
+                        "@id" : "schema:issuedBy",
+                        "@context" : {
+                            "@protected": true,
+                            "logo": {"@id" : "schema:image", "@type" : "@id"},
+                            "name" : "schema:legalName"
+                        }
+                    }
+                   
+                }
+            }
+        }
+    ],
+    "id": "",
+    "type": ["VerifiableCredential", "Over21"],
+    "issuer": "",
+    "issuanceDate": "",
+    "credentialSubject" : {
+        "type" : "Over21",
+        "ageOver" : "21",
+        "kycProvider" : "",
+        "kycId" : "",
+        "kycMethod" : "",
+        "issuedBy": {
+            "name": "Altme"
+        }
+    }
+}
