@@ -258,7 +258,7 @@ async def ai_over(red, mode, age_over):
     
     credential_filename = '/Over' + str(age_over) + '.jsonld'
     vc_for_counter = 'over' + str(age_over)
-    if age_over in [13, 15, 18]:
+    if age_over in [13, 15, 18, 21]:
         age_over = age_over + 2       
     if age >= age_over:
         credential = json.loads(open("./verifiable_credentials/" + credential_filename , 'r').read())
@@ -287,7 +287,7 @@ async def ai_over(red, mode, age_over):
     else:
         logging.warning("Age is estimated under %s", str(age_over))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error": "invalid_over13", "error_description": "User is estimated under 13"}
+        endpoint_response = {"error": "invalid_over13", "error_description": "User is estimated under " + str(age_over)}
         return Response(response=json.dumps(endpoint_response), status=403, headers=headers)  
 
 
