@@ -35,6 +35,7 @@ def update_counter(vc_for_counter, mode):
 
 
 def init_app(app, red, mode):
+    app.add_url_rule('/.well-known/openid-configuration', view_func=openid_configuration, methods=['GET'], defaults={'mode': mode})
     app.add_url_rule('/ai/over13',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 13})
     app.add_url_rule('/ai/over18',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 18})
     app.add_url_rule('/ai/over15',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 15})
@@ -44,6 +45,30 @@ def init_app(app, red, mode):
     app.add_url_rule('/ai/agerange',  view_func=ai_agerange, methods=['POST'], defaults={'mode': mode, 'red': red})
     app.add_url_rule('/ai/ageestimate',  view_func=ai_ageestimate, methods=['POST'], defaults ={'mode': mode, 'red': red})
     return
+
+
+def openid_configuration(mode):
+    credential_manifest = {
+        "id": "Identity_cards",
+        "issuer": {
+            "id": "uuid:0001",
+            "name": "Altme issuer"
+        },
+        "output_descriptors": []
+    }
+    for cm in ['over18', 'over13', 'over15', 'over21', 'over50', 'over65', 'agerange']:
+        over = json.loads(open("./credential_manifest/" + cm + "_credential_manifest.json", 'r').read())['output_descriptors'][0]
+        credential_manifest["output_descriptors"].append(over)
+    oidc = {
+        "issuer": mode.server,
+        "token_endpoint": mode.server + 'token',
+        "credential_endpoint": mode.server + 'credential',
+        "credential_manifest": credential_manifest,
+        "token_endpoint_auth_methods_supported": [
+            "client_secret_basic"
+        ]
+    }
+    return jsonify(oidc)
 
 
 def execute(request):
