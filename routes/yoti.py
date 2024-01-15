@@ -36,6 +36,7 @@ def update_counter(vc_for_counter, mode):
 
 def init_app(app, red, mode):
     app.add_url_rule('/.well-known/openid-configuration', view_func=openid_configuration, methods=['GET'], defaults={'mode': mode})
+    app.add_url_rule('/.well-known/openid-credential-issuer', view_func=openid_configuration, methods=['GET'], defaults={'mode': mode})
     app.add_url_rule('/ai/over13',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 13})
     app.add_url_rule('/ai/over18',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 18})
     app.add_url_rule('/ai/over15',  view_func=ai_over, methods=['POST'], defaults={'mode': mode, 'red': red, 'age_over': 15})
