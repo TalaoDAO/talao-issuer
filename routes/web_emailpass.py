@@ -17,7 +17,7 @@ QRCODE_DELAY = 60
 
 ISSUER_ID_JWT_VC_JSON = "tjxhjeilzg"
 OIDC4VC_URL = "https://talao.co/sandbox/oidc4vc/issuer/api"
-client_secret_jwt_vc_json = "4bbaf33e-c1e3-11ee-97fa-0a1628958560" # json.load(open("keys.json", "r"))["client_secret_jwt_vc_json"]
+client_secret_jwt_vc_json = json.load(open("keys.json", "r"))["client_secret_jwt_vc_json"]
 
 
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
