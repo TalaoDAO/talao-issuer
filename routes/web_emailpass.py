@@ -15,6 +15,11 @@ OFFER_DELAY = timedelta(seconds= 10*60)
 CODE_DELAY = timedelta(seconds= 180)
 QRCODE_DELAY = 60
 
+ISSUER_ID_JWT_VC_JSON = "tjxhjeilzg"
+OIDC4VC_URL = "https://talao.co/sandbox/oidc4vc/issuer/api"
+client_secret_jwt_vc_json = "4bbaf33e-c1e3-11ee-97fa-0a1628958560" # json.load(open("keys.json", "r"))["client_secret_jwt_vc_json"]
+
+
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
@@ -24,6 +29,9 @@ def init_app(app,red, mode) :
     app.add_url_rule('/emailproof',  view_func=emailpass, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass',  view_func=emailpass, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass/qrcode',  view_func=emailpass_qrcode, methods = ['GET', 'POST'], defaults={'mode' : mode, 'red' : red})
+    app.add_url_rule('/emailpass/oidc4vc',  view_func=emailpass_oidc4vc, methods = ['GET', 'POST'], defaults={'mode' : mode, 'red' : red})
+    app.add_url_rule('/emailpass/oidc4vc/callback',  view_func=emailpass_oidc4vc_callback, methods = ['GET', 'POST'])
+
     app.add_url_rule('/emailpass/offer/<id>',  view_func=emailpass_enpoint, methods = ['GET', 'POST'], defaults={'red' : red, 'mode' : mode})
     app.add_url_rule('/emailpass/authentication',  view_func=emailpass_authentication, methods = ['GET', 'POST'], defaults={'mode' : mode})
     app.add_url_rule('/emailpass/stream',  view_func=emailpass_stream, methods = ['GET', 'POST'], defaults={'red' : red})
@@ -34,8 +42,14 @@ def init_app(app,red, mode) :
 def emailpass(mode) :
     # request email to user and send a secret code
     if request.method == 'GET' :
-        return render_template('emailpass/emailpass.html')
+        if request.args.get('format') =='jwt_vc_json':
+            format = 'jwt_vc_json'
+        else:
+            format = "ldp_vc"
+        logging.info("VC format is %s", format)
+        return render_template('emailpass/emailpass.html', format=format)
     elif request.method == 'POST' :
+        session['format'] = request.form['format']
         session['email'] = request.form['email'].lower()
         logging.info("email = %s", session['email'])
         session['code'] = str(randint(10000, 99999))
@@ -71,7 +85,11 @@ def emailpass_authentication(mode) :
         logging.info('code received = %s', code)
         if code == session['code'] and datetime.now().timestamp() < session['code_delay'] :
         # success exit, lets display a a QR code or an universal link in same session
-            return redirect(mode.server + 'emailpass/qrcode')
+            print('format = ', session['format'])
+            if session['format'] == 'ldp_vc':
+                return redirect(mode.server + 'emailpass/qrcode')
+            else:
+                return redirect(mode.server + 'emailpass/oidc4vc?email=' + session['email'])
         elif session['code_delay'] < datetime.now().timestamp() :
             flash(_("Code expired."), "warning")
             return render_template('emailpass/emailpass.html')
@@ -153,6 +171,46 @@ async def emailpass_enpoint(id, red, mode):
         message.message("EmailPass sent", "thierry@altme.io", credential['credentialSubject']['email'], mode)
         return jsonify(signed_credential)
  
+
+def emailpass_oidc4vc(red, mode):
+    email = request.args.get('email')
+    print('email = ', email)
+    credential = json.load(open('./verifiable_credentials/EmailPass.jsonld' , 'r'))
+    credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    credential['expirationDate'] = (datetime.now() + timedelta(days= 365)).isoformat() + "Z"
+    credential['credentialSubject']['email'] = email
+    headers = {
+            'Content-Type': 'application/json',
+            'X-API-KEY': client_secret_jwt_vc_json
+    }
+    data = {
+        "vc": {'EmailPass': credential},
+        "issuer_state": "code",
+        "credential_type": ['EmailPass'],
+        "pre-authorized_code": True,
+        "user_pin_required": False,
+        "callback": mode.server + "/emailpass/oidc4vc/callback",
+        'issuer_id': ISSUER_ID_JWT_VC_JSON
+    }
+    resp = requests.post(OIDC4VC_URL, headers=headers, data=json.dumps(data))
+    logging.info("status code = %s", resp.status_code)
+    logging.info(resp.json())
+    try:
+        url = resp.json()['redirect_uri']
+    except Exception:
+        logging.error("error oidc")
+    return redirect(url)
+
+
+def emailpass_oidc4vc_callback():
+    if request.args.get("error"):
+        message = request.args.get("error")
+    else :
+        message = _('Great ! you have now a proof of email.')
+    return render_template('emailpass/emailpass_end.html', message=message)
+
+    #return render_template("emailpass/error.html", error=request.args.get("error").replace("_", " "), error_description=request.args.get("error_description"))
+
 
 def emailpass_end() :
     if not session.get('email') :
