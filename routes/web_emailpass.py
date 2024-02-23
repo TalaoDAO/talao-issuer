@@ -57,7 +57,7 @@ def emailpass(mode):
         elif not request.args.get('draft'):
             draft = "11"
         else:
-            draft = '13'
+            draft = request.args.get('draft')
         logging.info('VC format is %s', format)
         logging.info('VC draft is %s', draft)
         session['draft'] = draft
