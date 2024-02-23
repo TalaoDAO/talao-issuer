@@ -31,7 +31,7 @@ issuer_vm = 'did:web:app.altme.io:issuer#key-1'
 issuer_did = 'did:web:app.altme.io:issuer'
 
 
-def init_app(app,red, mode):
+def init_app(app, red, mode):
     app.add_url_rule('/emailproof',  view_func=emailpass, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/emailpass',  view_func=emailpass, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/emailpass/qrcode',  view_func=emailpass_qrcode, methods=['GET', 'POST'], defaults={'mode': mode, 'red': red})
@@ -192,7 +192,7 @@ async def emailpass_enpoint(id, red, mode):
         red.publish('emailpass', data)
         message.message('EmailPass sent', 'thierry@altme.io', credential['credentialSubject']['email'], mode)
         return jsonify(signed_credential)
- 
+
 
 def emailpass_oidc4vc(mode):
     if not session.get('email'):
@@ -249,7 +249,7 @@ def emailpass_oidc4vc_callback():
 
 def emailpass_end():
     if not session.get('email'):
-        return redirect ('/emailpass')
+        return redirect('/emailpass')
     if request.args['followup'] == 'success':
         message = 'Great ! you have now a proof of email.'
     elif request.args['followup'] == 'expired':
