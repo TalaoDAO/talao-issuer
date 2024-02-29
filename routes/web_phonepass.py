@@ -60,7 +60,7 @@ def phonepass(mode):
         session['draft'] = draft
         session['format'] = format
         return render_template('phonepass/phonepass.html')
-    if request.method == 'POST':
+    elif request.method == 'POST':
         # traiter phone
         session['phone'] = request.form['phone']
         session['code'] = str(randint(10000, 99999))
@@ -74,6 +74,8 @@ def phonepass(mode):
             flash(_("phone failed."), 'danger')
             return render_template('phonepass/phonepass.html')
         return redirect('phonepass/authentication')
+    else:
+        return jsonify("Unauthorized"), 404
 
 
 def phonepass_authentication(mode):
