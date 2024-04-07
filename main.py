@@ -116,15 +116,15 @@ def md_file() :
 	https://dev.to/mrprofessor/rendering-markdown-from-flask-1l41
 	"""
 	if request.args['file'] == 'privacy' :
-		try :
+		try:
 			content = open('privacy_'+ session['language'] + '.md', 'r').read()
-		except :
+		except:
 			content = open('privacy_en.md', 'r').read()
 	
 	elif request.args['file'] == 'terms_and_conditions' :
-		try :
+		try:
 			content = open('cgu_'+ session['language'] + '.md', 'r').read()
-		except :
+		except:
 			content = open('cgu_en.md', 'r').read()
 	return render_template_string( markdown.markdown(content, extensions=["fenced_code"]))
 
@@ -137,11 +137,9 @@ def company() :
 	return render_template('company.html')
 
 
-@app.route('/' , methods=['GET']) 
-def test() :
-   return jsonify("Hello")
-
-
+@app.route('/', methods=['GET']) 
+def test():
+	return jsonify("Hello")
 
 
 
@@ -159,6 +157,7 @@ provider_config_18 = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/ap
                                         client_metadata=client_metadata_18)
 """
 
+"""
 # +18 Talao
 client_metadata_18_talao = ClientMetadata(
         client_id='dybgruness',
@@ -167,9 +166,9 @@ client_metadata_18_talao = ClientMetadata(
 
 provider_config_18_talao = ProviderConfiguration(issuer= 'https://jeprouvemonage.talao.co/api/v1.0',
                                         client_metadata=client_metadata_18_talao)
+"""
 
-
-
+"""
 # 15
 client_metadata_15 = ClientMetadata(
         client_id='ddoyrkbtrg',
@@ -178,10 +177,10 @@ client_metadata_15 = ClientMetadata(
 
 provider_config_15 = ProviderConfiguration(issuer= 'https://preprod.jeprouvemonage.fr/api/v1.0',
                                         client_metadata=client_metadata_15)
+"""
 
 
-
-
+"""
 # pokemi
 client_metadata_pokemi = ClientMetadata(
         client_id='100',
@@ -191,22 +190,22 @@ client_metadata_pokemi = ClientMetadata(
 provider_config_pokemi = ProviderConfiguration(issuer= 'https://jeprouvemonage.fr/api/v1.0',
                                         client_metadata=client_metadata_pokemi)
 
-
-
+"""
+"""
 
 auth = OIDCAuthentication({
 	#'provider_18': provider_config_18,
-	'provider_18_talao': provider_config_18_talao,
-	'provider_pokemi' : provider_config_pokemi,
+	#'provider_18_talao': provider_config_18_talao,
+	#'provider_pokemi' : provider_config_pokemi,
 	'provider_15': provider_config_15}, app)
 #auth = OIDCAuthentication({'provider_18': provider_config_18, 'provider_15': provider_config_15}, app)
-
+"""
 
 """ 
 Verifiable Credential presented by user is transfered through vp_token in OAuth2 userinfo endpoint
 """
 
-
+"""
 @app.route('/pokemi',  methods = ['GET', 'POST'])
 def site_x():
 	if request.method == "GET":
@@ -218,7 +217,7 @@ def site_x():
 
 @app.route('/pornhub15',  methods = ['GET', 'POST'])
 def site_x_15():
-	if request.method == "GET" :
+	if request.method == "GET":
 		session.clear()
 		return render_template('site_x_15.html')
 	else :
@@ -231,8 +230,8 @@ def site_x_15():
 def index():
     user_session = UserSession(session)    
     return jsonify(access_token=user_session.access_token,
-                   id_token=user_session.id_token,
-                   userinfo=user_session.userinfo) # this is the user credential
+                id_token=user_session.id_token,
+                userinfo=user_session.userinfo) # this is the user credential
 
 
 @app.route('/pornhub15/login')
@@ -240,11 +239,11 @@ def index():
 def index_15():
     user_session = UserSession(session)    
     return jsonify(access_token=user_session.access_token,
-                   id_token=user_session.id_token,
-                   userinfo=user_session.userinfo) # this is the user credential
+                id_token=user_session.id_token,
+                userinfo=user_session.userinfo) # this is the user credential
 
 
-@app.route('/pornhub_talao',  methods = ['GET', 'POST'])
+@app.route('/pornhub_talao',  methods=['GET', 'POST'])
 def site_x_talao():
 	if request.method == "GET" :
 		session.clear()
@@ -258,10 +257,11 @@ def site_x_talao():
 def index_talao():
     user_session = UserSession(session)    
     return jsonify(access_token=user_session.access_token,
-                   id_token=user_session.id_token,
-                   userinfo=user_session.userinfo) # this is the user credential
+                id_token=user_session.id_token,
+                userinfo=user_session.userinfo) # this is the user credential
 
+"""
 
 # MAIN entry point. Flask test server
 if __name__ == '__main__':
-    app.run(host = mode.IP, port= mode.port, debug=True)
+    app.run(host=mode.IP, port= mode.port, debug=True)
