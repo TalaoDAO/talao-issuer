@@ -205,7 +205,8 @@ def emailpass_oidc4vc(mode):
     if format == "vc+sd_jwt":
         credential = {
             "vct": "talao:issuer:emailpass:1",
-            "email": session['email']
+            "email": session['email'],
+            "disclosure": ["email"]
         }
     else: 
         credential = json.load(open('./verifiable_credentials/EmailPass.jsonld' , 'r'))
