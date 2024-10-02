@@ -65,7 +65,6 @@ def emailpass(mode):
         logging.info('VC draft is %s', draft)
         session['draft'] = draft
         session['format'] = format
-        print("draft = ", draft, " format = ", format)
         if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json"] and draft not in ["0", "11", "13"]:
             return jsonify("Incorrect request", 401)
         
@@ -206,9 +205,8 @@ def emailpass_oidc4vc(mode):
         return redirect('/emailpass')
     draft = session['draft']
     format = session['format']
-    print("dans oidc4vc module : draft = ", draft, " format = ", format)
 
-    if format == "vc+sd_jwt":
+    if format == "vc_sd_jwt":
         credential = {
             "vct": "talao:issuer:emailpass:1",
             "email": session['email'],
@@ -220,6 +218,7 @@ def emailpass_oidc4vc(mode):
         credential['expirationDate'] = (datetime.now() + timedelta(days= 365)).isoformat() + 'Z'
         credential['credentialSubject']['email'] = session['email']
     # call to sandbox issuer
+    print("credential = ", credential)
     if format == 'ldp_vc' and draft == "11":
         x_api_key = client_secret_ldp_vc
         issuer_id = ISSUER_ID_LDP_VC
