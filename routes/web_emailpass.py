@@ -65,6 +65,10 @@ def emailpass(mode):
         logging.info('VC draft is %s', draft)
         session['draft'] = draft
         session['format'] = format
+        print("draft = ", draft, " format = ", format)
+        if format not in ["ldp_vc", "vc+sd_jwt", "jwt_vc_json"] and draft not in ["0", "11", "13"]:
+            return jsonify("Incorrect request", 401)
+        
         return render_template('emailpass/emailpass.html')
     elif request.method == 'POST':
         session['email'] = request.form['email'].lower()
@@ -202,6 +206,8 @@ def emailpass_oidc4vc(mode):
         return redirect('/emailpass')
     draft = session['draft']
     format = session['format']
+    print("dans oidc4vc module : draft = ", draft, " format = ", format)
+
     if format == "vc+sd_jwt":
         credential = {
             "vct": "talao:issuer:emailpass:1",
