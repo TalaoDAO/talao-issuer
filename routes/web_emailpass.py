@@ -26,6 +26,9 @@ client_secret_ldp_vc = json.load(open('keys.json', 'r'))['client_secret_ldp_vc']
 ISSUER_ID_JWT_VC_JSON_13 = 'mslmgnysdh'
 client_secret_jwt_vc_json_13 = json.load(open('keys.json', 'r'))['client_secret_jwt_vc_json']
 
+ISSUER_ID_VC_SD_JWT = 'acnliwayop'
+client_secret_vc_sd_jwt = json.load(open('keys.json', 'r'))['client_secret_vc_sd_jwt']
+
 issuer_key = json.dumps(json.load(open('keys.json', 'r'))['talao_Ed25519_private_key'])
 issuer_vm = 'did:web:app.altme.io:issuer#key-1'
 issuer_did = 'did:web:app.altme.io:issuer'
@@ -199,10 +202,16 @@ def emailpass_oidc4vc(mode):
         return redirect('/emailpass')
     draft = session['draft']
     format = session['format']
-    credential = json.load(open('./verifiable_credentials/EmailPass.jsonld' , 'r'))
-    credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
-    credential['expirationDate'] = (datetime.now() + timedelta(days= 365)).isoformat() + 'Z'
-    credential['credentialSubject']['email'] = session['email']
+    if format == "vc+sd_jwt":
+        credential = {
+            "vct": "talao:issuer:emailpass:1",
+            "email": session['email']
+        }
+    else: 
+        credential = json.load(open('./verifiable_credentials/EmailPass.jsonld' , 'r'))
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+        credential['expirationDate'] = (datetime.now() + timedelta(days= 365)).isoformat() + 'Z'
+        credential['credentialSubject']['email'] = session['email']
     # call to sandbox issuer
     if format == 'ldp_vc' and draft == "11":
         x_api_key = client_secret_ldp_vc
@@ -213,6 +222,9 @@ def emailpass_oidc4vc(mode):
     elif format == 'jwt_vc_json' and draft == "13":
         x_api_key = client_secret_jwt_vc_json_13
         issuer_id = ISSUER_ID_JWT_VC_JSON_13
+    elif format == 'vc+sd_jwt' and draft == "13":
+        x_api_key = client_secret_vc_sd_jwt
+        issuer_id = ISSUER_ID_VC_SD_JWT
     else:
         logging.error('draft or format not supported')
         return redirect('/emailpass')
