@@ -51,8 +51,8 @@ def init_app(app, red, mode):
 def emailpass(mode):
     # request email to user and send a secret code
     if request.method == 'GET':
-        if request.args.get('format') == 'jwt_vc_json':
-            format = 'jwt_vc_json'
+        if request.args.get('format') in['jwt_vc_json', "vc+sd_jwt"]:
+            format = request.args.get('format')
         else:
             format = 'ldp_vc'
         if not request.args.get('draft') and format == 'ldp_vc':
