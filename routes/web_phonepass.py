@@ -25,6 +25,10 @@ client_secret_ldp_vc = json.load(open('keys.json', 'r'))['client_secret_ldp_vc']
 
 ISSUER_ID_JWT_VC_JSON_13 = 'mslmgnysdh'
 client_secret_jwt_vc_json_13 = json.load(open('keys.json', 'r'))['client_secret_jwt_vc_json']
+
+ISSUER_ID_VC_SD_JWT = 'acnliwayop'
+client_secret_vc_sd_jwt = json.load(open('keys.json', 'r'))['client_secret_vc_sd_jwt']
+
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
@@ -45,8 +49,8 @@ def init_app(app, red, mode):
 
 def phonepass(mode):
     if request.method == 'GET':
-        if request.args.get('format') == 'jwt_vc_json':
-            format = 'jwt_vc_json'
+        if request.args.get('format') in['jwt_vc_json', "vc_sd_jwt"]:
+            format = request.args.get('format')
         else:
             format = 'ldp_vc'
         if not request.args.get('draft') and format == 'ldp_vc':
@@ -59,6 +63,9 @@ def phonepass(mode):
         logging.info('VC draft is %s', draft)
         session['draft'] = draft
         session['format'] = format
+        if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json"] and draft not in ["0", "11", "13"]:
+            return jsonify("Incorrect request", 401)
+        
         return render_template('phonepass/phonepass.html')
     elif request.method == 'POST':
         # traiter phone
@@ -189,10 +196,17 @@ def phonepass_oidc4vc(mode):
         return redirect('/phonepass')
     draft = session['draft']
     format = session['format']
-    credential = json.load(open('./verifiable_credentials/PhoneProof.jsonld', 'r'))
-    credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
-    credential['expirationDate'] = (datetime.now() + timedelta(days=365)).isoformat() + 'Z'
-    credential['credentialSubject']['phone'] = session['phone']
+    if format == "vc_sd_jwt":
+        credential = {
+            "vct": "talao:issuer:phoneproof:1",
+            "phone": session['phone'],
+            "disclosure": ["phone"]
+        }
+    else: 
+        credential = json.load(open('./verifiable_credentials/PhoneProof.jsonld', 'r'))
+        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+        credential['expirationDate'] = (datetime.now() + timedelta(days=365)).isoformat() + 'Z'
+        credential['credentialSubject']['phone'] = session['phone']
     # call to sandbox issuer
     if format == 'ldp_vc' and draft == "11":
         x_api_key = client_secret_ldp_vc
@@ -203,6 +217,9 @@ def phonepass_oidc4vc(mode):
     elif format == 'jwt_vc_json' and draft == "13":
         x_api_key = client_secret_jwt_vc_json_13
         issuer_id = ISSUER_ID_JWT_VC_JSON_13
+    elif format == 'vc_sd_jwt' and draft == "13":
+        x_api_key = client_secret_vc_sd_jwt
+        issuer_id = ISSUER_ID_VC_SD_JWT
     else:
         logging.error('draft or format not supported')
         return redirect('/phonepass')
