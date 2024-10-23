@@ -7,8 +7,9 @@ logging.basicConfig(level=logging.INFO)
 VC_LIST = [
     "emailpass", "phonepass", "agerange",
     "over18", "over13", "over15", "over21", "over50", "over65", "verifiableid",
+    "eudipid", "pid", "identitycredential", "individualverifiableattestation",
     "liveness", "diploma", "chainborn", "nationality",
-    "tezotopia", "bloometa", "twitter", "defi",
+    "twitter", "defi",
     "tezosassociatedaddress", "binanceassociatedaddress", "fantomassociatedaddress",
     "polygonassociatedaddress", "ethereumassociatedaddress" 
 ]
