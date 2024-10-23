@@ -62,7 +62,7 @@ def counter_update(mode):
     payload = {
         "channel": "#issuer_counter",
         "username": "issuer",
-        "text": "New VC is " + vc + " " + json.dumps(counter),
+        "text": "New " + vc + " has been issued " + json.dumps(counter),
         "icon_emoji": ":ghost:"
         }
     data = {

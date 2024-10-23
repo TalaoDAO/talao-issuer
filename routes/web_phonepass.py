@@ -243,6 +243,12 @@ def phonepass_oidc4vc(mode):
     except Exception:
         logging.error('error oidc, redirect uri not available')
         return redirect('/phonepass')
+    # update counter
+    data = {
+        'vc': 'phonepass',
+        'count': '1'
+    }
+    requests.post(mode.server + 'counter/update', data=data)
     return redirect(redirect_uri)
 
 
