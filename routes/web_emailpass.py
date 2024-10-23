@@ -269,6 +269,12 @@ def emailpass_end():
         return redirect('/emailpass')
     if request.args['followup'] == 'success':
         message = 'Great ! you have now a proof of email.'
+        # update counter
+        data = {
+            'vc': 'emailpass',
+            'count': '1'
+        }
+        requests.post(mode.server + 'counter/update', data=data)
     elif request.args['followup'] == 'expired':
         message = 'Sorry ! session expired.'
     else:
