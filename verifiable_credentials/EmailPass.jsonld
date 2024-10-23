@@ -9,17 +9,7 @@
                     "schema" : "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
-                    "email": "schema:email",
-                    "issuedBy" : {
-                        "@id" : "schema:issuedBy",
-                        "@context" : {
-                            "@version": 1.1,
-                            "@protected": true,
-                            "logo": {"@id" : "schema:image", "@type" : "@id"},
-                            "name" : "schema:name"
-                        }
-                    }
-                   
+                    "email": "schema:email"
                 }
             }
         }
@@ -30,9 +20,6 @@
     "issuanceDate": "",
     "credentialSubject" : {
         "type" : "EmailPass",
-        "email" : "",
-        "issuedBy" : {
-            "name" : "Altme"
-        }
+        "email" : ""
     }
 }

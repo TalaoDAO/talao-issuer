@@ -218,7 +218,6 @@ def emailpass_oidc4vc(mode):
         credential['expirationDate'] = (datetime.now() + timedelta(days= 365)).isoformat() + 'Z'
         credential['credentialSubject']['email'] = session['email']
     # call to sandbox issuer
-    print("credential = ", credential)
     if format == 'ldp_vc' and draft == "11":
         x_api_key = client_secret_ldp_vc
         issuer_id = ISSUER_ID_LDP_VC
@@ -259,10 +258,10 @@ def emailpass_oidc4vc(mode):
 
 def emailpass_oidc4vc_callback():
     if request.args.get('error'):
-        message = 'Sorry ! there is a server problem, try again later.'
+        msg = 'Sorry ! there is a server problem, try again later.'
     else:
-        message = 'Great ! you have now a proof of email.'
-    return render_template('emailpass/emailpass_end.html', message=message)
+        msg = 'Great ! you have now a proof of email.'
+    return render_template('emailpass/emailpass_end.html', message=msg)
 
 
 def emailpass_end():

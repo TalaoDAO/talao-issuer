@@ -31,7 +31,7 @@ def counter_get():
 
 def counter_update(mode):
     """
-    this allows teh wallet to update the counter json file
+    this allows the wallet to update the counter json file
 
     with a simple request request 
     # update counter
@@ -44,6 +44,7 @@ def counter_update(mode):
         return jsonify('Bad request'), 400
     count = request.form.get('count')
     if not count or not vc :
+        logging.error("counter error")
         return jsonify('Bad request'), 400
     counter = json.load(open("counter.json", "r"))
     credential_list = list(counter.keys())
@@ -61,7 +62,7 @@ def counter_update(mode):
     payload = {
         "channel": "#issuer_counter",
         "username": "issuer",
-        "text": json.dumps(counter),
+        "text": "New VC is " + vc + " " + json.dumps(counter),
         "icon_emoji": ":ghost:"
         }
     data = {

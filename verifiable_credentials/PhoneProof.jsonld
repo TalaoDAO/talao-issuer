@@ -10,16 +10,7 @@
                     "schema" : "https://schema.org/",
                     "id": "@id",
                     "type": "@type",
-                    "phone" : "schema:phone",
-                    "issuedBy" : {
-                        "@id" : "schema:issuedBy",
-                        "@context" : {
-                            "@version": 1.1,
-                            "@protected": true,
-                            "logo": {"@id" : "schema:image", "@type" : "@id"},
-                            "name" : "schema:name"
-                        }
-                    }
+                    "phone" : "schema:phone"
                 }
             }
         }
@@ -30,9 +21,6 @@
     "issuanceDate": "",
     "credentialSubject" : {
         "type" : "PhoneProof",
-        "phone" : "",
-        "issuedBy" : {
-            "name" : "Altme"
-        }
+        "phone" : ""
     }
 }
