@@ -253,6 +253,12 @@ def emailpass_oidc4vc(mode):
     except Exception:
         logging.error('error oidc, redirect uri not available')
         return redirect('/emailpass')
+    # update counter
+    data = {
+        'vc': 'emailpass',
+        'count': '1'
+    }
+    requests.post(mode.server + 'counter/update', data=data)
     return redirect(redirect_uri)
 
 
@@ -269,12 +275,6 @@ def emailpass_end():
         return redirect('/emailpass')
     if request.args['followup'] == 'success':
         message = 'Great ! you have now a proof of email.'
-        # update counter
-        data = {
-            'vc': 'emailpass',
-            'count': '1'
-        }
-        requests.post(mode.server + 'counter/update', data=data)
     elif request.args['followup'] == 'expired':
         message = 'Sorry ! session expired.'
     else:
