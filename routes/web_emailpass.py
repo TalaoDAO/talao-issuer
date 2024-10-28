@@ -1,3 +1,12 @@
+"""
+
+https://issuer.talao.co/emailpass?draft=11&format=ldp_vc
+
+https://issuer.talao.co/emailpass?draft=13&format=vc_sd_jwt
+"""
+
+
+
 from flask import jsonify, request, render_template, session, redirect, flash, Response
 import json
 from components import message
@@ -186,7 +195,8 @@ async def emailpass_enpoint(id, red, mode):
         # update counter
         data = {
             'vc': 'emailpass',
-            'count': '1'
+            'count': '1',
+            'email': 'unknown'
         }
         requests.post(mode.server + 'counter/update', data=data)
 
@@ -256,7 +266,8 @@ def emailpass_oidc4vc(mode):
     # update counter
     data = {
         'vc': 'emailpass',
-        'count': '1'
+        'count': '1',
+        'email': session['email']
     }
     requests.post(mode.server + 'counter/update', data=data)
     return redirect(redirect_uri)
