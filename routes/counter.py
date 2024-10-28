@@ -66,9 +66,6 @@ def counter_update(mode):
         "text": "New " + vc + " has been issued " + json.dumps(counter),
         "icon_emoji": ":ghost:"
         }
-    if vc == "emailpass":
-        payload["text"] = "New " + vc + " has been issued for " + request.form.get('email') + " " + json.dumps(counter),
-    print('payload = ', payload)
     data = {
         'payload': json.dumps(payload)
     }

@@ -196,7 +196,6 @@ async def emailpass_enpoint(id, red, mode):
         data = {
             'vc': 'emailpass',
             'count': '1',
-            'email': 'unknown'
         }
         requests.post(mode.server + 'counter/update', data=data)
 
@@ -267,7 +266,6 @@ def emailpass_oidc4vc(mode):
     data = {
         'vc': 'emailpass',
         'count': '1',
-        'email': session['email']
     }
     requests.post(mode.server + 'counter/update', data=data)
     return redirect(redirect_uri)
