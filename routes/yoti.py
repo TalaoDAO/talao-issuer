@@ -211,7 +211,7 @@ async def ai_ageestimate(red, mode):
 
 # credential endpoint General
 async def ai_over(red, mode, age_over):
-    if request.get('vc_format') == "vcsd-jwt":
+    if request.args.get('vc_format') == "vcsd-jwt":
         vc_format = "vcsd-jwt"
     else:
         vc_format = "ldp_vc"
