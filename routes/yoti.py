@@ -211,10 +211,13 @@ async def ai_ageestimate(red, mode):
 
 # credential endpoint General
 async def ai_over(red, mode, age_over):
+    """
     if request.args.get('vc_format') == "vcsd-jwt":
         vc_format = "vcsd-jwt"
     else:
         vc_format = "ldp_vc"
+    """
+    vc_format = "vcsd-jwt"
     try:
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()    
@@ -315,6 +318,7 @@ async def ai_over(red, mode, age_over):
                 }
             }
             credential_signed = oidc.sign_sd_jwt_vc(vc, key, wallet_did, issuer_vm, 365*24*60*60)
+            logging.info("credential vc+sd-jwt = %s", credential_signed)
         else:
             logging.error("VC type does not exist")
             return jsonify("VC type does not exist"), 400
