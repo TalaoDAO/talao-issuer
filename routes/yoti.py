@@ -291,6 +291,7 @@ async def ai_over(red, mode, age_over):
     
     credential_filename = '/Over' + str(age_over) + '.jsonld'
     vc_for_counter = 'over' + str(age_over)
+    age_over_vc = age_over
     if age_over <= 21:
         age_over = age_over + 2       
     if age >= age_over:
@@ -312,9 +313,9 @@ async def ai_over(red, mode, age_over):
         elif vc_format == "vcsd-jwt":
             vc = {
                 "vct": "https://doc.wallet-provider.io/wallet/vc_type/#OverNN",
-                "age_over_" + str(age_over): True,
+                "age_over_" + str(age_over_vc): True,
                 "age_equal_or_over": {
-                    str(age_over): True
+                    str(age_over_vc): True
                 }
             }
             credential_signed = oidc.sign_sd_jwt_vc(vc, key, wallet_did, issuer_vm, 365*24*60*60)
