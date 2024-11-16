@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import didkit
 import hashlib
 from components import message
-
+import oidc
 
 logging.basicConfig(level=logging.INFO)
 
@@ -195,13 +195,13 @@ async def ai_ageestimate(red, mode):
     credential['id'] = "urn:uuid:" + str(uuid.uuid1())
     credential['credentialSubject']['id'] = wallet_did
     credential['credentialSubject']['ageEstimate'] = str(age)
-    credential['credentialSubject']['kycId'] =  'AI age estimate'
+    credential['credentialSubject']['kycId'] = 'AI age estimate'
     credential['credentialSubject']['kycProvider'] = 'Yoti'
     didkit_options = {
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
     }
-    credential_signed =  await didkit.issue_credential(
+    credential_signed = await didkit.issue_credential(
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 key)
@@ -211,6 +211,10 @@ async def ai_ageestimate(red, mode):
 
 # credential endpoint General
 async def ai_over(red, mode, age_over):
+    if request.get('vc_format') == "vcsd-jwt":
+        vc_format = "vcsd-jwt"
+    else:
+        vc_format = "ldp_vc"
     try:
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()    
@@ -245,8 +249,8 @@ async def ai_over(red, mode, age_over):
     result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
     if result:
         logging.warning("Verify presentation  error %s", result)
-        #headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        #endpoint_response = {"error": "invalid_proof", "error_description": "The proof check fails"}
+        # headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        # endpoint_response = {"error": "invalid_proof", "error_description": "The proof check fails"}
         # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     # test if age estimate has already been done recently
@@ -284,30 +288,38 @@ async def ai_over(red, mode, age_over):
     
     credential_filename = '/Over' + str(age_over) + '.jsonld'
     vc_for_counter = 'over' + str(age_over)
-    if age_over in [13, 15, 18, 21]:
+    if age_over <= 21:
         age_over = age_over + 2       
     if age >= age_over:
-        credential = json.loads(open("./verifiable_credentials/" + credential_filename , 'r').read())
-        credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-        credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
-        credential['issuer'] = issuer_did
-        credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
-        credential['credentialSubject']['id'] = wallet_did
-        credential['credentialSubject']['kycId'] =  'AI age estimate'
-        credential['credentialSubject']['kycProvider'] = 'Yoti'
-        credential['credentialSubject']['kycMethod'] = 'Yoti artificial intelligence engine'
-        didkit_options = {
+        if vc_format == "ldp_vc":
+            credential = json.loads(open("./verifiable_credentials/" + credential_filename, 'r').read())
+            credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+            credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
+            credential['issuer']["id"] = issuer_did
+            credential['id'] = "urn:uuid:" + str(uuid.uuid1())
+            credential['credentialSubject']['id'] = wallet_did
+            didkit_options = {
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
-        }
-        credential_signed =  await didkit.issue_credential(
+            }
+            credential_signed = await didkit.issue_credential(
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 key)
-        
+        elif vc_format == "vcsd-jwt":
+            vc = {
+                "vct": "https://doc.wallet-provider.io/wallet/vc_type/#OverNN",
+                "age_over_" + str(age_over): True,
+                "age_equal_or_over": {
+                    str(age_over): True
+                }
+            }
+            credential_signed = oidc.sign_sd_jwt_vc(vc, key, wallet_did, issuer_vm, 365*24*60*60)
+        else:
+            logging.error("VC type does not exist")
+            return jsonify("VC type does not exist"), 400
         # update counter
         update_counter(vc_for_counter, mode)
-        
         logging.info("VC %s is sent to wallet", vc_for_counter)
         return jsonify(credential_signed)
     else:
@@ -385,7 +397,7 @@ async def ai_agerange(red, mode):
     #logging.info("age estimate by AI is %s", age)
     #logging.info("estimate quality by AI is %s", st_dev)
     
-    if st_dev > 6 :
+    if st_dev > 6:
         logging.warning(json.dumps(result))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error": "invalid_request", "error_description": "Uncertain estimate"}
@@ -395,7 +407,7 @@ async def ai_agerange(red, mode):
     credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
     credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
     credential['issuer'] = issuer_did
-    credential['id'] =  "urn:uuid:" + str(uuid.uuid1())
+    credential['id'] = "urn:uuid:" + str(uuid.uuid1())
     credential['credentialSubject']['id'] = wallet_did
     credential['credentialSubject']['kycId'] =  'AI age estimate'
     credential['credentialSubject']['kycProvider'] = 'Yoti'
@@ -426,7 +438,7 @@ async def ai_agerange(red, mode):
             "proofPurpose": "assertionMethod",
             "verificationMethod": issuer_vm
         }
-    signed_credential =  await didkit.issue_credential(
+    signed_credential = await didkit.issue_credential(
             json.dumps(credential),
             didkit_options.__str__().replace("'", '"'),
             key

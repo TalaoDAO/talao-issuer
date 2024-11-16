@@ -1,43 +1,22 @@
 {
     "@context": ["https://www.w3.org/2018/credentials/v1",
         {
-            "Over65" : {
-                "@id": "https://github.com/TalaoDAO/context#over65",
-                "@context": {
-                    "@version": 1.1,
-                    "@protected": true,
-                    "schema" : "https://schema.org/",
-                    "id": "@id",
-                    "type": "@type",
-                    "kycProvider" : "schema:legalName",
-                    "kycMethod" : "schema:identifier",
-                    "ageOver" : "schema:suggestedMinAge",
-                    "kycId" : "schema:identifier",
-                    "issuedBy" : {
-                        "@id" : "schema:issuedBy",
-                        "@context" : {
-                            "@protected": true,
-                            "logo": {"@id" : "schema:image", "@type" : "@id"},
-                            "name" : "schema:legalName"
-                        }
-                    }
-                   
-                }
-            }
+            "Over65" : "https://doc.wallet-provider.io/wallet/vc_type/#OverNN",
+            "age_over_65": "https://eu-digital-identity-wallet.github.io/eudi-doc-architecture-and-reference-framework/1.4.0/annexes/annex-3/annex-3.01-pid-rulebook/",
+            "@vocab": "https://schema.org"
         }
     ],
     "id": "",
     "type": ["VerifiableCredential", "Over65"],
-    "issuer": "",
+    "issuer": {
+        "id": "",
+        "name": "Talao",
+        "description": "See htts://talao.io, age is estimated with a YOTI Artificial Intelligence engine."
+    },
     "issuanceDate": "",
     "credentialSubject" : {
         "type" : "Over65",
         "ageOver" : "65",
-        "kycProvider" : "",
-        "kycId" : "",
-        "kycMethod" : "",
-        "issuedBy": {
-            "name": "Altme"
-        }
+        "age_over_65": true
     }
 }

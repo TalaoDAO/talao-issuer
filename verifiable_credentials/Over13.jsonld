@@ -1,43 +1,22 @@
 {
     "@context": ["https://www.w3.org/2018/credentials/v1",
         {
-            "Over13" : {
-                "@id": "https://github.com/TalaoDAO/context#over13",
-                "@context": {
-                    "@version": 1.1,
-                    "@protected": true,
-                    "schema" : "https://schema.org/",
-                    "id": "@id",
-                    "type": "@type",
-                    "kycProvider" : "schema:legalName",
-                    "kycMethod" : "schema:identifier",
-                    "ageOver" : "schema:suggestedMinAge",
-                    "kycId" : "schema:identifier",
-                    "issuedBy" : {
-                        "@id" : "schema:issuedBy",
-                        "@context" : {
-                            "@protected": true,
-                            "logo": {"@id" : "schema:image", "@type" : "@id"},
-                            "name" : "schema:legalName"
-                        }
-                    }
-                   
-                }
-            }
+            "Over13" : "https://doc.wallet-provider.io/wallet/vc_type/#OverNN",
+            "age_over_13": "https://eu-digital-identity-wallet.github.io/eudi-doc-architecture-and-reference-framework/1.4.0/annexes/annex-3/annex-3.01-pid-rulebook/",
+            "@vocab": "https://schema.org"
         }
     ],
     "id": "",
     "type": ["VerifiableCredential", "Over13"],
-    "issuer": "",
+    "issuer": {
+        "id": "",
+        "name": "Talao",
+        "description": "See htts://talao.io"
+    },
     "issuanceDate": "",
     "credentialSubject" : {
         "type" : "Over13",
         "ageOver" : "13",
-        "kycProvider" : "",
-        "kycMethod" : "",
-        "kycId" : "",
-        "issuedBy": {
-            "name": "Altme"
-        }
+        "age_over_13": true
     }
 }
