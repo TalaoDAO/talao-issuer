@@ -8,6 +8,7 @@ import os
 import logging
 logging.basicConfig(level=logging.INFO)
 import math
+import uuid
 
 
 def generate_key(curve):
