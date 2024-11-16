@@ -62,8 +62,7 @@ def emailpass(mode):
     if request.method == 'GET':
         if request.args.get('format') in['jwt_vc_json', "vc_sd_jwt", "vcsd-jwt"]:
             format = request.args.get('format')
-            if format == "vcsd-jwt":
-                format = "vc_sd_jwt"
+            if format == "vcsd-jwt": format = "vc_sd_jwt"
         else:
             format = 'ldp_vc'
         if not request.args.get('draft') and format == 'ldp_vc':
