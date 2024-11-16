@@ -136,7 +136,7 @@ def sign_jwt_vp(vc, audience, holder_vm, holder_did, nonce, vp_id, holder_key):
     return token.serialize()
   
   
-def sign_sd_jwt_vc(vc, issuer_key, holder_did, issuer_vm, duration):
+def sign_sd_jwt_vc(vc, issuer, issuer_key, holder_did, issuer_vm, duration):
     issuer_key = json.loads(issuer_key) if isinstance(issuer_key, str) else issuer_key
     signer_key = jwk.JWK(**issuer_key) 
     header = {
@@ -145,6 +145,7 @@ def sign_sd_jwt_vc(vc, issuer_key, holder_did, issuer_vm, duration):
         "kid": issuer_vm
     }
     payload = {
+        "iss": issuer,
         "jti": "urn:uuid:" + str(uuid.uuid1()),
         'iat': math.ceil(datetime.timestamp(datetime.now())),
         'exp': math.ceil(datetime.timestamp(datetime.now())) + duration,

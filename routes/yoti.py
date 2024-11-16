@@ -315,7 +315,7 @@ async def ai_over(red, mode, age_over):
                     str(age_over_vc): True
                 }
             }
-            credential_signed = oidc.sign_sd_jwt_vc(vc, key, wallet_did, issuer_vm, 365*24*60*60)
+            credential_signed = oidc.sign_sd_jwt_vc(vc, issuer_did, key, wallet_did, issuer_vm, 365*24*60*60)
             logging.info("credential vc+sd-jwt = %s", credential_signed)
         else:
             logging.error("VC type does not exist")
