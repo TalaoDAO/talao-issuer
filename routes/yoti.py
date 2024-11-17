@@ -131,10 +131,9 @@ async def ai_ageestimate(red, mode):
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    encoded_string_hash = sha256(encoded_string)
-    # test if age estimate has already been done recently
+    # test if age estimate has already been done recently by smae wallet
     try:
-        data = json.loads(red.get(encoded_string_hash).decode())
+        data = json.loads(red.get(wallet_did).decode())
         age = data['age']
         st_dev = data['st_dev']
         prediction = data['prediction']
@@ -155,7 +154,7 @@ async def ai_ageestimate(red, mode):
                 'st_dev': st_dev,
                 'prediction': prediction
             }
-            red.setex(encoded_string_hash, 240, json.dumps(data))
+            red.setex(wallet_did, 240, json.dumps(data))
             logging.info("age is now stored in redis for 240s")
         except Exception:
             logging.error(json.dumps(result))
@@ -203,7 +202,6 @@ async def ai_over(red, mode, age_over):
     try:
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()
-        logging.info("wallet request = %s", json.dumps(wallet_request, indent=4))
     except Exception:
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -223,12 +221,10 @@ async def ai_over(red, mode, age_over):
         endpoint_response = {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    encoded_string_hash = sha256(encoded_string)
     
     # test if age estimate has already been done recently
     try:
-        data = json.loads(red.get(encoded_string_hash).decode())
+        data = json.loads(red.get(wallet_did).decode())
         age = data['age']
         st_dev = data['st_dev']
         prediction = data['prediction']
@@ -245,7 +241,7 @@ async def ai_over(red, mode, age_over):
                 'st_dev': st_dev,
                 'prediction': prediction
             }
-            red.setex(encoded_string_hash, 240, json.dumps(data))
+            red.setex(wallet_did, 240, json.dumps(data))
             logging.info("age is stored in redis for 240 sec")
         except Exception:
             logging.warning(json.dumps(result))
@@ -334,7 +330,7 @@ async def ai_agerange(red, mode):
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     encoded_string_hash = sha256(encoded_string)
     try:
-        data = json.loads(red.get(encoded_string_hash).decode())
+        data = json.loads(red.get(wallet_did).decode())
         age = data['age']
         st_dev = data['st_dev']
         prediction = data['prediction']
@@ -351,15 +347,13 @@ async def ai_agerange(red, mode):
                 'st_dev': st_dev,
                 'prediction': prediction
             }
-            red.setex(encoded_string_hash, 240, json.dumps(data))
+            red.setex(wallet_did, 240, json.dumps(data))
             logging.info("age is stored in redis for 240 sec")
         except Exception:
             logging.warning(json.dumps(result))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
             endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
             return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    #logging.info("age estimate by AI is %s", age)
-    #logging.info("estimate quality by AI is %s", st_dev)
     
     if st_dev > 6:
         logging.warning(json.dumps(result))
