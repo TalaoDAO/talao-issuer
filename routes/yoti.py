@@ -243,7 +243,7 @@ async def ai_over(red, mode, age_over):
     if sha256(encoded_string) != challenge:
         logging.warning("Proof challenge does not match")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error": "invalid_request", "error_description": "Challeng does not match"}
+        endpoint_response = {"error": "invalid_request", "error_description": "Challenge does not match"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
@@ -288,11 +288,10 @@ async def ai_over(red, mode, age_over):
     
     credential_filename = '/Over' + str(age_over) + '.jsonld'
     vc_for_counter = 'over' + str(age_over)
-    age_over_vc = age_over
-    if age_over <= 21:
-        age_over = age_over + 2       
-    if age >= age_over:
-        if vc_format == "ldp_vc":
+    if vc_format == "ldp_vc":
+        if age_over <= 21:
+            age_over = age_over + 2  
+        if age >= age_over:
             credential = json.loads(open("./verifiable_credentials/" + credential_filename, 'r').read())
             credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
             credential['expirationDate'] = (datetime.now() + EXPIRATION_DELAY).replace(microsecond=0).isoformat() + "Z"
@@ -307,29 +306,34 @@ async def ai_over(red, mode, age_over):
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
                 key)
-        elif vc_format == "vcsd-jwt":
-            vc = {
-                "vct": "https://doc.wallet-provider.io/wallet/vc_type/#OverNN",
-                "age_over_" + str(age_over_vc): True,
-                "age_equal_or_over": {
-                    str(age_over_vc): True
-                }
-            }
-            credential_signed = oidc.sign_sd_jwt_vc(vc, issuer_did, key, wallet_did, issuer_vm, 365*24*60*60)
-            logging.info("credential vc+sd-jwt = %s", credential_signed)
         else:
-            logging.error("VC type does not exist")
-            return jsonify("VC type does not exist"), 400
-        # update counter
-        update_counter(vc_for_counter, mode)
-        logging.info("VC %s is sent to wallet", vc_for_counter)
-        return jsonify(credential_signed)
+            logging.warning("Age is estimated under %s", str(age_over))
+            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+            endpoint_response = {"error": "invalid_over13", "error_description": "User is estimated under " + str(age_over)}
+            return Response(response=json.dumps(endpoint_response), status=403, headers=headers)  
+    elif vc_format == "vcsd-jwt":
+        vc = {"vct": "urn:talao:age_over"}
+        for age_in_vc in [12, 14, 16, 18, 21, 50, 65]:
+            if age_in_vc <= 21:
+                age_over = age_in_vc + 2
+            else:
+                age_over = age_in_vc
+            if age >= age_over:
+                vc.update({"age_over_" + str(age_in_vc): True})
+            else:
+                vc.update({"age_over_" + str(age_in_vc): False})
+        credential_signed = oidc.sign_sd_jwt(vc, key, issuer_did, wallet_did, duration=365*24*60*60)
+        logging.info("credential vc+sd-jwt = %s", credential_signed)
     else:
-        logging.warning("Age is estimated under %s", str(age_over))
+        logging.warning("VC format not supported")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error": "invalid_over13", "error_description": "User is estimated under " + str(age_over)}
+        endpoint_response = {"error": "invalid_request", "error_description": "VC format not supported"}
         return Response(response=json.dumps(endpoint_response), status=403, headers=headers)  
-
+    # update counter
+    update_counter(vc_for_counter, mode)
+    logging.info("VC %s is sent to wallet", vc_for_counter)
+    return jsonify(credential_signed)
+    
 
     # credential endpoint
 async def ai_agerange(red, mode):

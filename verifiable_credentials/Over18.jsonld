@@ -1,7 +1,7 @@
 {
     "@context": ["https://www.w3.org/2018/credentials/v1",
         {
-            "Over18" : "https://doc.wallet-provider.io/wallet/vc_type/#OverNN",
+            "Over18" : "https://doc.wallet-provider.io/wallet/vc_type/#Over18",
             "age_over_18": "https://eu-digital-identity-wallet.github.io/eudi-doc-architecture-and-reference-framework/1.4.0/annexes/annex-3/annex-3.01-pid-rulebook/",
             "@vocab": "https://schema.org"
         }
@@ -11,7 +11,7 @@
     "issuer": {
         "id": "",
         "name": "Talao",
-        "description": "See htts://talao.io"
+        "description": "See htts://talao.io, age is estimated with a YOTI Artificial Intelligence engine."
     },
     "issuanceDate": "",
     "credentialSubject" : {
