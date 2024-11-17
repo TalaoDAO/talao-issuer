@@ -210,14 +210,11 @@ async def ai_ageestimate(red, mode):
 
 
 # credential endpoint General
-async def ai_over(red, mode, age_over):
-    vc_format = "vcsd-jwt"
-    
-    #if request.args.get('vc_format') == "vcsd-jwt":
-    #    vc_format = "vcsd-jwt"
-    #else:
-    #    vc_format = "ldp_vc"
-    
+async def ai_over(red, mode, age_over):    
+    if request.args.get('vc_format') == "vcsd-jwt":
+        vc_format = "vcsd-jwt"
+    else:
+        vc_format = "ldp_vc"
     try:
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()    
