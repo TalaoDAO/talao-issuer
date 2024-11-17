@@ -14,6 +14,7 @@ import oidc
 logging.basicConfig(level=logging.INFO)
 
 EXPIRATION_DELAY = timedelta(weeks=52)
+AGE_STORAGE = 300
 
 key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
@@ -78,6 +79,37 @@ def execute(request):
     return response.content
 
 
+def get_age_from_yoti(encoded_string, wallet_did, red, mode):
+    try:
+        data = json.loads(red.get(wallet_did).decode())
+        age = data['age']
+        st_dev = data['st_dev']
+        prediction = data['prediction']
+        logging.info("age is available in redis")
+    except Exception:
+        logging.info("call Yoti server")
+        result = generate_session(encoded_string, mode)
+        try:
+            message.message_html("New request to Yoti", "thierry@altme.io", "", mode)
+        except Exception:
+            logging.warning("failed to send message")
+        try:
+            age = result['age']['age']
+            st_dev = result['age']['st_dev']
+            prediction = result['antispoofing']['prediction']
+            data = {
+                'age': age,
+                'st_dev': st_dev,
+                'prediction': prediction
+            }
+            red.setex(wallet_did, AGE_STORAGE, json.dumps(data))
+            logging.info("age is now stored in redis")
+        except Exception:
+            logging.error(json.dumps(result))
+            return None, None, None
+    return age, st_dev, prediction
+    
+
 def generate_session(encoded_string, mode):
     img = {
         "img": encoded_string.decode("utf-8"),
@@ -132,35 +164,11 @@ async def ai_ageestimate(red, mode):
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     # test if age estimate has already been done recently by smae wallet
-    try:
-        data = json.loads(red.get(wallet_did).decode())
-        age = data['age']
-        st_dev = data['st_dev']
-        prediction = data['prediction']
-        logging.info("age is available in redis")
-    except Exception:
-        logging.info("call Yoti server")
-        result = generate_session(encoded_string, mode)
-        try:
-            message.message_html("New request to Yoti", "thierry@altme.io", "", mode)
-        except Exception:
-            logging.warning("failed to send message")
-        try:
-            age = result['age']['age']
-            st_dev = result['age']['st_dev']
-            prediction = result['antispoofing']['prediction']
-            data = {
-                'age': age,
-                'st_dev': st_dev,
-                'prediction': prediction
-            }
-            red.setex(wallet_did, 240, json.dumps(data))
-            logging.info("age is now stored in redis for 240s")
-        except Exception:
-            logging.error(json.dumps(result))
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    age, st_dev, prediction = get_age_from_yoti(encoded_string, wallet_did, red, mode)
+    if not age:
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     logging.info("age estimate by AI is %s", age)
     logging.info("estimate quality by AI is %s", st_dev)
@@ -223,31 +231,11 @@ async def ai_over(red, mode, age_over):
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     
     # test if age estimate has already been done recently
-    try:
-        data = json.loads(red.get(wallet_did).decode())
-        age = data['age']
-        st_dev = data['st_dev']
-        prediction = data['prediction']
-        logging.info("age is available in redis")
-    except Exception:   
-        logging.info("call Yoti server, age not available")
-        result = generate_session(encoded_string, mode)
-        try:
-            age = result['age']['age']
-            st_dev = result['age']['st_dev']
-            prediction = result['antispoofing']['prediction']
-            data = {
-                'age': age,
-                'st_dev': st_dev,
-                'prediction': prediction
-            }
-            red.setex(wallet_did, 240, json.dumps(data))
-            logging.info("age is stored in redis for 240 sec")
-        except Exception:
-            logging.warning(json.dumps(result))
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    age, st_dev, prediction = get_age_from_yoti(encoded_string, wallet_did, red, mode)
+    if not age:
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     if st_dev > 6:
         logging.warning(json.dumps(result))
@@ -304,7 +292,7 @@ async def ai_over(red, mode, age_over):
     return jsonify(credential_signed)
     
 
-    # credential endpoint
+    # agerange credential endpoint
 async def ai_agerange(red, mode):
     try:
         x_api_key = request.headers['X-API-KEY']
@@ -328,33 +316,12 @@ async def ai_agerange(red, mode):
         endpoint_response = {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    encoded_string_hash = sha256(encoded_string)
-    try:
-        data = json.loads(red.get(wallet_did).decode())
-        age = data['age']
-        st_dev = data['st_dev']
-        prediction = data['prediction']
-        logging.info("age is available in redis")
-    except Exception:  
-        logging.info("call Yoti server, age not available")
-        result = generate_session(encoded_string, mode)
-        try:
-            age = result['age']['age']
-            st_dev = result['age']['st_dev']
-            prediction = result['antispoofing']['prediction']
-            data = {
-                'age': age,
-                'st_dev': st_dev,
-                'prediction': prediction
-            }
-            red.setex(wallet_did, 240, json.dumps(data))
-            logging.info("age is stored in redis for 240 sec")
-        except Exception:
-            logging.warning(json.dumps(result))
-            headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
-            return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    
+    age, st_dev, prediction = get_age_from_yoti(encoded_string, wallet_did, red, mode)
+    if not age:
+        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
+        endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
+        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+
     if st_dev > 6:
         logging.warning(json.dumps(result))
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
