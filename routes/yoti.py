@@ -118,9 +118,7 @@ async def ai_ageestimate(red, mode):
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     try:  
         wallet_did = wallet_request['did']
-        did_authn = wallet_request["vp"]
         encoded_string = wallet_request["base64_encoded_string"].encode()
-        challenge = json.loads(did_authn)['proof']['challenge']
     except Exception:
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -133,20 +131,10 @@ async def ai_ageestimate(red, mode):
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    if sha256(encoded_string) != challenge:
-        logging.warning("Proof challenge does not match")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error": "invalid_request", "error_description": "Challeng does not match"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
-    if result:
-        logging.warning("Verify presentation  error %s", result)
-        # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-    
+    encoded_string_hash = sha256(encoded_string)
     # test if age estimate has already been done recently
     try:
-        data = json.loads(red.get(challenge).decode())
+        data = json.loads(red.get(encoded_string_hash).decode())
         age = data['age']
         st_dev = data['st_dev']
         prediction = data['prediction']
@@ -167,7 +155,7 @@ async def ai_ageestimate(red, mode):
                 'st_dev': st_dev,
                 'prediction': prediction
             }
-            red.setex(challenge, 240, json.dumps(data))
+            red.setex(encoded_string_hash, 240, json.dumps(data))
             logging.info("age is now stored in redis for 240s")
         except Exception:
             logging.error(json.dumps(result))
@@ -178,9 +166,6 @@ async def ai_ageestimate(red, mode):
     logging.info("age estimate by AI is %s", age)
     logging.info("estimate quality by AI is %s", st_dev)
     logging.info("prediction is %s", prediction)
-    
-    #if prediction != 'real':
-    #    logging.warning('prediction = %s', prediction)
     
     if st_dev > 6:
         logging.warning(json.dumps(result))
@@ -217,7 +202,8 @@ async def ai_over(red, mode, age_over):
         vc_format = "ldp_vc"
     try:
         x_api_key = request.headers['X-API-KEY']
-        wallet_request = request.get_json()    
+        wallet_request = request.get_json()
+        logging.info("wallet request = %s", json.dumps(wallet_request, indent=4))
     except Exception:
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -225,9 +211,7 @@ async def ai_over(red, mode, age_over):
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     try:  
         wallet_did = wallet_request['did']
-        did_authn = wallet_request["vp"]
         encoded_string = wallet_request["base64_encoded_string"].encode()
-        challenge = json.loads(did_authn)['proof']['challenge']
     except Exception:
         logging.warning("Invalid request")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -240,22 +224,11 @@ async def ai_over(red, mode, age_over):
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
-    if sha256(encoded_string) != challenge:
-        logging.warning("Proof challenge does not match")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error": "invalid_request", "error_description": "Challenge does not match"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
-    if result:
-        logging.warning("Verify presentation  error %s", result)
-        # headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        # endpoint_response = {"error": "invalid_proof", "error_description": "The proof check fails"}
-        # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
+    encoded_string_hash = sha256(encoded_string)
     
     # test if age estimate has already been done recently
     try:
-        data = json.loads(red.get(challenge).decode())
+        data = json.loads(red.get(encoded_string_hash).decode())
         age = data['age']
         st_dev = data['st_dev']
         prediction = data['prediction']
@@ -272,7 +245,7 @@ async def ai_over(red, mode, age_over):
                 'st_dev': st_dev,
                 'prediction': prediction
             }
-            red.setex(challenge, 240, json.dumps(data))
+            red.setex(encoded_string_hash, 240, json.dumps(data))
             logging.info("age is stored in redis for 240 sec")
         except Exception:
             logging.warning(json.dumps(result))
@@ -347,9 +320,7 @@ async def ai_agerange(red, mode):
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
     try:
         wallet_did = wallet_request['did']
-        did_authn = wallet_request["vp"]
         encoded_string = wallet_request["base64_encoded_string"].encode()
-        challenge = json.loads(did_authn)['proof']['challenge']
     except Exception:
         logging.warning("Invalid data sent")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -361,22 +332,9 @@ async def ai_agerange(red, mode):
         endpoint_response = {"error": "unauthorized_client"}
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    if sha256(encoded_string) != challenge:
-        logging.warning("Challenge does not match")
-        headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error": "invalid_request", "error_description": "Challeng does not match"}
-        return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-
-    result = json.loads(await didkit.verify_presentation(did_authn, '{}'))['errors']
-    if result:
-        logging.warning("Verify presentation  error %s", result)
-        #headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        #endpoint_response = {"error": "invalid_proof", "error_description": "The proof check fails"}
-        # return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
-        #test if age estimate has already been done recently
+    encoded_string_hash = sha256(encoded_string)
     try:
-        data = json.loads(red.get(challenge).decode())
+        data = json.loads(red.get(encoded_string_hash).decode())
         age = data['age']
         st_dev = data['st_dev']
         prediction = data['prediction']
@@ -393,7 +351,7 @@ async def ai_agerange(red, mode):
                 'st_dev': st_dev,
                 'prediction': prediction
             }
-            red.setex(challenge, 240, json.dumps(data))
+            red.setex(encoded_string_hash, 240, json.dumps(data))
             logging.info("age is stored in redis for 240 sec")
         except Exception:
             logging.warning(json.dumps(result))
