@@ -35,6 +35,9 @@ client_secret_ldp_vc = json.load(open('keys.json', 'r'))['client_secret_ldp_vc']
 ISSUER_ID_JWT_VC_JSON_13 = 'mslmgnysdh'
 client_secret_jwt_vc_json_13 = json.load(open('keys.json', 'r'))['client_secret_jwt_vc_json']
 
+ISSUER_LDP_VC_13 = 'lpiqylqrrs'
+client_secret_ldp_vc_13 = json.load(open('keys.json', 'r'))['client_secret_ldp_vc_13']
+
 ISSUER_ID_VC_SD_JWT = 'acnliwayop'
 client_secret_vc_sd_jwt = json.load(open('keys.json', 'r'))['client_secret_vc_sd_jwt']
 
@@ -231,6 +234,9 @@ def emailpass_oidc4vc(mode):
     if format == 'ldp_vc' and draft == "11":
         x_api_key = client_secret_ldp_vc
         issuer_id = ISSUER_ID_LDP_VC
+    elif format == 'ldp_vc' and draft == "13":
+        x_api_key = client_secret_ldp_vc_13
+        issuer_id = ISSUER_LDP_VC_13
     elif format == 'jwt_vc_json' and draft == "11":
         x_api_key = client_secret_jwt_vc_json
         issuer_id = ISSUER_ID_JWT_VC_JSON
