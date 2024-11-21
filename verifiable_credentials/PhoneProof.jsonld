@@ -8,11 +8,7 @@
     ],
     "id": "",
     "type": ["VerifiableCredential", "PhoneProof"],
-    "issuer": {
-        "id": "",
-        "name": "Talao",
-        "description": "See https://talao.io"
-    },
+    "issuer": "",
     "issuanceDate": "",
     "credentialSubject" : {
         "type" : "PhoneProof",
