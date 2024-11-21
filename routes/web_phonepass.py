@@ -1,3 +1,8 @@
+"""
+https://issuer.talao.co/phoneproof?draft=13&format=ldp_vc
+
+"""
+
 from flask import jsonify, request, render_template, session, redirect, flash, Response
 from components import sms, message
 import uuid
