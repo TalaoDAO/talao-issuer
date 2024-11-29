@@ -62,7 +62,7 @@ def init_app(app, red, mode):
 def emailpass(mode):
     # request email to user and send a secret code
     if request.method == 'GET':
-        if request.args.get('format') in['jwt_vc_json', "vc_sd_jwt", "vcsd-jwt"]:
+        if request.args.get('format') in['jwt_vc_json', "vc_sd_jwt", "vcsd-jwt", "jwt_vc_json-ld"]:
             format = request.args.get('format')
             if format == "vcsd-jwt": format = "vc_sd_jwt"
         else:
@@ -77,7 +77,7 @@ def emailpass(mode):
         logging.info('VC draft is %s', draft)
         session['draft'] = draft
         session['format'] = format
-        if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json"] and draft not in ["0", "11", "13"]:
+        if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json", "jwt_vc_json-ld"] and draft not in ["0", "11", "13"]:
             return jsonify("Incorrect request", 401)
         
         return render_template('emailpass/emailpass.html')

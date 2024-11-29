@@ -1,7 +1,7 @@
 {
     "@context": ["https://www.w3.org/2018/credentials/v1",
         {
-            "Over15" : "https://doc.wallet-provider.io/wallet/vc_type/#Over15",
+            "Over15" : "https://doc.wallet-provider.io/vc_type#over15",
             "age_over_15": "https://eu-digital-identity-wallet.github.io/eudi-doc-architecture-and-reference-framework/1.4.0/annexes/annex-3/annex-3.01-pid-rulebook/",
             "@vocab": "https://schema.org"
         }

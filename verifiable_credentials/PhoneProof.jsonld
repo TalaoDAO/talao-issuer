@@ -2,7 +2,7 @@
     "@context": [
         "https://www.w3.org/2018/credentials/v1",
         {
-            "PhoneProof": "https://doc.wallet-provider.io/wallet/vc_type/#PhoneProof",
+            "PhoneProof": "https://doc.wallet-provider.io/vc_type#phoneproof",
             "@vocab": "https://schema.org/"
         }
     ],

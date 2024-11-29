@@ -1,6 +1,8 @@
 """
 https://issuer.talao.co/phoneproof?draft=13&format=ldp_vc
 
+https://issuer.talao.co/phoneproof?draft=13&format=vc_sd_jwt
+
 """
 
 from flask import jsonify, request, render_template, session, redirect, flash, Response

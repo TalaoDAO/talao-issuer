@@ -1,7 +1,7 @@
 {
     "@context": ["https://www.w3.org/2018/credentials/v1",
         {
-            "EmailPass": "https://doc.wallet-provider.io/wallet/vc_type/#Emai!lPass",
+            "EmailPass": "https://doc.wallet-provider.io/vc_type#emailpass",
             "@vocab": "https://schema.org/"   
         }
     ],
