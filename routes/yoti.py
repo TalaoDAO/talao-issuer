@@ -234,11 +234,11 @@ async def ai_over(red, mode, age_over):
     age, st_dev, prediction = get_age_from_yoti(encoded_string, wallet_did, red, mode)
     if not age:
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
+        endpoint_response = {"error": "invalid_request", "error_description": "age not available"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     if st_dev > 6:
-        logging.warning(json.dumps(result))
+        logging.warning("dev > 6")
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
         endpoint_response = {"error": "invalid_request", "error_description": "Uncertain estimate"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
