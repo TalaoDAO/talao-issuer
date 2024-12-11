@@ -269,7 +269,7 @@ async def ai_over(red, mode, age_over):
             endpoint_response = {"error": "invalid_over13", "error_description": "User is estimated under " + str(age_over)}
             return Response(response=json.dumps(endpoint_response), status=403, headers=headers)  
     elif vc_format == "vcsd-jwt":
-        vc = {"vct": "urn:talao:age_over"}
+        vc = {"vct": "urn:example:talao:age_over"}
         for age_in_vc in [12, 14, 16, 18, 21, 50, 65]:
             if age_in_vc <= 21:
                 age_over = age_in_vc + 2
@@ -279,7 +279,7 @@ async def ai_over(red, mode, age_over):
                 vc.update({"age_over_" + str(age_in_vc): True})
             else:
                 vc.update({"age_over_" + str(age_in_vc): False})
-        credential_signed = oidc.sign_sd_jwt(vc, key, issuer_did, wallet_did, duration=365*24*60*60)
+        credential_signed = oidc.sign_sd_jwt(vc, key, issuer_did, wallet_did, duration=365*24*60*60, kid=issuer_vm)
         logging.info("credential vc+sd-jwt = %s", credential_signed)
     else:
         logging.warning("VC format not supported")

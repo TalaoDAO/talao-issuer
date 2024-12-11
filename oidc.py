@@ -147,7 +147,7 @@ def hash(text):
     return base64.urlsafe_b64encode(m.digest()).decode().replace("=", "")
   
 
-def sign_sd_jwt(unsecured, issuer_key, issuer, wallet_did, duration=365*24*60*60):
+def sign_sd_jwt(unsecured, issuer_key, issuer, wallet_did, duration=365*24*60*60, kid=None):
     disclosed_claims = ['status', 'vct', 'iat', 'iss', 'exp', '_sd_alg', 'cnf']
     issuer_key = json.loads(issuer_key) if isinstance(issuer_key, str) else issuer_key
     payload = {
@@ -219,11 +219,18 @@ def sign_sd_jwt(unsecured, issuer_key, issuer, wallet_did, duration=365*24*60*60
         del payload["_sd_alg"]
     logging.info("sd-jwt payload = %s", payload)
     signer_key = jwk.JWK(**issuer_key)
-    kid = issuer_key.get('kid') if issuer_key.get('kid') else signer_key.thumbprint()
+    
+    # get kid
+    if not kid:
+      if issuer_key.get('kid'):
+        kid = issuer_key.get('kid')
+      else:
+        kid = signer_key.thumbprint()
+
     header = {
-        'typ': "vc+sd-jwt",
-        'alg': alg(issuer_key),
-        'kid': kid
+      'typ': "vc+sd-jwt",
+      'alg': alg(issuer_key),
+      'kid': kid
     }
     if unsecured.get('status'): payload['status'] = unsecured['status']
     token = jwt.JWT(header=header, claims=payload, algs=[alg(issuer_key)])
