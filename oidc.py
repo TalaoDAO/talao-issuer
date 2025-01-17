@@ -13,54 +13,53 @@ from random import randbytes
 
 
 def generate_key(curve):
-  """
-  alg value https://www.rfc-editor.org/rfc/rfc7518#page-6
+    """
+    alg value https://www.rfc-editor.org/rfc/rfc7518#page-6
 
-   +--------------+-------------------------------+--------------------+
-   | "alg" Param  | Digital Signature or MAC      | Implementation     |
-   | Value        | Algorithm                     | Requirements       |
-   +--------------+-------------------------------+--------------------+
-   | RS256        | RSASSA-PKCS1-v1_5 using       | Recommended        |
-   |              | SHA-256                       |                    |
-   | RS384        | RSASSA-PKCS1-v1_5 using       | Optional           |
-   |              | SHA-384                       |                    |
-   | RS512        | RSASSA-PKCS1-v1_5 using       | Optional           |
-   |              | SHA-512                       |                    |
-   | ES256        | ECDSA using P-256 and SHA-256 | Recommended+       |
-   | ES384        | ECDSA using P-384 and SHA-384 | Optional           |
-   | ES512        | ECDSA using P-521 and SHA-512 | Optional           |
-   +--------------+-------------------------------+--------------------+
-  """
-  if curve in  ['P-256', 'P-384', 'P-521', 'secp256k1']:
-    key = jwk.JWK.generate(kty='EC', crv=curve)
-  elif curve == 'RSA':
-    key = jwk.JWK.generate(kty='RSA', size=2048)
-  else:
-    raise Exception("Curve not supported")
-  return json.loads(key.export(private_key=True))  
+    +--------------+-------------------------------+--------------------+
+    | "alg" Param  | Digital Signature or MAC      | Implementation     |
+    | Value        | Algorithm                     | Requirements       |
+    +--------------+-------------------------------+--------------------+
+    | RS256        | RSASSA-PKCS1-v1_5 using       | Recommended        |
+    |              | SHA-256                       |                    |
+    | RS384        | RSASSA-PKCS1-v1_5 using       | Optional           |
+    |              | SHA-384                       |                    |
+    | RS512        | RSASSA-PKCS1-v1_5 using       | Optional           |
+    |              | SHA-512                       |                    |
+    | ES256        | ECDSA using P-256 and SHA-256 | Recommended+       |
+    | ES384        | ECDSA using P-384 and SHA-384 | Optional           |
+    | ES512        | ECDSA using P-521 and SHA-512 | Optional           |
+    +--------------+-------------------------------+--------------------+
+    """
+    if curve in ['P-256', 'P-384', 'P-521', 'secp256k1']:
+        key = jwk.JWK.generate(kty='EC', crv=curve)
+    elif curve == 'RSA':
+        key = jwk.JWK.generate(kty='RSA', size=2048)
+    else:
+        raise Exception("Curve not supported")
+    return json.loads(key.export(private_key=True))  
 
 
 def alg(key):
-  key = json.loads(key) if isinstance(key, str) else key
-  if key['kty'] == 'EC':
-    if key['crv'] in ['secp256k1', 'P-256K']:
-      key['crv'] = 'secp256k1'
-      return 'ES256K' 
-    elif key['crv'] == 'P-256':
-      return 'ES256'
-    elif key['crv'] == 'P-384':
-      return 'ES384'
-    elif key['crv'] == 'P-521':
-      return 'ES512'
+    key = json.loads(key) if isinstance(key, str) else key
+    if key['kty'] == 'EC':
+        if key['crv'] in ['secp256k1', 'P-256K']:
+            key['crv'] = 'secp256k1'
+            return 'ES256K' 
+        elif key['crv'] == 'P-256':
+            return 'ES256'
+        elif key['crv'] == 'P-384':
+            return 'ES384'
+        elif key['crv'] == 'P-521':
+            return 'ES512'
+        else:
+            raise Exception("Curve not supported")
+    elif key['kty'] == 'RSA':
+        return 'RS256'
+    elif key['kty'] == 'OKP':
+        return 'EdDSA'
     else:
-      raise Exception("Curve not supported")
-  elif key['kty'] == 'RSA':
-    return 'RS256'
-  elif key['kty'] == 'OKP':
-    return 'EdDSA'
-  else:
-    raise Exception("Key type not supported")
-
+        raise Exception("Key type not supported")
 
 
 def pub_key(key):
@@ -69,7 +68,7 @@ def pub_key(key):
     return Key.export_public(as_dict=True)
     
 
-def sign_jwt_vc(vc, issuer_vm , issuer_key, issuer_did, wallet_did, nonce):
+def sign_jwt_vc(vc, issuer_vm, issuer_key, issuer_did, wallet_did, nonce):
     """
     For issuer
 
@@ -81,30 +80,25 @@ def sign_jwt_vc(vc, issuer_vm , issuer_key, issuer_did, wallet_did, nonce):
     vc = json.loads(vc) if isinstance(vc, str) else vc
     signer_key = jwk.JWK(**issuer_key) 
     header = {
-      'typ':'JWT',
-      'kid': issuer_vm,
-      'alg': alg(issuer_key)
+        'typ':'JWT',
+        'kid': issuer_vm,
+        'alg': alg(issuer_key)
     }
     payload = {
-      'iss': issuer_did,
-      'nonce': nonce,
-      'iat': datetime.timestamp(datetime.now()),
-      'nbf': datetime.timestamp(datetime.now()),
-      'jti': vc['id'],
-      'exp': datetime.timestamp(datetime.now()) + 1000,
-      'sub': wallet_did,
-      'vc': vc
+        'iss': issuer_did,
+        'nonce': nonce,
+        'iat': datetime.timestamp(datetime.now()),
+        'nbf': datetime.timestamp(datetime.now()),
+        'jti': vc['id'],
+        'exp': datetime.timestamp(datetime.now()) + 1000,
+        'sub': wallet_did,
+        'vc': vc
     }  
     token = jwt.JWT(header=header,claims=payload, algs=[alg(issuer_key)])
     token.make_signed_token(signer_key)
     return token.serialize()
 
 
-"""
-For holder/wallet
-Build and sign verifiable presentation as vp_token
-Ascii is by default in the json string 
-"""
 def sign_jwt_vp(vc, audience, holder_vm, holder_did, nonce, vp_id, holder_key):
     holder_key = json.loads(holder_key) if isinstance(holder_key, str) else holder_key
     signer_key = jwk.JWK(**holder_key) 
@@ -145,7 +139,7 @@ def hash(text):
     m = hashlib.sha256()
     m.update(text.encode())
     return base64.urlsafe_b64encode(m.digest()).decode().replace("=", "")
-  
+
 
 def sign_sd_jwt(unsecured, issuer_key, issuer, wallet_did, duration=365*24*60*60, kid=None):
     disclosed_claims = ['status', 'vct', 'iat', 'iss', 'exp', '_sd_alg', 'cnf']
@@ -222,15 +216,15 @@ def sign_sd_jwt(unsecured, issuer_key, issuer, wallet_did, duration=365*24*60*60
     
     # get kid
     if not kid:
-      if issuer_key.get('kid'):
-        kid = issuer_key.get('kid')
-      else:
-        kid = signer_key.thumbprint()
+        if issuer_key.get('kid'):
+            kid = issuer_key.get('kid')
+        else:
+            kid = signer_key.thumbprint()
 
     header = {
-      'typ': "vc+sd-jwt",
-      'alg': alg(issuer_key),
-      'kid': kid
+        'typ': "vc+sd-jwt",
+        'alg': alg(issuer_key),
+        'kid': kid
     }
     if unsecured.get('status'): payload['status'] = unsecured['status']
     token = jwt.JWT(header=header, claims=payload, algs=[alg(issuer_key)])
@@ -239,104 +233,74 @@ def sign_sd_jwt(unsecured, issuer_key, issuer, wallet_did, duration=365*24*60*60
 
 
 def verif_token(token, nonce):
-  """
-  For issuer 
-  raise exception if problem
-  pub _key is in header
-  https://jwcrypto.readthedocs.io/en/latest/jwt.html#jwcrypto.jwt.JWT.validate
-  """
-  header = get_header_from_token(token)
-  payload = get_payload_from_token(token)
-  if payload['nonce'] != nonce:
-    raise Exception("Nonce is incorrect")
-  a =jwt.JWT.from_jose_token(token)
-  if isinstance (header['jwk'], str):
-    header['jwk'] = json.loads(header['jwk'])
-  issuer_key = jwk.JWK(**header['jwk']) 
-  a.validate(issuer_key)
-  return
+    header = get_header_from_token(token)
+    payload = get_payload_from_token(token)
+    if payload['nonce'] != nonce:
+        raise Exception("Nonce is incorrect")
+    a = jwt.JWT.from_jose_token(token)
+    if isinstance(header['jwk'], str):
+        header['jwk'] = json.loads(header['jwk'])
+    issuer_key = jwk.JWK(**header['jwk']) 
+    a.validate(issuer_key)
+    return
 
 
 def verify_jwt_credential(token, pub_key):
-  """
-  For verifier and holder
-  raise an exception if problem
-  pub_key is not in header
-  https://jwcrypto.readthedocs.io/en/latest/jwt.html#jwcrypto.jwt.JWT.validate
-  """
-  a =jwt.JWT.from_jose_token(token)
-  pub_key = json.loads(pub_key) if isinstance(pub_key, str) else pub_key
-  issuer_key = jwk.JWK(**pub_key) 
-  a.validate(issuer_key)
-  return
-
-"""
-def get_payload_from_token(token, nonce):
-  payload = token.split('.')[1]
-  payload += "=" * ((4 - len(payload) % 4) % 4) # solve the padding issue of the base64 python lib
-  payload = json.loads(base64.urlsafe_b64decode(payload).decode())
-  try:
-    verif_proof_of_key(token, nonce)
-  except:
+    a =jwt.JWT.from_jose_token(token)
+    pub_key = json.loads(pub_key) if isinstance(pub_key, str) else pub_key
+    issuer_key = jwk.JWK(**pub_key) 
+    a.validate(issuer_key)
     return
-  return payload
-  """
 
-def get_payload_from_token(token):
-  """
-  For verifier
-  check the signature and return None if failed
-  """
-  payload = token.split('.')[1]
-  payload += "=" * ((4 - len(payload) % 4) % 4) # solve the padding issue of the base64 python lib
-  return json.loads(base64.urlsafe_b64decode(payload).decode())
- 
 
-def get_header_from_token(token):
-  header = token.split('.')[0]
-  header += "=" * ((4 - len(header) % 4) % 4) # solve the padding issue of the base64 python lib
-  return json.loads(base64.urlsafe_b64decode(header).decode())
+def get_payload_from_token(token) -> dict:
+    payload = token.split('.')[1]
+    payload += "=" * ((4 - len(payload) % 4) % 4) # solve the padding issue of the base64 python lib
+    return json.loads(base64.urlsafe_b64decode(payload).decode())
+
+
+def get_header_from_token(token) -> dict:
+    header = token.split('.')[0]
+    header += "=" * ((4 - len(header) % 4) % 4) # solve the padding issue of the base64 python lib
+    return json.loads(base64.urlsafe_b64decode(header).decode())
 
 
 def build_proof_of_key_ownership(key, kid, aud, signer_did, nonce):
-  """
-  For wallets natural person as jwk is added in header
-  """
-  key = json.loads(key) if isinstance(key, str) else key
-  signer_key = jwk.JWK(**key) 
-  signer_pub_key = signer_key.export(private_key=False, as_dict=True)
-  header = {
-    'typ':'JWT',
-    'alg': alg(key),
-    'jwk': signer_pub_key, # for natural person
-    'kid': kid # only for EBSI
-  }
-  payload = {
-    'iss': signer_did,
-    'nonce': nonce,
-    'iat': datetime.timestamp(datetime.now()),
-    'aud': aud
-  }  
-  token = jwt.JWT(header=header,claims=payload, algs=[alg(key)])
-  token.make_signed_token(signer_key)
-  return token.serialize()
+    key = json.loads(key) if isinstance(key, str) else key
+    signer_key = jwk.JWK(**key) 
+    signer_pub_key = signer_key.export(private_key=False, as_dict=True)
+    header = {
+        'typ':'JWT',
+        'alg': alg(key),
+        'jwk': signer_pub_key, # for natural person
+        'kid': kid  # only for EBSI
+    }
+    payload = {
+        'iss': signer_did,
+        'nonce': nonce,
+        'iat': datetime.timestamp(datetime.now()),
+        'aud': aud
+    }  
+    token = jwt.JWT(header=header,claims=payload, algs=[alg(key)])
+    token.make_signed_token(signer_key)
+    return token.serialize()
 
 
 def thumbprint(key):
-  key = json.loads(key) if isinstance(key, str) else key
-  if key['crv'] == 'P-256K':
-    key['crv'] = 'secp256k1'
-  signer_key = jwk.JWK(**key) 
-  a = signer_key.thumbprint()
-  a  += "=" * ((4 - len(a) % 4) % 4) 
-  return base64.urlsafe_b64decode(a).hex()
+    key = json.loads(key) if isinstance(key, str) else key
+    if key['crv'] == 'P-256K':
+        key['crv'] = 'secp256k1'
+    signer_key = jwk.JWK(**key) 
+    a = signer_key.thumbprint()
+    a  += "=" * ((4 - len(a) % 4) % 4) 
+    return base64.urlsafe_b64decode(a).hex()
 
 
 def generate_lp_ebsi_did():
     """
     for legal person as issuer
     """
-    return  'did:ebsi:z' + base58.b58encode(b'\x01' + os.urandom(16)).decode()
+    return 'did:ebsi:z' + base58.b58encode(b'\x01' + os.urandom(16)).decode()
 
 
 def generate_np_ebsi_did(key):
@@ -344,7 +308,7 @@ def generate_np_ebsi_did(key):
     for natural person / wallet
     """
     key = json.loads(key) if isinstance(key, str) else key
-    return  'did:ebsi:z' + base58.b58encode(b'\x02' + bytes.fromhex(thumbprint(key))).decode()
+    return 'did:ebsi:z' + base58.b58encode(b'\x02' + bytes.fromhex(thumbprint(key))).decode()
 
 
 def verification_method(did, key): # = kid
@@ -387,19 +351,19 @@ def did_resolve_lp(did):
  
 
 def get_lp_public_jwk(did, kid):
-  """
-  API v3
-  """
-  did_document = did_resolve_lp(did)
-  if not did_document:
-    logging.warning('DID Document not found')
+    """
+    API v3
+    """
+    did_document = did_resolve_lp(did)
+    if not did_document:
+        logging.warning('DID Document not found')
+        return
+    for key in did_document['verificationMethod']:
+        if key['id'] == kid:
+            return key['publicKeyJwk']
+    logging.warning('public key not found')
     return
-  for key in did_document['verificationMethod']:
-    if key['id'] == kid:
-      return key['publicKeyJwk']
-  logging.warning('public key not found')
-  return  
-  
+
 
 def get_issuer_registry_data(did):
   """
@@ -424,36 +388,36 @@ def get_issuer_registry_data(did):
 
 
 def did_resolve(did, key):
-  """
-  for natural person
-  https://ec.europa.eu/digital-building-blocks/wikis/display/EBSIDOC/EBSI+DID+Method
-  """
-  key = json.loads(key) if isinstance(key, str) else key
-  did_document = {
-    "@context": "https://w3id.org/did/v1",
-    "id": did,
-    "verificationMethod": [
-      {
-        "id": verification_method(did, key),
-        "type": "JsonWebKey2020",
-        "controller": did,
-        "publicKeyJwk": {
-          "kty": key['kty'],
-          "crv": key['crv'],
-          "x": key["x"],
-          "y": key["y"],
-          "alg": alg(key)
-        }
-      }
-    ],
-    "authentication": [
-      verification_method(did, key)
-    ],
-    "assertionMethod": [
-      verification_method(did, key)
-      ]
+    """
+    for natural person
+    https://ec.europa.eu/digital-building-blocks/wikis/display/EBSIDOC/EBSI+DID+Method
+    """
+    key = json.loads(key) if isinstance(key, str) else key
+    did_document = {
+        "@context": "https://w3id.org/did/v1",
+        "id": did,
+        "verificationMethod": [
+            {
+                "id": verification_method(did, key),
+                "type": "JsonWebKey2020",
+                "controller": did,
+                "publicKeyJwk": {
+                    "kty": key['kty'],
+                    "crv": key['crv'],
+                    "x": key["x"],
+                    "y": key["y"],
+                    "alg": alg(key)
+                }
+            }
+        ],
+        "authentication": [
+            verification_method(did, key)
+        ],
+        "assertionMethod": [
+            verification_method(did, key)
+        ]
     }
-  return json.dumps(did_document)
+    return json.dumps(did_document)
 
 
 ########################## TEST VECTORS

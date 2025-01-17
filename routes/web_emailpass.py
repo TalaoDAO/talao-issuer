@@ -200,7 +200,7 @@ async def emailpass_enpoint(id, red, mode):
             'vc': 'emailpass',
             'count': '1',
         }
-        requests.post(mode.server + 'counter/update', data=data)
+        requests.post(mode.server + 'counter/update', data=data, timeout=10)
 
         # Success: send event to client agent to go forward
         data = json.dumps({
@@ -263,7 +263,7 @@ def emailpass_oidc4vc(mode):
         'issuer_id': issuer_id
     }
     try:
-        resp = requests.post(OIDC4VC_URL, headers=headers, data=json.dumps(data))
+        resp = requests.post(OIDC4VC_URL, headers=headers, data=json.dumps(data), timeout=10)
         redirect_uri = resp.json()['redirect_uri']
     except Exception:
         logging.error('error oidc, redirect uri not available')
@@ -273,7 +273,7 @@ def emailpass_oidc4vc(mode):
         'vc': 'emailpass',
         'count': '1',
     }
-    requests.post(mode.server + 'counter/update', data=data)
+    requests.post(mode.server + 'counter/update', data=data, timeout=10)
     return redirect(redirect_uri)
 
 
