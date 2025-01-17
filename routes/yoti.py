@@ -267,7 +267,7 @@ async def ai_over(red, mode, age_over):
         else:
             logging.warning("Age is estimated under %s", str(age_over))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-            endpoint_response = {"error": "invalid_over13", "error_description": "User is estimated under " + str(age_over)}
+            endpoint_response = {"error": "invalid_over" + str(age_over), "error_description": "User is estimated under " + str(age_over)}
             return Response(response=json.dumps(endpoint_response), status=403, headers=headers)  
     elif vc_format == "vcsd-jwt":
         vc = {"vct": "urn:example:talao:age_over"}
