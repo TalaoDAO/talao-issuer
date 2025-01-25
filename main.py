@@ -12,6 +12,7 @@ import sys
 from flask_babel import Babel, _, refresh
 from datetime import timedelta
 import markdown
+import json
 import markdown.extensions.fenced_code
 from components import message
 from flask_session import Session
@@ -28,7 +29,7 @@ import environment
 import logging
 logging.basicConfig(level=logging.INFO)
 ISSUER_CONFIG = {
-    'SECRET_CAPTCHA_KEY': 'LONG SECRET KEY HERE',  # use for JWT encoding/decoding
+    'SECRET_CAPTCHA_KEY': json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key']),  # use for JWT encoding/decoding
     'CAPTCHA_LENGTH': 6,  # Length of the generated CAPTCHA text
     'CAPTCHA_DIGITS': False,  # Should digits be added to the character pool?
     # EXPIRE_SECONDS will take prioritity over EXPIRE_MINUTES if both are set.
