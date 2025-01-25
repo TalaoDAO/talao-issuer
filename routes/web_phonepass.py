@@ -17,6 +17,8 @@ import json
 from urllib.parse import urlencode
 import didkit
 import requests
+from flask_simple_captcha import CAPTCHA
+
 
 OFFER_DELAY = timedelta(seconds= 10*60)
 CODE_DELAY = timedelta(seconds=180)
@@ -44,9 +46,9 @@ issuer_vm = "did:web:app.altme.io:issuer#key-1"
 issuer_did = "did:web:app.altme.io:issuer"
 
 
-def init_app(app, red, mode):
-    app.add_url_rule('/phonepass',  view_func=phonepass, methods=['GET', 'POST'], defaults={'mode': mode})
-    app.add_url_rule('/phoneproof',  view_func=phonepass, methods=['GET', 'POST'], defaults={'mode': mode})
+def init_app(captcha, app, red, mode):
+    app.add_url_rule('/phonepass',  view_func=phonepass, methods=['GET', 'POST'], defaults={'captcha': captcha, 'mode': mode})
+    app.add_url_rule('/phoneproof',  view_func=phonepass, methods=['GET', 'POST'], defaults={'captcha': captcha, 'mode': mode})
     app.add_url_rule('/phonepass/authentication',  view_func=phonepass_authentication, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/phonepass/qrcode',  view_func=phonepass_qrcode, methods=['GET', 'POST'], defaults={'mode': mode, 'red': red})
     app.add_url_rule('/phonepass/offer/<id>',  view_func=phonepass_enpoint, methods=['GET', 'POST'], defaults={'red': red, 'mode': mode})
@@ -57,8 +59,10 @@ def init_app(app, red, mode):
     return
 
 
-def phonepass(mode):
+def phonepass(captcha, mode):
     if request.method == 'GET':
+        session['request_args'] = request.args
+        print('initial request args =', request.args)
         if request.args.get('format') in['jwt_vc_json', "vc_sd_jwt"]:
             format = request.args.get('format')
         else:
@@ -75,14 +79,26 @@ def phonepass(mode):
         session['format'] = format
         if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json"] and draft not in ["0", "11", "13"]:
             return jsonify("Incorrect request", 401)
-        
-        return render_template('phonepass/phonepass.html')
+        new_captcha_dict = captcha.create()
+        return render_template('phonepass/phonepass.html', captcha=new_captcha_dict)
     elif request.method == 'POST':
         # traiter phone
         session['phone'] = request.form['phone']
         session['code'] = str(randint(10000, 99999))
         session['code_delay'] = (datetime.now() + CODE_DELAY).timestamp()
-        try: 
+        c_hash = request.form.get('captcha-hash')
+        c_text = request.form.get('captcha-text')
+        if not captcha.verify(c_text, c_hash):
+            flash(_("Captcha failed."), 'danger')
+            logging.warning("Captcha failed")
+            url = "/phonepass?"
+            if session['request_args'].get('format'):
+                url += "format=" + session['request_args'].get('format')
+            if session['request_args'].get('draft'):
+                url += "&draft=" + session['request_args'].get('draft')
+            logging.info('redirect url = %s', url)
+            return redirect(url)
+        try:
             sms.send_code(session['phone'], session['code'], mode)
             logging.info('secret code sent = %s', session['code'])
             flash(_("Secret code sent to your phone."), 'success')

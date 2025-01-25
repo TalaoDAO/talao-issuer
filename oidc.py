@@ -155,7 +155,7 @@ def sign_sd_jwt(unsecured, issuer_key, issuer, wallet_did, duration=365*24*60*60
     _disclosure = ""
     disclosure_list = unsecured.get("disclosure", [])
     if not disclosure_list:
-        logging.warning("disclosure is missing in sd-jwt")
+        logging.info("disclosure is missing in sd-jwt")
     for claim in [attribute for attribute in unsecured.keys()]:
         if claim == "disclosure":
             pass

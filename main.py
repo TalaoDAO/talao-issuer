@@ -16,6 +16,7 @@ import markdown.extensions.fenced_code
 from components import message
 from flask_session import Session
 from flask_mobility import Mobility
+from flask_simple_captcha import CAPTCHA
 
 
 # local dependencies
@@ -26,6 +27,18 @@ import environment
 
 import logging
 logging.basicConfig(level=logging.INFO)
+ISSUER_CONFIG = {
+    'SECRET_CAPTCHA_KEY': 'LONG SECRET KEY HERE',  # use for JWT encoding/decoding
+    'CAPTCHA_LENGTH': 6,  # Length of the generated CAPTCHA text
+    'CAPTCHA_DIGITS': False,  # Should digits be added to the character pool?
+    # EXPIRE_SECONDS will take prioritity over EXPIRE_MINUTES if both are set.
+    'EXPIRE_SECONDS': 60 * 10,
+    #'EXPIRE_MINUTES': 10, # backwards compatibility concerns supports this too
+    #'EXCLUDE_VISUALLY_SIMILAR': True,  # Optional
+    #'ONLY_UPPERCASE': True,  # Optional
+    #'CHARACTER_POOL': 'AaBb',  # Optional
+}
+ISSUER_CAPTCHA = CAPTCHA(config=ISSUER_CONFIG)
 
 LANGUAGES = ['en', 'fr']
 
@@ -48,7 +61,9 @@ app.config['SESSION_TYPE'] = 'redis' # Redis server side session
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60) # session lifetime
 app.config['SESSION_FILE_THRESHOLD'] = 100
 app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "1.6.0"
+app.jinja_env.globals['Version'] = "2.0.1"
+
+app = ISSUER_CAPTCHA.init_app(app)
 
 # site X
 app.config.update(
@@ -69,7 +84,7 @@ sess.init_app(app)
 
 # init routes 
 web_emailpass.init_app(app, red, mode)
-web_phonepass.init_app(app, red, mode)
+web_phonepass.init_app(ISSUER_CAPTCHA, app, red, mode)
 dapp_register_gamer_pass.init_app(app, red, mode)
 yoti.init_app(app, red, mode)
 tezotopia.init_app(app, red, mode)
