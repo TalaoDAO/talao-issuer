@@ -79,6 +79,8 @@ def phonepass(captcha, mode):
         session['format'] = format
         if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json"] and draft not in ["0", "11", "13"]:
             return jsonify("Incorrect request", 401)
+        if format == "ldp_vc" and draft == "0":
+            return jsonify("Incorrect request", 401)
         new_captcha_dict = captcha.create()
         return render_template('phonepass/phonepass.html', captcha=new_captcha_dict)
     elif request.method == 'POST':
@@ -88,7 +90,7 @@ def phonepass(captcha, mode):
         session['code_delay'] = (datetime.now() + CODE_DELAY).timestamp()
         c_hash = request.form.get('captcha-hash')
         c_text = request.form.get('captcha-text')
-        if not captcha.verify(c_text, c_hash):
+        if not captcha.verify(c_text, c_hash) :
             flash(_("Captcha failed."), 'danger')
             logging.warning("Captcha failed")
             url = "/phonepass?"
