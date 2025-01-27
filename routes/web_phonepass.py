@@ -86,6 +86,7 @@ def phonepass(captcha, mode):
     elif request.method == 'POST':
         # traiter phone
         session['phone'] = request.form['phone']
+        logging.info("phone number input = %s", request.form['phone'])
         session['code'] = str(randint(10000, 99999))
         session['code_delay'] = (datetime.now() + CODE_DELAY).timestamp()
         c_hash = request.form.get('captcha-hash')
