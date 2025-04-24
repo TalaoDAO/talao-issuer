@@ -90,13 +90,15 @@ def emailpass(mode):
         if session['email'].split('@')[1] == 'wallet-provider.io':
             session['try_number'] = 1
             logging.info('wallet provider email request')
-        elif message.messageHTML(subject, session['email'], 'code_auth_en', {'code': session['code']}, mode):
-            logging.info('secret code sent = %s', session['code'])
-            flash(_('Secret code sent to your email.'), 'success')
-            session['try_number'] = 1
         else:
-            flash(_('Email failed.'), 'danger')
-            return render_template('emailpass/emailpass.html')
+            try:
+                message.messageHTML(subject, session['email'], 'code_auth_en', {'code': session['code']}, mode)
+                logging.info('secret code sent = %s', session['code'])
+                flash(_('Secret code sent to your email.'), 'success')
+                session['try_number'] = 1
+            except:
+                flash(_('Email failed.'), 'danger')
+                return render_template('emailpass/emailpass.html')
         return redirect('emailpass/authentication')
     else:
         return jsonify(), 404
@@ -208,7 +210,10 @@ async def emailpass_enpoint(id, red, mode):
             'check': 'success'
         })
         red.publish('emailpass', data)
-        message.message('EmailPass sent', 'thierry@altme.io', credential['credentialSubject']['email'], mode)
+        try:
+            message.message('EmailPass sent', 'thierry@altme.io', credential['credentialSubject']['email'], mode)
+        except:
+            logging.error("SMTP error")
         return jsonify(signed_credential)
 
 
