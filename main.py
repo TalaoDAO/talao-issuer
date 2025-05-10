@@ -21,9 +21,8 @@ from flask_simple_captcha import CAPTCHA
 
 
 # local dependencies
-from routes import web_emailpass, web_phonepass, yoti, dapp_register_gamer_pass
-from routes import tezotopia, twitter, chainborn,  oidc4vci_kyc, polygonid, counter
-from routes import verifier_defi_nft, verifier_defi_tezid
+from routes import web_emailpass, web_phonepass, yoti
+from routes import oidc4vci_kyc, counter
 import environment
 
 import logging
@@ -86,16 +85,16 @@ sess.init_app(app)
 # init routes 
 web_emailpass.init_app(app, red, mode)
 web_phonepass.init_app(ISSUER_CAPTCHA, app, red, mode)
-dapp_register_gamer_pass.init_app(app, red, mode)
+#dapp_register_gamer_pass.init_app(app, red, mode)
 yoti.init_app(app, red, mode)
-tezotopia.init_app(app, red, mode)
-twitter.init_app(app, red, mode)
-chainborn.init_app(app, red, mode)
+#tezotopia.init_app(app, red, mode)
+#twitter.init_app(app, red, mode)
+#chainborn.init_app(app, red, mode)
 oidc4vci_kyc.init_app(app, red, mode)
-polygonid.init_app(app)
+#polygonid.init_app(app)
 counter.init_app(app, mode)
-verifier_defi_nft.init_app(app, red, mode)
-verifier_defi_tezid.init_app(app, red, mode)
+#verifier_defi_nft.init_app(app, red, mode)
+#verifier_defi_tezid.init_app(app, red, mode)
 
 
 @app.errorhandler(500)

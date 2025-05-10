@@ -9,8 +9,12 @@ from flask_babel import _
 import logging
 logging.basicConfig(level=logging.INFO)
 
+blacklist = ["254", "255"]
+
 def send_code(phone, code, mode) :
 	""" code = str, phone number with country code 33607182594 """
+	if phone.startswith(tuple(blacklist)):
+		return 
 	token = mode.sms_token
 	try :
 		client = SmsApiComClient(access_token=token)
