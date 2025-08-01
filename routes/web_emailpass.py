@@ -78,7 +78,7 @@ def emailpass(mode):
         session['draft'] = draft
         session['format'] = format
         
-        if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json", "jwt_vc_json-ld"] and draft not in ["0", "11", "13"]:
+        if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json", "jwt_vc_json-ld"] or draft not in ["0", "11", "13"]:
             flash(_('Draft of format not supported.'), 'danger')
             return render_template('emailpass/emailpass.html')
             #return jsonify("Incorrect request", 401)
