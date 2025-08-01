@@ -134,7 +134,7 @@ def phonepass_authentication(mode):
                 return redirect(mode.server + 'phonepass/oidc4vc?draft=11&format=jwt_vc_json')
         elif session['code_delay'] < datetime.now().timestamp():
             flash(_("Code expired."), "warning")
-            return render_template('phonepass/phonepass.html')
+            return redirect('/phonepass') #TODO
         elif session['try_number'] > 3:
             flash(_("Too many trials (3 max)."), "warning")
             return render_template('phonepass/phonepass.html')

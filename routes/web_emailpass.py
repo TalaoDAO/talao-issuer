@@ -252,6 +252,7 @@ def emailpass_oidc4vc(mode):
         issuer_id = ISSUER_ID_VC_SD_JWT
     else:
         logging.error('draft or format not supported')
+        flash(_('Protocol draft or format not supported yet.'), 'danger')
         return redirect('/emailpass')
     logging.info('issuer id = %s', issuer_id)
     headers = {
