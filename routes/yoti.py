@@ -270,16 +270,26 @@ async def ai_over(red, mode, age_over):
             endpoint_response = {"error": "invalid_over" + str(age_over), "error_description": "User is estimated under " + str(age_over)}
             return Response(response=json.dumps(endpoint_response), status=403, headers=headers)  
     elif vc_format == "vcsd-jwt":
-        vc = {"vct": "urn:example:talao:age_over"}
-        for age_in_vc in [12, 14, 16, 18, 21, 50, 65]:
-            if age_in_vc <= 21:
-                age_over = age_in_vc + 2
+        if age_over == 18:
+            vc = {
+                "vct": "https://vc-registry.com/vct/registry/publish/75DUn-S4KQpSFNi31ApY5v2eedTSuQ7T08UwMKH9H50",
+                "vct#integrity": "sha256-0Tj3G8av1AkM9nOvleY/rKnR9zrPFTOu9s+7zD4oQZU="
+            }
+            if age <= 21:
+                vc.update({"age_over_18": False})
             else:
-                age_over = age_in_vc
-            if age >= age_over:
-                vc.update({"age_over_" + str(age_in_vc): True})
-            else:
-                vc.update({"age_over_" + str(age_in_vc): False})
+                vc.update({"age_over_18": True})
+        else:
+            vc = {"vct": "urn:example:talao:age_over"}
+            for age_in_vc in [12, 14, 16, 18, 21, 50, 65]:
+                if age_in_vc <= 21:
+                    age_over = age_in_vc + 2
+                else:
+                    age_over = age_in_vc
+                if age >= age_over:
+                    vc.update({"age_over_" + str(age_in_vc): True})
+                else:
+                    vc.update({"age_over_" + str(age_in_vc): False})
         credential_signed = oidc.sign_sd_jwt(vc, key, issuer_did, wallet_did, duration=365*24*60*60, kid=issuer_vm)
         logging.info("credential vc+sd-jwt = %s", credential_signed)
     else:
