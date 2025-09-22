@@ -227,7 +227,8 @@ def phonepass_oidc4vc(mode):
     format = session['format']
     if format == "vc_sd_jwt":
         credential = {
-            "vct": "talao:issuer:phoneproof:1",
+            "vct": "https://vc-registry.com/vct/registry/publish/04mHy3S5qyUuMj6SUi2npMBlmQwABa2Z9buxGnMWzvY",
+            "vct#integrity": "sha256-HVSMNVIBlSCvh4Uqud6N+2B4mWUfm4e4Sk12ik3HeGI=",
             "phone": session['phone'],
             "disclosure": ["phone"]
         }

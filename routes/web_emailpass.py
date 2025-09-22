@@ -59,6 +59,9 @@ def init_app(app, red, mode):
     return
 
 
+FORMAT_SUPPORTED = ["ldp_vc", "vc_sd_jwt", "jwt_vc_json", "jwt_vc_json-ld",  "vcsd-jwt"]
+OIDC4VCI_DRAFT_SUPPORTED = ["0", "11", "13"]
+
 def emailpass(mode):
     # request email to user and send a secret code
     if request.method == 'GET':
@@ -78,10 +81,9 @@ def emailpass(mode):
         session['draft'] = draft
         session['format'] = format
         
-        if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json", "jwt_vc_json-ld"] or draft not in ["0", "11", "13"]:
+        if format not in FORMAT_SUPPORTED or draft not in OIDC4VCI_DRAFT_SUPPORTED:
             flash(_('Draft of format not supported.'), 'danger')
             return render_template('emailpass/emailpass.html')
-            #return jsonify("Incorrect request", 401)
         
         return render_template('emailpass/emailpass.html')
     elif request.method == 'POST':
@@ -99,7 +101,7 @@ def emailpass(mode):
                 logging.info('secret code sent = %s', session['code'])
                 flash(_('Secret code sent to your email.'), 'success')
                 session['try_number'] = 1
-            except:
+            except Exception:
                 flash(_('Email failed.'), 'danger')
                 return render_template('emailpass/emailpass.html')
         return redirect('emailpass/authentication')
@@ -226,11 +228,13 @@ def emailpass_oidc4vc(mode):
     draft = session['draft']
     format = session['format']
 
-    if format == "vc_sd_jwt":
+    if format in ["vc_sd_jwt", "dc_sd_jwt"]:
         credential = {
-            "vct": "talao:issuer:emailpass:1",
+            "vct": "https://vc-registry.com/vct/registry/publish/mv-PvJ9tUWXzcG_Vk_AEzKpiCTLqe8y-Uo1m89WID7c",
+            "vct#integrity": "sha256-K8K5xq4Hb4yexGWGElszjL2d8t4yXz278pq9xoBE8TU=",
             "email": session['email'],
-            "disclosure": ["email"]
+            "email_address": session['email'],
+            "disclosure": ["email", "email_address"]
         }
     else: 
         credential = json.load(open('./verifiable_credentials/EmailPass.jsonld' , 'r'))
