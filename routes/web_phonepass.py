@@ -227,8 +227,8 @@ def phonepass_oidc4vc(mode):
     format = session['format']
     if format == "vc_sd_jwt":
         credential = {
-            "vct": "https://vc-registry.com/vct/registry/publish/04mHy3S5qyUuMj6SUi2npMBlmQwABa2Z9buxGnMWzvY",
-            "vct#integrity": "sha256-HVSMNVIBlSCvh4Uqud6N+2B4mWUfm4e4Sk12ik3HeGI=",
+            "vct": "https://vc-registry.com/vct/registry/publish/72db2df9f9c498cbad8f230d8fcba73884393e1d37f1b4bc488f96a717dbf030",
+            "vct#integrity": "sha256-BDzkKm4n5TcCfzylthSc5QMfPNbD+lJ5f4unWzumBGY=",
             "phone": session['phone'],
             "disclosure": ["phone"]
         }

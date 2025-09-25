@@ -272,8 +272,8 @@ async def ai_over(red, mode, age_over):
     elif vc_format == "vcsd-jwt":
         if age_over == 18:
             vc = {
-                "vct": "https://vc-registry.com/vct/registry/publish/75DUn-S4KQpSFNi31ApY5v2eedTSuQ7T08UwMKH9H50",
-                "vct#integrity": "sha256-0Tj3G8av1AkM9nOvleY/rKnR9zrPFTOu9s+7zD4oQZU="
+                "vct": "https://vc-registry.com/vct/registry/publish/61d37c6a0affe9883a29b08029496acbc1dbc8bba88bb166c167a96781659b00",
+                "vct#integrity": "sha256-UFaOUKlUz4UJALWNWyTj7WGTyw91aEIFmWwGs+kQVo8="
             }
             if age <= 21:
                 vc.update({"age_over_18": False})
