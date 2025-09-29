@@ -10,6 +10,7 @@ import didkit
 import hashlib
 from components import message
 import oidc
+from random import randint
 
 logging.basicConfig(level=logging.INFO)
 
@@ -273,12 +274,15 @@ async def ai_over(red, mode, age_over):
         if age_over == 18:
             vc = {
                 "vct": "https://vc-registry.com/vct/registry/publish/61d37c6a0affe9883a29b08029496acbc1dbc8bba88bb166c167a96781659b00",
-                "vct#integrity": "sha256-UFaOUKlUz4UJALWNWyTj7WGTyw91aEIFmWwGs+kQVo8="
+                "vct#integrity": "sha256-UFaOUKlUz4UJALWNWyTj7WGTyw91aEIFmWwGs+kQVo8=",
+                'status': {
+                    'status_list': {
+                        'idx': randint(0, 99999),
+                        'uri': 'https://talao.co/issuer/statuslist/1'
+                    }
+                },
+                "age_over_18": False if age <= 21 else True
             }
-            if age <= 21:
-                vc.update({"age_over_18": False})
-            else:
-                vc.update({"age_over_18": True})
         else:
             vc = {"vct": "urn:example:talao:age_over"}
             for age_in_vc in [12, 14, 16, 18, 21, 50, 65]:

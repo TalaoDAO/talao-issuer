@@ -190,7 +190,7 @@ async def emailpass_enpoint(id, red, mode):
             logging.error('redis data expired')
             data = json.dumps({'id': id, 'check': 'expired'})
             red.publish('emailpass', data)
-            return jsonify('Session expired'), 412
+            return jsonify({'error': 'Session expired'}), 412
         credential['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
         # signature 
         didkit_options = {
