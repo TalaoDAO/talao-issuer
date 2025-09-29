@@ -77,10 +77,10 @@ def phonepass(captcha, mode):
         logging.info('VC draft is %s', draft)
         session['draft'] = draft
         session['format'] = format
-        if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json"] and draft not in ["0", "11", "13"]:
-            return jsonify("Incorrect request", 401)
+        if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json"] or draft not in ["0", "11", "13"]:
+            return jsonify({"error": "Incorrect request"}), 401
         if format == "ldp_vc" and draft == "0":
-            return jsonify("Incorrect request", 401)
+            return jsonify({"error": "Incorrect request"}), 401
         new_captcha_dict = captcha.create()
         return render_template('phonepass/phonepass.html', captcha=new_captcha_dict)
     elif request.method == 'POST':
@@ -108,10 +108,10 @@ def phonepass(captcha, mode):
             session['try_number'] = 1
         except Exception:
             flash(_("phone failed."), 'danger')
-            return render_template('phonepass/phonepass.html')
+            return redirect('/phonepass')
         return redirect('phonepass/authentication')
     else:
-        return jsonify("Unauthorized"), 404
+        return jsonify({"error": "Unauthorized"}), 404
 
 
 def phonepass_authentication(mode):
@@ -137,7 +137,7 @@ def phonepass_authentication(mode):
             return redirect('/phonepass') #TODO
         elif session['try_number'] > 3:
             flash(_("Too many trials (3 max)."), "warning")
-            return render_template('phonepass/phonepass.html')
+            return redirect('/phonepass')
         else:
             if session['try_number'] == 2:
                 flash(_('This code is incorrect, 2 trials left.'), 'warning')
@@ -156,7 +156,7 @@ def phonepass_qrcode(red, mode):
     deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri': qr_code})
     if not session.get('phone'):
         flash(_("Code expired."), "warning")
-        return render_template('phonepass/phonepass.html')
+        return redirect('/phonepass')
     red.setex(id, QRCODE_DELAY, session['phone'])  # phone is stored in redis with id as index
     return render_template(
         'phonepass/phonepass_qrcode.html',
@@ -194,7 +194,7 @@ async def phonepass_enpoint(id, red, mode):
             logging.error('redis data expired')
             data = json.dumps({"id": id, "check": "expired"})
             red.publish('phonepass', data)
-            return jsonify('session expired'), 408
+            return jsonify({'error': 'session expired'}), 408
         # init credential
         credential['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
         # signature 
