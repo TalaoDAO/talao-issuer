@@ -230,7 +230,8 @@ def phonepass_oidc4vc(mode):
             "vct": "https://vc-registry.com/vct/registry/publish/72db2df9f9c498cbad8f230d8fcba73884393e1d37f1b4bc488f96a717dbf030",
             "vct#integrity": "sha256-BDzkKm4n5TcCfzylthSc5QMfPNbD+lJ5f4unWzumBGY=",
             "phone": session['phone'],
-            "disclosure": ["phone"]
+            "mobile_phone_number": session['phone'],
+            "disclosure": ["phone", "mobile_phone_number"]
         }
     else: 
         credential = json.load(open('./verifiable_credentials/PhoneProof.jsonld', 'r'))
