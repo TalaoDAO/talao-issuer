@@ -11,6 +11,8 @@ import hashlib
 from components import message
 import oidc
 from random import randint
+import asyncio
+import inspect
 
 logging.basicConfig(level=logging.INFO)
 
@@ -27,6 +29,12 @@ PATHS = {
     "AGE_LIVENESS": '/age-antispoofing'
 }
 
+
+def didkit_issue_credential_sync(cred_json: str, options_json: str, key: str) -> str:
+    res = didkit.issue_credential(cred_json, options_json, key)
+    if inspect.isawaitable(res):
+        return asyncio.run(res)
+    return res
 
 def update_counter(vc_for_counter, mode):
     data = {
@@ -140,7 +148,7 @@ def sha256(x):
 
 
 # credential endpoint
-async def ai_ageestimate(red, mode):
+def ai_ageestimate(red, mode):
     try: 
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()    
@@ -194,16 +202,18 @@ async def ai_ageestimate(red, mode):
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
     }
-    credential_signed = await didkit.issue_credential(
-                json.dumps(credential),
-                didkit_options.__str__().replace("'", '"'),
-                key)
+    credential_signed = didkit_issue_credential_sync(
+        json.dumps(credential),
+        didkit_options.__str__().replace("'", '"'),
+        key
+    )
+
     logging.info("VC age estimate is sent to wallet")
     return jsonify(credential_signed)
 
 
 # credential endpoint General
-async def ai_over(red, mode, age_over):    
+def ai_over(red, mode, age_over):    
     print("request args = ", request.args)
     if request.args.get('vc_format') in ["vcsd-jwt", "vc_sd_jwt"]:
         vc_format = "vcsd-jwt"
@@ -261,10 +271,11 @@ async def ai_over(red, mode, age_over):
                 "proofPurpose": "assertionMethod",
                 "verificationMethod": issuer_vm
             }
-            credential_signed = await didkit.issue_credential(
+            credential_signed = didkit_issue_credential_sync(
                 json.dumps(credential),
                 didkit_options.__str__().replace("'", '"'),
-                key)
+                key
+            )
         else:
             logging.warning("Age is estimated under %s", str(age_over))
             headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
@@ -308,7 +319,7 @@ async def ai_over(red, mode, age_over):
     
 
     # agerange credential endpoint
-async def ai_agerange(red, mode):
+def ai_agerange(red, mode):
     try:
         x_api_key = request.headers['X-API-KEY']
         wallet_request = request.get_json()    
@@ -378,11 +389,12 @@ async def ai_agerange(red, mode):
             "proofPurpose": "assertionMethod",
             "verificationMethod": issuer_vm
         }
-    signed_credential = await didkit.issue_credential(
-            json.dumps(credential),
-            didkit_options.__str__().replace("'", '"'),
-            key
+    signed_credential = didkit_issue_credential_sync(
+        json.dumps(credential),
+        didkit_options.__str__().replace("'", '"'),
+        key
     )
+
     # update counter
     update_counter("agerange", mode)
     

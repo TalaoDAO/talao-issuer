@@ -13,7 +13,6 @@ from flask_babel import Babel, _, refresh
 from datetime import timedelta
 import markdown
 import json
-import markdown.extensions.fenced_code
 from components import message
 from flask_session import Session
 from flask_mobility import Mobility
@@ -31,12 +30,7 @@ ISSUER_CONFIG = {
     'SECRET_CAPTCHA_KEY': json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key']),  # use for JWT encoding/decoding
     'CAPTCHA_LENGTH': 6,  # Length of the generated CAPTCHA text
     'CAPTCHA_DIGITS': False,  # Should digits be added to the character pool?
-    # EXPIRE_SECONDS will take prioritity over EXPIRE_MINUTES if both are set.
     'EXPIRE_SECONDS': 60 * 10,
-    #'EXPIRE_MINUTES': 10, # backwards compatibility concerns supports this too
-    #'EXCLUDE_VISUALLY_SIMILAR': True,  # Optional
-    #'ONLY_UPPERCASE': True,  # Optional
-    #'CHARACTER_POOL': 'AaBb',  # Optional
 }
 ISSUER_CAPTCHA = CAPTCHA(config=ISSUER_CONFIG)
 
@@ -55,6 +49,8 @@ if not myenv:
 mode = environment.currentMode(myenv)
 app = Flask(__name__)
 qrcode = QRcode(app)
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_REDIS'] = red  
 app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_COOKIE_NAME'] = 'altme_issuer'
 app.config['SESSION_TYPE'] = 'redis' # Redis server side session
@@ -73,28 +69,15 @@ app.config.update(
 babel = Babel(app)
 Mobility(app)
 
-"""
-https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-xiii-i18n-and-l10n
-pybabel extract -F babel.cfg -o messages.pot .
-pybabel update -i messages.pot -d translations -l fr
-pybabel compile -d translations
-"""
 sess = Session()
 sess.init_app(app)
 
 # init routes 
 web_emailpass.init_app(app, red, mode)
 web_phonepass.init_app(ISSUER_CAPTCHA, app, red, mode)
-#dapp_register_gamer_pass.init_app(app, red, mode)
 yoti.init_app(app, red, mode)
-#tezotopia.init_app(app, red, mode)
-#twitter.init_app(app, red, mode)
-#chainborn.init_app(app, red, mode)
 oidc4vci_kyc.init_app(app, red, mode)
-#polygonid.init_app(app)
 counter.init_app(app, mode)
-#verifier_defi_nft.init_app(app, red, mode)
-#verifier_defi_tezid.init_app(app, red, mode)
 
 
 @app.errorhandler(500)
