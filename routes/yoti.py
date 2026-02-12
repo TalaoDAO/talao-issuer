@@ -31,10 +31,15 @@ PATHS = {
 
 
 def didkit_issue_credential_sync(cred_json: str, options_json: str, key: str) -> str:
-    res = didkit.issue_credential(cred_json, options_json, key)
-    if inspect.isawaitable(res):
-        return asyncio.run(res)
-    return res
+    async def _call():
+        r = didkit.issue_credential(cred_json, options_json, key)
+        if inspect.isawaitable(r):
+            return await r
+        return r
+
+    # Run in a fresh loop (works in normal WSGI request threads)
+    return asyncio.run(_call())
+
 
 def update_counter(vc_for_counter, mode):
     data = {
@@ -176,7 +181,7 @@ def ai_ageestimate(red, mode):
     age, st_dev, prediction = get_age_from_yoti(encoded_string, wallet_did, red, mode)
     if not age:
         headers = {'Content-Type': 'application/json',  "Cache-Control": "no-store"}
-        endpoint_response = {"error": "invalid_request", "error_description": json.dumps(result)}
+        endpoint_response = {"error": "invalid_request", "error_description": "age not available"}
         return Response(response=json.dumps(endpoint_response), status=400, headers=headers)
 
     logging.info("age estimate by AI is %s", age)
