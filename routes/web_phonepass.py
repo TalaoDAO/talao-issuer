@@ -3,6 +3,9 @@ https://issuer.talao.co/phoneproof?draft=13&format=ldp_vc
 
 https://issuer.talao.co/phoneproof?draft=13&format=vc_sd_jwt
 
+https://issuer.talao.co/phoneproof?draft=15&format=vc_sd_jwt
+http://192.168.0.65:5000/phoneproof?draft=15&format=vc_sd_jwt
+
 """
 
 from flask import jsonify, request, render_template, session, redirect, flash, Response
@@ -33,13 +36,19 @@ ISSUER_ID_LDP_VC = 'zijyqrygan' # draft 11
 client_secret_ldp_vc = json.load(open('keys.json', 'r'))['client_secret_ldp_vc']
 
 ISSUER_LDP_VC_13 = 'lpiqylqrrs'
-client_secret_ldp_vc_13 = json.load(open('keys.json', 'r'))['client_secret_ldp_vc_13']
+client_secret_ldp_vc_13 = json.load(open('keys.json', 'r'))['client_secret_ldp_vc_13'] # profile default
 
 ISSUER_ID_JWT_VC_JSON_13 = 'mslmgnysdh'
 client_secret_jwt_vc_json_13 = json.load(open('keys.json', 'r'))['client_secret_jwt_vc_json']
 
 ISSUER_ID_VC_SD_JWT = 'acnliwayop'
 client_secret_vc_sd_jwt = json.load(open('keys.json', 'r'))['client_secret_vc_sd_jwt']
+
+ISSUER_ID_VC_SD_JWT_15 = 'sdesntwqil'
+client_secret_vc_sd_jwt_15 = json.load(open('keys.json', 'r'))['client_secret_vc_sd_jwt']
+
+ISSUER_ID_VC_SD_JWT_18 = 'qpthwnsyyg'
+client_secret_vc_sd_jwt_18 = json.load(open('keys.json', 'r'))['client_secret_vc_sd_jwt']
 
 issuer_key = json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key'])
 issuer_vm = "did:web:app.altme.io:issuer#key-1"
@@ -49,9 +58,8 @@ issuer_did = "did:web:app.altme.io:issuer"
 def init_app(captcha, app, red, mode):
     app.add_url_rule('/phonepass',  view_func=phonepass, methods=['GET', 'POST'], defaults={'captcha': captcha, 'mode': mode})
     app.add_url_rule('/phoneproof',  view_func=phonepass, methods=['GET', 'POST'], defaults={'captcha': captcha, 'mode': mode})
+    
     app.add_url_rule('/phonepass/authentication',  view_func=phonepass_authentication, methods=['GET', 'POST'], defaults={'mode': mode})
-    app.add_url_rule('/phonepass/qrcode',  view_func=phonepass_qrcode, methods=['GET', 'POST'], defaults={'mode': mode, 'red': red})
-    app.add_url_rule('/phonepass/offer/<id>',  view_func=phonepass_enpoint, methods=['GET', 'POST'], defaults={'red': red, 'mode': mode})
     app.add_url_rule('/phonepass/stream',  view_func=phonepass_stream, methods=['GET', 'POST'], defaults={'red': red})
     app.add_url_rule('/phonepass/end',  view_func=phonepass_end, methods=['GET', 'POST'])
     app.add_url_rule('/phonepass/oidc4vc',  view_func=phonepass_oidc4vc, methods=['GET', 'POST'], defaults={'mode': mode})
@@ -63,7 +71,7 @@ def phonepass(captcha, mode):
     if request.method == 'GET':
         session['request_args'] = request.args
         print('initial request args =', request.args)
-        if request.args.get('format') in['jwt_vc_json', "vc_sd_jwt"]:
+        if request.args.get('format') in['jwt_vc_json', "vc_sd_jwt", "dc_sd_jwt"]:
             format = request.args.get('format')
         else:
             format = 'ldp_vc'
@@ -77,7 +85,7 @@ def phonepass(captcha, mode):
         logging.info('VC draft is %s', draft)
         session['draft'] = draft
         session['format'] = format
-        if format not in ["ldp_vc", "vc_sd_jwt", "jwt_vc_json"] or draft not in ["0", "11", "13"]:
+        if format not in ["ldp_vc", "vc_sd_jwt", "dc_sd_jwt", "jwt_vc_json"] or draft not in ["0", "11", "13", "15", "18"]:
             return jsonify({"error": "Incorrect request"}), 401
         if format == "ldp_vc" and draft == "0":
             return jsonify({"error": "Incorrect request"}), 401
@@ -146,86 +154,12 @@ def phonepass_authentication(mode):
             return render_template("phonepass/phonepass_authentication.html")
 
 
-def phonepass_qrcode(red, mode):
-    if not session.get('phone'):
-        return redirect('/phonepass')
-    id = str(uuid.uuid1())
-    qr_code = mode.server + "phonepass/offer/" + id 
-    logging.info('qr code = %s', qr_code)
-    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri': qr_code})
-    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri': qr_code})
-    if not session.get('phone'):
-        flash(_("Code expired."), "warning")
-        return redirect('/phonepass')
-    red.setex(id, QRCODE_DELAY, session['phone'])  # phone is stored in redis with id as index
-    return render_template(
-        'phonepass/phonepass_qrcode.html',
-        url=qr_code,
-        id=id,
-        deeplink_talao=deeplink_talao,
-        deeplink_altme=deeplink_altme
-    )
-
-
-async def phonepass_enpoint(id, red, mode):
-    credential = json.load(open('./verifiable_credentials/PhoneProof.jsonld', 'r'))
-    credential["issuer"] = issuer_did 
-    credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-    credential['expirationDate'] = (datetime.now() + timedelta(days=365)).isoformat() + "Z"
-    credential['id'] = "urn:uuid:" + str(uuid.uuid1())
-    if request.method == 'GET': 
-        # make an offer  
-        credential_manifest = json.load(open('./credential_manifest/phone_credential_manifest.json', 'r'))
-        credential_manifest['issuer']['id'] = issuer_did
-        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
-        credential['credentialSubject']['id'] = "did:wallet"
-        credential_offer = {
-            "type": "CredentialOffer",
-            "credentialPreview": credential,
-            "expires": (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat(),
-            "credential_manifest": credential_manifest
-        }
-        return jsonify(credential_offer)
-    else:  # POST
-        try:
-            credential['credentialSubject']['phone'] = red.get(id).decode()
-            red.delete(id)
-        except Exception:
-            logging.error('redis data expired')
-            data = json.dumps({"id": id, "check": "expired"})
-            red.publish('phonepass', data)
-            return jsonify({'error': 'session expired'}), 408
-        # init credential
-        credential['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
-        # signature 
-        didkit_options = {
-            "proofPurpose": "assertionMethod",
-            "verificationMethod": issuer_vm
-            }
-        signed_credential = await didkit.issue_credential(
-                json.dumps(credential),
-                didkit_options.__str__().replace("'", '"'),
-                issuer_key)
-        
-        # update counter
-        data = {"vc": "phonepass", "count": "1"}
-        requests.post(mode.server + 'counter/update', data=data)
-
-        # Success: send event to client agent to go forward
-        data = json.dumps({"id": id, "check": "success"})
-        red.publish('phonepass', data)
-        
-        # send message
-        message.message("PhonePass sent", "thierry@altme.io", credential['credentialSubject']['phone'], mode)
-        return jsonify(signed_credential)
-
-
 def phonepass_oidc4vc(mode):
     if not session.get('phone'):
         return redirect('/phonepass')
     draft = session['draft']
     format = session['format']
-    if format == "vc_sd_jwt":
+    if format in ["vc_sd_jwt", "dc_sd_jwt"]:
         credential = {
             "vct": "https://vc-registry.com/vct/registry/publish/72db2df9f9c498cbad8f230d8fcba73884393e1d37f1b4bc488f96a717dbf030",
             "vct#integrity": "sha256-BDzkKm4n5TcCfzylthSc5QMfPNbD+lJ5f4unWzumBGY=",
@@ -251,9 +185,12 @@ def phonepass_oidc4vc(mode):
     elif format == 'jwt_vc_json' and draft == "13":
         x_api_key = client_secret_jwt_vc_json_13
         issuer_id = ISSUER_ID_JWT_VC_JSON_13
-    elif format == 'vc_sd_jwt' and draft == "13":
-        x_api_key = client_secret_vc_sd_jwt
-        issuer_id = ISSUER_ID_VC_SD_JWT
+    elif format in ['vc_sd_jwt', 'dc_sd_jwt'] and draft == "15":
+        x_api_key = client_secret_vc_sd_jwt_15
+        issuer_id = ISSUER_ID_VC_SD_JWT_15
+    elif format == ['vc_sd_jwt', 'dc_sd_jwt'] and draft == "18":
+        x_api_key = client_secret_vc_sd_jwt_18
+        issuer_id = ISSUER_ID_VC_SD_JWT_18
     else:
         logging.error('draft or format not supported')
         return redirect('/phonepass')
@@ -288,23 +225,23 @@ def phonepass_oidc4vc(mode):
 
 def phonepass_oidc4vc_callback():
     if request.args.get('error'):
-        message = 'Sorry ! there is a server problem, try again later.'
+        message_text = 'Sorry ! there is a server problem, try again later.'
     else:
-        message = 'Great ! you have now a proof of phone number.'
-    return render_template('phonepass/phonepass_end.html', message=message)
+        message_text = 'Great ! you have now a proof of phone number.'
+    return render_template('phonepass/phonepass_end.html', message=message_text)
 
 
 def phonepass_end():
     if not session.get('phone'):
         return redirect('/phonepass')
     if request.args['followup'] == "success":
-        message = _('Great ! you have now a proof of phone.')
+        message_text = _('Great ! you have now a proof of phone.')
     elif request.args['followup'] == 'expired':
-        message = _('Sorry ! session expired.')
+        message_text = _('Sorry ! session expired.')
     else:
-        message = _('Sorry ! there is a server problem, try again later.')
+        message_text = _('Sorry ! there is a server problem, try again later.')
     session.clear()
-    return render_template('phonepass/phonepass_end.html', message=message)
+    return render_template('phonepass/phonepass_end.html', message=message_text)
 
 
 # server event

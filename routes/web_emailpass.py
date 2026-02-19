@@ -3,6 +3,11 @@
 https://issuer.talao.co/emailpass?draft=11&format=ldp_vc
 
 https://issuer.talao.co/emailpass?draft=13&format=vc_sd_jwt
+
+
+https://issuer.talao.co/emailpass?draft=15&format=dc_sd_jwt
+
+https://issuer.talao.co/emailpass?draft=18&format=dc_sd_jwt
 """
 
 
@@ -40,6 +45,13 @@ client_secret_ldp_vc_13 = json.load(open('keys.json', 'r'))['client_secret_ldp_v
 ISSUER_ID_VC_SD_JWT = 'acnliwayop'
 client_secret_vc_sd_jwt = json.load(open('keys.json', 'r'))['client_secret_vc_sd_jwt']
 
+ISSUER_ID_VC_SD_JWT_15 = 'sdesntwqil'
+client_secret_vc_sd_jwt_15 = json.load(open('keys.json', 'r'))['client_secret_vc_sd_jwt']
+
+ISSUER_ID_VC_SD_JWT_18 = 'qpthwnsyyg'
+client_secret_vc_sd_jwt_18 = json.load(open('keys.json', 'r'))['client_secret_vc_sd_jwt']
+
+
 issuer_key = json.dumps(json.load(open('keys.json', 'r'))['talao_Ed25519_private_key'])
 issuer_vm = 'did:web:app.altme.io:issuer#key-1'
 issuer_did = 'did:web:app.altme.io:issuer'
@@ -48,24 +60,23 @@ issuer_did = 'did:web:app.altme.io:issuer'
 def init_app(app, red, mode):
     app.add_url_rule('/emailproof',  view_func=emailpass, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/emailpass',  view_func=emailpass, methods=['GET', 'POST'], defaults={'mode': mode})
-    app.add_url_rule('/emailpass/qrcode',  view_func=emailpass_qrcode, methods=['GET', 'POST'], defaults={'mode': mode, 'red': red})
+    
     app.add_url_rule('/emailpass/oidc4vc',  view_func=emailpass_oidc4vc, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/emailpass/oidc4vc/callback',  view_func=emailpass_oidc4vc_callback, methods=['GET', 'POST'])
 
-    app.add_url_rule('/emailpass/offer/<id>',  view_func=emailpass_enpoint, methods=['GET', 'POST'], defaults={'red': red, 'mode': mode})
     app.add_url_rule('/emailpass/authentication',  view_func=emailpass_authentication, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/emailpass/stream',  view_func=emailpass_stream, methods=['GET', 'POST'], defaults={'red': red})
     app.add_url_rule('/emailpass/end',  view_func=emailpass_end, methods=['GET', 'POST'])
     return
 
 
-FORMAT_SUPPORTED = ["ldp_vc", "vc_sd_jwt", "jwt_vc_json", "jwt_vc_json-ld",  "vcsd-jwt"]
-OIDC4VCI_DRAFT_SUPPORTED = ["0", "11", "13"]
+FORMAT_SUPPORTED = ["ldp_vc", "vc_sd_jwt", "jwt_vc_json", "jwt_vc_json-ld",  "dc_sd_jwt", "vcsd-jwt"]
+OIDC4VCI_DRAFT_SUPPORTED = ["0", "11", "13", "15", "18"]
 
 def emailpass(mode):
     # request email to user and send a secret code
     if request.method == 'GET':
-        if request.args.get('format') in['jwt_vc_json', "vc_sd_jwt", "vcsd-jwt", "jwt_vc_json-ld"]:
+        if request.args.get('format') in['jwt_vc_json', "vc_sd_jwt", "vcsd-jwt", "jwt_vc_json-ld", "dc_sd_jwt"]:
             format = request.args.get('format')
             if format == "vcsd-jwt": format = "vc_sd_jwt"
         else:
@@ -143,85 +154,6 @@ def emailpass_authentication(mode):
             return render_template('emailpass/emailpass_authentication.html')
 
 
-def emailpass_qrcode(red, mode):
-    if not session.get('email'):
-        return redirect('/emailpass')
-    id = str(uuid.uuid1())
-    qr_code = mode.server + 'emailpass/offer/' + id + '?issuer=' + issuer_did
-    logging.info('qr code = %s', qr_code)
-    deeplink_talao = mode.deeplink_talao + 'app/download?' + urlencode({'uri': qr_code})
-    deeplink_altme = mode.deeplink_altme + 'app/download?' + urlencode({'uri': qr_code})
-    if not session.get('email'):
-        flash(_('Code expired.'), 'warning')
-        return render_template('emailpass/emailpass.html')
-    red.setex(id, QRCODE_DELAY, session['email'])  # email is stored in redis with id as index
-    return render_template(
-        'emailpass/emailpass_qrcode.html',
-        url=qr_code,
-        id=id,
-        deeplink_talao=deeplink_talao,
-        deeplink_altme=deeplink_altme
-    )
-
-
-async def emailpass_enpoint(id, red, mode):
-    credential = json.load(open('./verifiable_credentials/EmailPass.jsonld', 'r'))
-    credential['issuer'] = issuer_did 
-    credential['issuanceDate'] = datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
-    credential['expirationDate'] = (datetime.now() + timedelta(days=365)).isoformat() + 'Z'
-    credential['id'] = 'urn:uuid:' + str(uuid.uuid1())
-    if request.method == 'GET': 
-        # make an offer  
-        credential_manifest = json.load(open('./credential_manifest/email_credential_manifest.json', 'r'))
-        credential_manifest['issuer']['id'] = issuer_did
-        credential_manifest['output_descriptors'][0]['id'] = str(uuid.uuid1())
-        credential['credentialSubject']['id'] = 'did:wallet'
-        credential_offer = {
-            'type': 'CredentialOffer',
-            'credentialPreview': credential,
-            'expires': (datetime.now() + OFFER_DELAY).replace(microsecond=0).isoformat(),
-            'credential_manifest': credential_manifest
-        }
-        return jsonify(credential_offer)
-    else:  # POST
-        try:
-            credential['credentialSubject']['email'] = red.get(id).decode()
-        except Exception:
-            logging.error('redis data expired')
-            data = json.dumps({'id': id, 'check': 'expired'})
-            red.publish('emailpass', data)
-            return jsonify({'error': 'Session expired'}), 412
-        credential['credentialSubject']['id'] = request.form.get('subject_id', 'unknown DID')
-        # signature 
-        didkit_options = {
-            'proofPurpose': 'assertionMethod',
-            'verificationMethod': issuer_vm
-        }
-        signed_credential = await didkit.issue_credential(
-                json.dumps(credential),
-                didkit_options.__str__().replace("'", '"'),
-                issuer_key)
-        
-        # update counter
-        data = {
-            'vc': 'emailpass',
-            'count': '1',
-        }
-        requests.post(mode.server + 'counter/update', data=data, timeout=10)
-
-        # Success: send event to client agent to go forward
-        data = json.dumps({
-            'id': id,
-            'check': 'success'
-        })
-        red.publish('emailpass', data)
-        try:
-            message.message('EmailPass sent', 'thierry@altme.io', credential['credentialSubject']['email'], mode)
-        except:
-            logging.error("SMTP error")
-        return jsonify(signed_credential)
-
-
 def emailpass_oidc4vc(mode):
     if not session.get('email'):
         return redirect('/emailpass')
@@ -257,6 +189,12 @@ def emailpass_oidc4vc(mode):
     elif format == 'vc_sd_jwt' and draft == "13":
         x_api_key = client_secret_vc_sd_jwt
         issuer_id = ISSUER_ID_VC_SD_JWT
+    elif format in ['vc_sd_jwt', 'dc_sd_jwt'] and draft == "15":
+        x_api_key = client_secret_vc_sd_jwt_15
+        issuer_id = ISSUER_ID_VC_SD_JWT_15
+    elif format == ['vc_sd_jwt', 'dc_sd_jwt'] and draft == "18":
+        x_api_key = client_secret_vc_sd_jwt_18
+        issuer_id = ISSUER_ID_VC_SD_JWT_18
     else:
         logging.error('draft or format not supported')
         flash(_('Protocol draft or format not supported yet.'), 'danger')

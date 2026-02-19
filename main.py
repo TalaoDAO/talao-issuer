@@ -21,7 +21,7 @@ from flask_simple_captcha import CAPTCHA
 
 # local dependencies
 from routes import web_emailpass, web_phonepass, yoti
-from routes import oidc4vci_kyc, counter
+from routes import counter
 import environment
 
 import logging
@@ -76,7 +76,7 @@ sess.init_app(app)
 web_emailpass.init_app(app, red, mode)
 web_phonepass.init_app(ISSUER_CAPTCHA, app, red, mode)
 yoti.init_app(app, red, mode)
-oidc4vci_kyc.init_app(app, red, mode)
+#oidc4vci_kyc.init_app(app, red, mode)
 counter.init_app(app, mode)
 
 
