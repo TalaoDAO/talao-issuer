@@ -71,7 +71,7 @@ def init_app(app, red, mode):
 
 
 FORMAT_SUPPORTED = ["ldp_vc", "vc_sd_jwt", "jwt_vc_json", "jwt_vc_json-ld",  "dc_sd_jwt", "vcsd-jwt"]
-OIDC4VCI_DRAFT_SUPPORTED = ["0", "11", "13", "15", "18"]
+OIDC4VCI_DRAFT_SUPPORTED = ["0", "11", "13", "14", "15", "18"]
 
 def emailpass(mode):
     # request email to user and send a secret code
