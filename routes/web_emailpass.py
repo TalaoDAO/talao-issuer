@@ -60,6 +60,7 @@ issuer_did = 'did:web:app.altme.io:issuer'
 def init_app(app, red, mode):
     app.add_url_rule('/emailproof',  view_func=emailpass, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/emailpass',  view_func=emailpass, methods=['GET', 'POST'], defaults={'mode': mode})
+
     
     app.add_url_rule('/emailpass/oidc4vc',  view_func=emailpass_oidc4vc, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/emailpass/oidc4vc/callback',  view_func=emailpass_oidc4vc_callback, methods=['GET', 'POST'])
@@ -118,7 +119,8 @@ def emailpass(mode):
         return redirect('emailpass/authentication')
     else:
         return jsonify(), 404
-
+    
+  
 
 def emailpass_authentication(mode):
     if not session.get('email'):
@@ -159,6 +161,8 @@ def emailpass_oidc4vc(mode):
         return redirect('/emailpass')
     draft = session['draft']
     format = session['format']
+    if format == "pending":
+        return redirect("/new_emailpass_oidc4vc") 
 
     if format in ["vc_sd_jwt", "dc_sd_jwt"]:
         credential = {
@@ -226,6 +230,7 @@ def emailpass_oidc4vc(mode):
     }
     requests.post(mode.server + 'counter/update', data=data, timeout=10)
     return redirect(redirect_uri)
+
 
 
 def emailpass_oidc4vc_callback():
