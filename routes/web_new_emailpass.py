@@ -1,8 +1,8 @@
 """
-https://issuer.talao.co/emailpass?draft=11&format=ldp_vc
-https://issuer.talao.co/emailpass?draft=13&format=vc_sd_jwt
-https://issuer.talao.co/emailpass?draft=15&format=dc_sd_jwt
-https://issuer.talao.co/emailpass?draft=18&format=dc_sd_jwt
+https://issuer.talao.co/new/emailpass
+
+
+choose your wallet
 """
 
 from flask import jsonify, request, render_template, session, redirect, flash, Response
@@ -56,7 +56,7 @@ def init_app(app, red, mode):
     app.add_url_rule('/new/emailpass', view_func=new_emailpass, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/new/emailpass/oidc4vc', view_func=new_emailpass_oidc4vc, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/new/wallet-uri', view_func=new_wallet_uri, methods=['GET', 'POST'], defaults={'mode': mode})
-    app.add_url_rule('/new/emailpass/oidc4vc/webhook', view_func=new_emailpass_oidc4vc_webhook, methods=['GETn', 'POST'],  defaults={'mode': mode})
+    app.add_url_rule('/new/emailpass/oidc4vc/webhook', view_func=new_emailpass_oidc4vc_webhook, methods=['POST'],  defaults={'red': red})
     app.add_url_rule('/new/emailpass/authentication', view_func=new_emailpass_authentication, methods=['GET', 'POST'], defaults={'mode': mode})
     app.add_url_rule('/new/emailpass/stream',  view_func=new_emailpass_stream, methods=['GET', 'POST'], defaults={'red': red})
     app.add_url_rule('/new/emailpass/follow_up/<session_id>',  view_func=new_emailpass_follow_up, methods=['GET', 'POST'], defaults={'red': red})
