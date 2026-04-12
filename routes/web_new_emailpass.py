@@ -309,16 +309,24 @@ def new_wallet_uri(mode):
 
 def new_emailpass_oidc4vc_webhook(red):
     body = request.get_json(silent=True) or {}
-    red.publish('new_emailpass', json.dumps(body))
+    if body.get("event") == "CREDENTIAL_SENT":
+        event = "success"
+    else:
+        event = "error"
+    data = {
+        "issuer_id": body.get("issuer_state"),
+        "event": event
+    }
+    red.publish('new_emailpass', json.dumps(data))
     return jsonify("ok"), 200
 
 
 
 def new_emailpass_follow_up(session_id, red):
     if request.args.get("message") == "ok":
-        message_text = "Congratulations !"
+        message_text = "You have received your proof of email, congratulations !"
     else:
-        message_text = "Sorry, Error !"
+        message_text = "Sorry, issuer error !"
     return render_template('emailpass/emailpass_end.html', message=message_text)
 
 

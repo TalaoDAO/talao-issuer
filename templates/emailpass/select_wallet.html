@@ -552,8 +552,8 @@
     var source = new EventSource('/new/emailpass/stream');
     source.onmessage = function (event) {
       const data = JSON.parse(event.data);
-      if (data.session_state == sessionId) {
-        if (data.event == 'CREDENTIAL_SENT') {
+      if (data.issuer_id == sessionId) {
+        if (data.event == 'success') {
           window.location.href = '/new/emailpass/follow_up/{{session_id}}?message=ok';
         } else {
           window.location.href = '/new/emailpass/follow_up/{{session_id}}?message=error';
