@@ -1,0 +1,159 @@
+[
+    {
+        "name": "Altme",
+        "logo": "altme.png",
+        "oidc4vci_draft": "13",
+        "oidc4vp_draft": "18",
+        "format": "vc_sd_jwt"
+
+    },
+    {
+        "name": "Animo",
+        "logo": "animo.jpeg",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+
+    },
+    {
+        "name": "Compellio",
+        "logo": "compellio.png",
+        "oidc4vci_draft": "13",
+        "oidc4vp_draft": "18",
+        "format": "vc_sd_jwt"
+
+    },
+    {
+        "name": "DIIP V3",
+        "logo": "fides.jpeg",
+        "oidc4vci_draft": "13",
+        "oidc4vp_draft": "18",
+        "format": "vc_sd_jwt"
+
+    },
+     {
+        "name": "DIIP V4",
+        "logo": "fides.jpeg",
+        "oidc4vci_draft": "15",
+        "oidc4vp_draft": "28",
+        "format": "vc_sd_jwt"
+
+    },
+     {
+        "name": "DIIP V5",
+        "logo": "fides.jpeg",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "vc_sd_jwt"
+
+    },
+    {
+        "name": "EBSI V3",
+        "logo": "ebsi.jpeg",
+        "oidc4vci_draft": "11",
+        "oidc4vp_draft": "18",
+        "format": "jwt_vc_json"
+
+    },
+    {
+        "name": "EUDIW",
+        "logo": "eudiw.png",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+
+    },
+    {
+        "name": "Gataca",
+        "logo": "gataca.png",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+
+    },
+     {
+        "name": "hovi",
+        "logo": "hovi.png",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+
+    },
+     {
+        "name": "iGrant.io",
+        "logo": "igrantio.png",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+
+    },
+     {
+        "name": "Inji",
+        "logo": "inji.png",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+
+    },
+    {
+        "name": "Identfy",
+        "logo": "izertis.jpeg",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+
+    },
+    {
+        "name": "Lissi",
+        "logo": "lissi.png",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+
+    },
+    {
+        "name": "Namirial",
+        "logo": "namirial.png",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+
+    },
+     {
+        "name": "Procivis",
+        "logo": "procivis.png",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+
+    },
+    {
+        "name": "Scytales",
+        "logo": "scytales.png",
+        "oidc4vci_draft": "18",
+        "oidc4vp_draft": "30",
+        "format": "dc_sd_jwt"
+    },
+    {
+        "name": "Sphereon",
+        "logo": "sphereon.png",
+        "oidc4vci_draft": "15",
+        "oidc4vp_draft": "28",
+        "format": "vc_sd_jwt"
+
+    },
+    {
+        "name": "Talao",
+        "logo": "talao.png",
+        "oidc4vci_draft": "13",
+        "oidc4vp_draft": "18",
+        "format": "vc_sd_jwt"
+    },
+     {
+        "name": "UniMe",
+        "logo": "unime.png",
+        "oidc4vci_draft": "13",
+        "oidc4vp_draft": "18",
+        "format": "vc_sd_jwt"
+    }
+]
