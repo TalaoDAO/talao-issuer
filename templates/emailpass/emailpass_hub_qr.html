@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% include 'head.html' %}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <style>
+        .issuance-card {
+            max-width: 620px;
+            margin: 2.5rem auto;
+        }
+
+        .email-value {
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .qr-box {
+            width: min(100%, 380px);
+            margin: 1.5rem auto;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        #qr {
+            width: 100%;
+            height: auto;
+        }
+
+        .wallet-link {
+            display: block;
+            width: 100%;
+            padding: .9rem 1rem;
+            border-radius: .5rem;
+            background: #500bf5;
+            color: white;
+            text-align: center;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .wallet-link:hover {
+            color: white;
+            text-decoration: none;
+        }
+
+        .status-box {
+            margin-top: 1.25rem;
+            padding: 1rem;
+            border-radius: .5rem;
+            background: #f8f9fa;
+            text-align: center;
+        }
+
+        .status {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .pending {
+            color: #856404;
+        }
+
+        .helper {
+            color: #6c757d;
+            line-height: 1.5;
+        }
+
+        .result-screen {
+            display: none;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        .result-icon {
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .result-success .result-icon {
+            background: #e7f7ed;
+            color: #159447;
+            border: 3px solid #159447;
+        }
+
+        .result-error .result-icon {
+            background: #fdecec;
+            color: #c02b2b;
+            border: 3px solid #c02b2b;
+        }
+
+        .result-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: .75rem;
+        }
+
+        .result-message {
+            color: #6c757d;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .restart-link {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: .75rem 1.25rem;
+            border-radius: .5rem;
+            background: #500bf5;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .restart-link:hover {
+            color: white;
+            text-decoration: none;
+        }
+
+        @media (max-width: 576px) {
+            .issuance-card {
+                margin: .75rem auto;
+            }
+
+            .issuance-card .card-body {
+                padding: 1.5rem !important;
+            }
+
+            .qr-desktop {
+                display: none;
+            }
+
+            .wallet-link {
+                margin-top: 1.5rem;
+                padding: 1rem;
+            }
+
+            .result-screen {
+                padding: 3rem .5rem;
+            }
+        }
+    </style>
+</head>
+
+<body id="page-top">
+<div id="wrapper">
+    <div class="d-flex flex-column" id="content-wrapper">
+        <div id="content">
+
+
+            <div class="container px-3">
+                <div class="issuance-card card shadow border-0">
+                    <div class="card-body p-5">
+
+                        <!-- =================================================
+                             ACTIVE QR / WALLET SCREEN
+                             ================================================= -->
+                        <div id="issuance-screen" class="text-center">
+
+                            <h4 class="text-dark mb-2">
+                                {{ _('Your Proof of Email is ready') }}
+                            </h4>
+
+                            <p class="helper mb-1">{{ _('Email') }}</p>
+                            <p class="email-value">{{ email }}</p>
+
+                            <p class="helper mt-3">
+                                {{ _('A verification code has been sent to your email address. Open your wallet, accept the credential offer, then enter that code when the wallet asks for the transaction code.') }}
+                            </p>
+
+                            <div class="qr-desktop qr-box">
+                                <img
+                                    id="qr"
+                                    src="{{ qr_image }}"
+                                    alt="Credential offer QR code"
+                                >
+                            </div>
+
+                            <p class="qr-desktop helper">
+                                {{ _('Scan the QR code with your wallet.') }}
+                            </p>
+
+                            <a
+                                class="wallet-link"
+                                href="{{ qr_code_content }}"
+                            >
+                                {{ _('Open in wallet') }}
+                            </a>
+
+                            <div class="status-box">
+                                <div id="status" class="status pending">
+                                    {{ _('Waiting for wallet...') }}
+                                </div>
+                                <div id="message" class="helper mt-1">
+                                    {{ _('This page updates automatically.') }}
+                                </div>
+                            </div>
+
+                            <div class="helper mt-3">
+                                {{ _('The issuance expires in approximately %(seconds)s seconds.', seconds=expires_in) }}
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             SUCCESS SCREEN
+                             ================================================= -->
+                        <div id="success-screen" class="result-screen result-success">
+
+                            <div class="result-icon">✓</div>
+
+                            <div class="result-title">
+                                Congrats!
+                            </div>
+
+                            <div class="result-message">
+                                You now have a Proof of Email!
+                            </div>
+
+                            <a
+                                href="/emailpass-hub"
+                                class="restart-link"
+                            >
+                                Issue another Proof of Email
+                            </a>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             ERROR SCREEN
+                             ================================================= -->
+                        <div id="error-screen" class="result-screen result-error">
+
+                            <div class="result-icon">×</div>
+
+                            <div class="result-title">
+                                Credential issuance failed
+                            </div>
+
+                            <div
+                                id="error-message"
+                                class="result-message"
+                            >
+                                We could not issue your Proof of Email.
+                            </div>
+
+                            <a
+                                href="/emailpass-hub"
+                                class="restart-link"
+                            >
+                                Try again
+                            </a>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% include 'footer.html' %}
+
+<script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
+<script src="{{ url_for('static', filename='bs-init.js') }}"></script>
+<script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+<script>
+const issuanceId = {{ issuance_id | tojson }};
+
+let eventSource = null;
+
+function closeEventStream() {
+    if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+    }
+}
+
+
+function showSuccess() {
+    closeEventStream();
+
+    // Completely hide/remove the active QR screen.
+    document.getElementById("issuance-screen").style.display = "none";
+    document.getElementById("error-screen").style.display = "none";
+
+    const successScreen = document.getElementById("success-screen");
+    successScreen.style.display = "block";
+}
+
+
+function showError(message) {
+    closeEventStream();
+
+    // Completely hide/remove QR/deep-link content on terminal error.
+    document.getElementById("issuance-screen").style.display = "none";
+    document.getElementById("success-screen").style.display = "none";
+
+    document.getElementById("error-message").textContent =
+        message || "We could not issue your Proof of Email.";
+
+    document.getElementById("error-screen").style.display = "block";
+}
+
+
+function updatePending(status) {
+    const statusElement = document.getElementById("status");
+    const messageElement = document.getElementById("message");
+
+    statusElement.textContent = status || "pending";
+
+    if (status === "in_progress") {
+        messageElement.textContent =
+            "Your wallet has started the issuance process.";
+    } else if (status === "partially_issued") {
+        messageElement.textContent =
+            "The credential issuance is still in progress.";
+    } else {
+        messageElement.textContent =
+            "Waiting for your wallet to complete the issuance.";
+    }
+}
+
+
+function startEventStream() {
+    eventSource = new EventSource(
+        "/emailpass-hub/events/" + encodeURIComponent(issuanceId)
+    );
+
+    eventSource.onmessage = function(event) {
+        let payload;
+
+        try {
+            payload = JSON.parse(event.data);
+        } catch (error) {
+            return;
+        }
+
+        const status = payload.status || "pending";
+
+        if (status === "completed") {
+            showSuccess();
+            return;
+        }
+
+        if (status === "failed") {
+            showError(
+                payload.error_description ||
+                "We could not issue your Proof of Email. Please try again."
+            );
+            return;
+        }
+
+        if (status === "expired") {
+            showError(
+                "The credential offer has expired. Please start again."
+            );
+            return;
+        }
+
+        updatePending(status);
+    };
+
+    eventSource.onerror = function() {
+        // EventSource automatically reconnects. Do not show a final error
+        // for a temporary SSE/network interruption.
+        const messageElement = document.getElementById("message");
+
+        if (messageElement) {
+            messageElement.textContent =
+                "Connection interrupted. Reconnecting...";
+        }
+    };
+}
+
+
+startEventStream();
+
+window.addEventListener("beforeunload", closeEventStream);
+</script>
+
+</body>
+</html>

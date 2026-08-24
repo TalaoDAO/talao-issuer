@@ -167,7 +167,6 @@ def emailpass_oidc4vc(mode):
     if format in ["vc_sd_jwt", "dc_sd_jwt"]:
         credential = {
             "vct": "https://vc-registry.com/vct/registry/publish/2a6101b7c2207c7b6904a9215b25f4a556fe1b2c1c62debec96d5599d86a06a2",
-            "vct#integrity": "sha256-aKWO/c+m2vTACgrYwydCqNz3LAVinhs0/vpGfzQGYYk=",
             "email": session['email'],
             "email_address": session['email'],
             "disclosure": ["email", "email_address"]

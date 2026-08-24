@@ -47,9 +47,9 @@ class currentMode() :
 		elif self.myenv == 'local' :
 			self.yoti_pem_file = '/home/thierry/issuer/key.pem'
 			self.sys_path = '/home/thierry'
-			self.server = 'http://' + extract_ip() + ':5000/'
+			self.server = 'http://' + extract_ip() + ':5100/'
 			self.IP = extract_ip()
-			self.port = 5000
+			self.port = 5100
 		else :
 			logging.error('environment variable problem')
 			sys.exit()
