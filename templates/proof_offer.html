@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Receive your {{ proof_name }}{% endblock %}
+{% block content %}
+  <section class="card offer-card">
+    <div id="issuance-screen">
+      <p class="eyebrow">Wallet offer</p>
+      <h1>Your {{ proof_name }} is ready</h1>
+      <p class="subject-value">{{ masked_subject }}</p>
+      <p class="lead">
+        Open the offer in your wallet, then enter the verification code sent to you.
+      </p>
+
+      <div class="qr-box">
+        <img src="{{ qr_image }}" alt="Wallet offer QR code">
+      </div>
+      <a class="primary-link wallet-open-link" href="{{ qr_code_content }}">
+        Open in wallet
+      </a>
+
+      <div class="status-box" role="status" aria-live="polite">
+        <strong id="status">Waiting for wallet…</strong>
+        <span id="status-message">This page updates automatically.</span>
+      </div>
+      <p class="hint">This offer expires in approximately {{ expires_in }} seconds.</p>
+    </div>
+
+    <div id="success-screen" class="result-screen" hidden>
+      <div class="result-icon success" aria-hidden="true">✓</div>
+      <h1>Proof issued</h1>
+      <p class="lead">Your {{ proof_name }} is now in your wallet.</p>
+      <a class="primary-link" href="{{ restart_url }}">Issue another</a>
+    </div>
+
+    <div id="error-screen" class="result-screen" hidden>
+      <div class="result-icon error" aria-hidden="true">×</div>
+      <h1>Issuance failed</h1>
+      <p id="error-message" class="lead">The proof could not be issued.</p>
+      <a class="primary-link" href="{{ restart_url }}">Try again</a>
+    </div>
+  </section>
+
+  <script>
+    const eventUrl = {{ events_url | tojson }};
+    let eventSource = new EventSource(eventUrl);
+
+    function closeEvents() {
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+    }
+
+    function showResult(screenId, errorMessage) {
+      closeEvents();
+      document.getElementById("issuance-screen").hidden = true;
+      document.getElementById("success-screen").hidden = screenId !== "success-screen";
+      document.getElementById("error-screen").hidden = screenId !== "error-screen";
+      if (errorMessage) {
+        document.getElementById("error-message").textContent = errorMessage;
+      }
+    }
+
+    eventSource.onmessage = (event) => {
+      let payload;
+      try {
+        payload = JSON.parse(event.data);
+      } catch (_error) {
+        return;
+      }
+
+      const status = payload.status || "pending";
+      if (status === "completed") {
+        showResult("success-screen");
+      } else if (status === "failed" || status === "expired") {
+        showResult(
+          "error-screen",
+          payload.error_description || "The proof could not be issued."
+        );
+      } else {
+        document.getElementById("status").textContent = status.replaceAll("_", " ");
+        document.getElementById("status-message").textContent =
+          status === "in_progress"
+            ? "Your wallet has started the issuance."
+            : "Waiting for your wallet to complete the issuance.";
+      }
+    };
+
+    eventSource.onerror = () => {
+      const message = document.getElementById("status-message");
+      if (message) {
+        message.textContent = "Connection interrupted. Reconnecting…";
+      }
+    };
+    window.addEventListener("beforeunload", closeEvents);
+  </script>
+{% endblock %}

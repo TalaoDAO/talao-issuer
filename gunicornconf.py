@@ -1,14 +1,15 @@
+import os
 
-workers = 5
-worker_class = 'gevent' 
+bind = os.getenv("GUNICORN_BIND", "127.0.0.1:5100")
+workers = int(os.getenv("GUNICORN_WORKERS", "2"))
+worker_class = "gthread"
+threads = int(os.getenv("GUNICORN_THREADS", "4"))
 
-loglevel = 'info'
+loglevel = os.getenv("GUNICORN_LOG_LEVEL", "info")
 errorlog = "-"
 accesslog = "-"
-
-timeout = 30  # sec
-keepalive = 504  # sec
 capture_output = True
 
-# Environment variables
+timeout = 60
+keepalive = 5
 raw_env = ["MYENV=aws"]

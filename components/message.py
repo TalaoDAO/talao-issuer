@@ -1,119 +1,39 @@
+"""Email delivery for the Proof of Email transaction code."""
+
+import html
 import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.header import Header
-from email.utils import formataddr
-from email.mime.text import MIMEText
-import codecs
-import logging
-logging.basicConfig(level=logging.INFO)
-
-signature = '\r\n\r\n\r\nThe Altme team.\r\nhttps://altme.io/'
+from email.message import EmailMessage
 
 
+def send_verification_code(email: str, code: str, settings) -> None:
+    if not settings.smtp_password:
+        raise RuntimeError("SMTP_PASSWORD is not configured")
 
-# dict of HTML templates with commented formating needed
-HTML_templates = {'code_auth_en' : 'templates/code_auth_en.html', # code
-				'code_auth_fr' : 'templates/code_auth_fr.html', # code
-} 
+    message = EmailMessage()
+    message["From"] = settings.smtp_from
+    message["To"] = email
+    message["Subject"] = "Your Proof of Email verification code"
+    message.set_content(f"Your verification code is: {code}")
+    message.add_alternative(
+        f"""
+        <!doctype html>
+        <html lang="en">
+          <body style="font-family:Arial,sans-serif;text-align:center;padding:32px">
+            <h1 style="font-size:24px">Your verification code</h1>
+            <p style="font-size:42px;font-weight:700;letter-spacing:6px">{html.escape(code)}</p>
+            <p>Enter this code only in your wallet.</p>
+          </body>
+        </html>
+        """,
+        subtype="html",
+    )
 
-def messageHTML(subject, to, HTML_key, format_dict, mode)  :
-	password = mode.smtp_password
-	fromaddr = "relay@talao.io"
-	toaddr = [to]
-
-	msg = MIMEMultipart()
-	msg['From'] = formataddr((str(Header('Altme', 'utf-8')), fromaddr))
-	msg['To'] = ", ".join(toaddr)
-	msg['Subject'] = subject
-	# string to store the body of the mail
-
-	if HTML_key not in HTML_templates:
-		logging.error('wrong HTML_key')
-		return False
-
-	template = HTML_templates[HTML_key]
-	try :
-		html = str(codecs.open(template, 'r', 'utf-8').read()).format(**format_dict)
-	except Exception as e:
-		logging.error('Upload email template  : %s', str(e))
-		return False
-
-	msg.attach(MIMEText(html, 'html', 'utf-8'))
-	#p = MIMEBase('application', 'octet-stream')
-
-	# creates SMTP session
-	s = smtplib.SMTP('smtp.gmail.com', 587)
-	s.starttls()
-	s.login(fromaddr, password)
-	text = msg.as_string()
-
-	# sending the mail
-	try:
-		s.sendmail(msg['from'],  msg["To"].split(","), text)
-		logging.info('email sent')
-		s.quit()
-		return True
-	except:
-		logging.error('sending mail')
-		s.quit()
-		return False
-
-
-def message_html(subject, to, text, mode)  :
-	fromaddr = "relay@talao.io"
-	toaddr = [to]
-	msg = MIMEMultipart()
-	msg['From'] = formataddr((str(Header('Altme', 'utf-8')), fromaddr))
-	msg['To'] = ", ".join(toaddr)
-	msg['Subject'] = subject
-	# string to store the body of the mail
-	msg.attach(MIMEText(text, 'html', 'utf-8'))
-	# creates SMTP session
-	s = smtplib.SMTP('smtp.gmail.com', 587)
-	s.starttls()
-	s.login(fromaddr, mode.smtp_password)
-	text = msg.as_string()
-
-	# sending the mail
-	try:
-		s.sendmail(msg['from'],  msg["To"].split(","), text)
-		logging.info('email sent')
-		s.quit()
-		return True
-	except:
-		logging.error('sending mail')
-		s.quit()
-		return False
-
-
-def message(subject, to, messagetext, mode) :
-
-	password = mode.smtp_password
-
-	fromaddr = "relay@talao.io"
-	toaddr = [to]
-
-	msg = MIMEMultipart()
-	msg['From'] = formataddr((str(Header('Altme', 'utf-8')), fromaddr))
-	msg['To'] = ", ".join(toaddr)
-	msg['Subject'] =  subject
-	body = messagetext + signature
-	msg.attach(MIMEText(body, 'plain'))
-	#p = MIMEBase('application', 'octet-stream')
-
-	# creates SMTP session
-	s = smtplib.SMTP('smtp.gmail.com', 587)
-	s.starttls()
-	s.login(fromaddr, password)
-	text = msg.as_string()
-
-	# sending the mail
-	try:
-		s.sendmail(msg['from'],  msg["To"].split(","), text)
-	except:
-		logging.error('sending mail')
-		return False
-	s.quit()
-	return True
-
-
+    with smtplib.SMTP(
+        settings.smtp_host,
+        settings.smtp_port,
+        timeout=settings.hub_request_timeout,
+    ) as smtp:
+        if settings.smtp_starttls:
+            smtp.starttls()
+        smtp.login(settings.smtp_username, settings.smtp_password)
+        smtp.send_message(message)

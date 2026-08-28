@@ -1,0 +1,5 @@
+Flask>=3.1,<4
+gunicorn>=23,<24
+qrcode>=8.2,<9
+requests>=2.32,<3
+smsapi-client>=2.9,<3

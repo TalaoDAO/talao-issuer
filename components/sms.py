@@ -1,38 +1,30 @@
-""" for token see passwords.json 
-https://ssl.smsapi.com/#/payments/transfer/success
-"""
-
-from smsapi.client import SmsApiComClient
-from smsapi.exception import SmsApiException
-from flask_babel import _
+"""SMS delivery for the Proof of Phone transaction code."""
 
 import logging
-logging.basicConfig(level=logging.INFO)
 
-blacklist = ["254", "255"]
+LOGGER = logging.getLogger(__name__)
+BLOCKED_COUNTRY_PREFIXES = ("254", "255")
 
-def send_code(phone, code, mode) :
-	""" code = str, phone number with country code 33607182594 """
-	if phone.startswith(tuple(blacklist)):
-		return 
-	token = mode.sms_token
-	try :
-		client = SmsApiComClient(access_token=token)
-		send_results = client.sms.send(to=phone, message=_("# Your verification code is : ") + code)
-		for result in send_results :
-			logging.info('result =  %s %s %s', result.id, result.points, result.error)
-			return True
-	except SmsApiException as e:
-		logging.error('%s',e.message)
-		return False
 
-def check_phone(phone, mode) :
-	token = mode.sms_token
-	try:
-		client = SmsApiComClient(access_token=token)
-		client.sms.send(to=phone, message=_("Your phone number has been verified."))
-		return True
-	except SmsApiException as e:
-		logging.error('sms api message = %s', e.message)
-		return False
+def send_verification_code(phone_number: str, code: str, settings) -> bool:
+    from smsapi.client import SmsApiComClient
+    from smsapi.exception import SmsApiException
 
+    destination = phone_number.removeprefix("+")
+    if destination.startswith(BLOCKED_COUNTRY_PREFIXES):
+        LOGGER.warning("SMS destination country is blocked")
+        return False
+    if not settings.sms_token:
+        raise RuntimeError("SMS_API_TOKEN is not configured")
+
+    try:
+        client = SmsApiComClient(access_token=settings.sms_token)
+        results = client.sms.send(
+            to=destination,
+            message=f"Your Proof of Phone verification code is: {code}",
+        )
+    except SmsApiException as exc:
+        LOGGER.warning("SMS delivery failed: %s", exc)
+        return False
+
+    return any(result.error is None for result in results)

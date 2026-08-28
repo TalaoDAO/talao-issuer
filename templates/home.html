@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Talao proof issuer{% endblock %}
+{% block content %}
+  <section class="hero">
+    <p class="eyebrow">Contact verification</p>
+    <h1>Choose a proof to issue</h1>
+    <p class="lead">Verify one contact detail and receive the proof in your wallet.</p>
+  </section>
+
+  <section class="choice-grid" aria-label="Available proofs">
+    <a class="choice-card" href="/emailpass-hub">
+      <span class="choice-icon" aria-hidden="true">@</span>
+      <span>
+        <strong>Proof of Email</strong>
+        <small>Verify an email address</small>
+      </span>
+    </a>
+    <a class="choice-card" href="{{ url_for('phone_proof_start') }}">
+      <span class="choice-icon" aria-hidden="true">+</span>
+      <span>
+        <strong>Proof of Phone</strong>
+        <small>Verify a phone number</small>
+      </span>
+    </a>
+  </section>
+{% endblock %}

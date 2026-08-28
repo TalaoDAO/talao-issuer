@@ -1,68 +1,116 @@
-import socket
+"""Runtime configuration for the focused email/phone issuer."""
+
+from __future__ import annotations
+
 import json
-import logging
-import sys
+import os
+from dataclasses import dataclass
+from pathlib import Path
 
-logging.basicConfig(level=logging.INFO)
-
-class currentMode() :
-	def __init__(self, myenv):
-		self.admin = 'thierry.thevenet@talao.io'
-		self.test = True
-		self.myenv = myenv
-		self.deeplink_talao = 'https://app.talao.co/'	
-		self.deeplink_altme = 'https://app.altme.io/'			
-		with open("./passwords.json", "r") as read_content: 
-			passwords = json.load(read_content)
-		self.yoti = passwords['yoti']                                # yoti.py
-		self.analytics_key = passwords['analytics']
-		self.analytics_key2 = passwords['analytics2']
-		self.pinata_api_key = passwords['pinata_api_key'] # used in Talao_ipfs.py
-		self.pinata_secret_api_key = passwords['pinata_secret_api_key'] # used in Talao_ipfs.py
-		self.password = passwords['password']
-		self.altme_passbase_check = passwords['altme_passbase_check'] # web_passabse.py
-		self.altme_wallet_webhook = passwords['altme_wallet_webhook'] # web_passbase.py
-		self.altme_ai_token = passwords['altme_ai_token'] 			  # yoti.py
-		self.tezid_issuer_key = passwords['tezid_issuer_key']
-		self.tezotopia_issuer_key = passwords['tezotopia_issuer_key']
-		self.bloometa_issuer_key = passwords['bloometa_issuer_key']
-		self.pep_api_key = passwords['pep_api_key']
-		self.altme_wallet_token = passwords['altme_wallet_token']     # vc_issuer.py
-		self.passbase = passwords['passbase'] # web_passebase.py
-		self.chainborn_api_key = passwords['chainborn_api_key']       # chainborn.py                 
-		self.smtp_password = passwords['smtp_password'] 			  # smtp.py
-		self.sms_token = passwords['sms_token'] 
-		self.slack_url = passwords['slack_url'] 
-		self.slack_nft_url = passwords['slack_nft_url']   
-		self.meranti_test = passwords['meranti_test']
-		self.meranti_main = passwords['meranti_main'] 
-		self.wallet_provider = passwords['wallet-provider']                  # sms.py		
-	
-		# En Prod chez AWS 
-		if self.myenv == 'aws':
-			self.yoti_pem_file = '/home/admin/issuer/key.pem'
-			self.sys_path = '/home/admin'
-			self.server = 'https://issuer.talao.co/'
-			self.IP = '3.130.207.31' 
-		elif self.myenv == 'local' :
-			self.yoti_pem_file = '/home/thierry/issuer/key.pem'
-			self.sys_path = '/home/thierry'
-			self.server = 'http://' + extract_ip() + ':5100/'
-			self.IP = extract_ip()
-			self.port = 5100
-		else :
-			logging.error('environment variable problem')
-			sys.exit()
-		self.help_path = self.sys_path + '/issuer/templates/'
+BASE_DIR = Path(__file__).resolve().parent
 
 
-def extract_ip():
-    st = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:       
-        st.connect(('10.255.255.255', 1))
-        IP = st.getsockname()[0]
-    except Exception:
-        IP = '127.0.0.1'
-    finally:
-        st.close()
-    return IP
+def _load_json(path: Path) -> dict:
+    try:
+        with path.open(encoding="utf-8") as stream:
+            value = json.load(stream)
+    except FileNotFoundError:
+        return {}
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"Cannot load configuration file {path.name}") from exc
+
+    if not isinstance(value, dict):
+        raise TypeError(f"Configuration file {path.name} must contain an object")
+    return value
+
+
+def _value(env_name: str, source: dict, key: str, default: str = "") -> str:
+    value = os.getenv(env_name, source.get(key, default))
+    return str(value).strip()
+
+
+@dataclass(frozen=True)
+class Settings:
+    environment: str
+    host: str
+    port: int
+    secret_key: str
+    secure_cookies: bool
+    hub_url: str
+    hub_api_key: str
+    hub_request_timeout: float
+    issuance_expires_in: int
+    event_poll_interval: float
+    email_hub_issuer: str
+    email_credential_configuration_id: str
+    email_claim: str
+    phone_hub_issuer: str
+    phone_credential_configuration_id: str
+    phone_claim: str
+    smtp_host: str
+    smtp_port: int
+    smtp_username: str
+    smtp_password: str
+    smtp_from: str
+    smtp_starttls: bool
+    sms_token: str
+    counter_path: Path
+    counter_api_key: str
+    slack_url: str
+
+
+def load_settings(environment: str | None = None) -> Settings:
+    """Load secrets locally without exposing them at module import time."""
+
+    selected_environment = environment or os.getenv("MYENV", "local")
+    if selected_environment not in {"local", "aws"}:
+        raise RuntimeError("MYENV must be either 'local' or 'aws'")
+
+    passwords = _load_json(BASE_DIR / "passwords.json")
+    keys = _load_json(BASE_DIR / "keys.json")
+    secret_key = _value("ISSUER_SECRET_KEY", passwords, "password")
+    hub_api_key = _value("OPENID4VC_HUB_API_KEY", keys, "openid4vc_hub_api_key")
+    if not secret_key:
+        raise RuntimeError(
+            "ISSUER_SECRET_KEY or passwords.json['password'] is required"
+        )
+    if not hub_api_key:
+        raise RuntimeError(
+            "OPENID4VC_HUB_API_KEY or keys.json['openid4vc_hub_api_key'] is required"
+        )
+
+    default_host = "0.0.0.0" if selected_environment == "aws" else "127.0.0.1"
+    return Settings(
+        environment=selected_environment,
+        host=os.getenv("ISSUER_HOST", default_host),
+        port=int(os.getenv("ISSUER_PORT", "5100")),
+        secret_key=secret_key,
+        secure_cookies=selected_environment == "aws",
+        hub_url=os.getenv("OPENID4VC_HUB_URL", "https://openid4vc-hub.com").rstrip("/"),
+        hub_api_key=hub_api_key,
+        hub_request_timeout=float(os.getenv("HUB_REQUEST_TIMEOUT", "10")),
+        issuance_expires_in=int(os.getenv("ISSUANCE_EXPIRES_IN", "600")),
+        event_poll_interval=float(os.getenv("EVENT_POLL_INTERVAL", "1.5")),
+        email_hub_issuer=os.getenv("EMAIL_HUB_ISSUER", "core-email-proof-issuer"),
+        email_credential_configuration_id=os.getenv(
+            "EMAIL_CREDENTIAL_CONFIGURATION_ID", "email_proof_sd_jwt"
+        ),
+        email_claim=os.getenv("EMAIL_CREDENTIAL_CLAIM", "email"),
+        phone_hub_issuer=os.getenv("PHONE_HUB_ISSUER", "core-phone-proof-issuer"),
+        phone_credential_configuration_id=os.getenv(
+            "PHONE_CREDENTIAL_CONFIGURATION_ID", "phone_sd_jwt"
+        ),
+        phone_claim=os.getenv("PHONE_CREDENTIAL_CLAIM", "phone_number"),
+        smtp_host=os.getenv("SMTP_HOST", "smtp.gmail.com"),
+        smtp_port=int(os.getenv("SMTP_PORT", "587")),
+        smtp_username=os.getenv("SMTP_USERNAME", "relay@talao.io"),
+        smtp_password=_value("SMTP_PASSWORD", passwords, "smtp_password"),
+        smtp_from=os.getenv("SMTP_FROM", "Talao <relay@talao.io>"),
+        smtp_starttls=os.getenv("SMTP_STARTTLS", "1") != "0",
+        sms_token=_value("SMS_API_TOKEN", passwords, "sms_token"),
+        counter_path=Path(
+            os.getenv("COUNTER_PATH", str(BASE_DIR / "counter.json"))
+        ).resolve(),
+        counter_api_key=os.getenv("COUNTER_API_KEY", ""),
+        slack_url=_value("COUNTER_SLACK_URL", passwords, "slack_url"),
+    )

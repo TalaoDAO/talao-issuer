@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Issue a Proof of Email or Proof of Phone">
+  <title>{% block title %}Talao Issuer{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('home') }}">
+      <img src="{{ url_for('static', filename='talao_icon.jpg') }}" alt="Talao">
+      <span>Talao Issuer</span>
+    </a>
+  </header>
+
+  <main class="page">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <span>© Web3 Digital Wallet 2026</span>
+    <nav class="legal-links" aria-label="Legal information">
+      <a href="https://www.talao.io/cgu">Terms and conditions</a>
+      <a href="https://www.talao.io/privacy">Privacy</a>
+    </nav>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Get a {{ proof_name }}{% endblock %}
+{% block content %}
+  <section class="card form-card">
+    <div class="proof-icon" aria-hidden="true">{{ icon }}</div>
+    <p class="eyebrow">Contact verification</p>
+    <h1>Get a {{ proof_name }}</h1>
+    <p class="lead">{{ description }}</p>
+
+    <form action="{{ submit_url }}" method="post">
+      <label for="proof-subject">{{ field_label }}</label>
+      <input
+        id="proof-subject"
+        name="{{ field_name }}"
+        type="{{ input_type }}"
+        value="{{ value }}"
+        autocomplete="{{ autocomplete }}"
+        required
+        autofocus
+      >
+      <button type="submit">Continue</button>
+    </form>
+
+    <p class="hint">The verification code is entered only in your wallet.</p>
+  </section>
+{% endblock %}

@@ -1,126 +1,178 @@
-from flask import jsonify, request
+"""Persistent and idempotent counters for completed issuances."""
+
+from __future__ import annotations
+
+import fcntl
+import hmac
 import json
-import requests
 import logging
-logging.basicConfig(level=logging.INFO)
+import os
+import tempfile
+import time
+from contextlib import contextmanager
+from pathlib import Path
 
-VC_LIST = [
-    "emailpass", "phonepass", "agerange",
-    "over18", "over13", "over15", "over21", "over50", "over65", "verifiableid",
-    "eudipid", "pid", "identitycredential", "individualverifiableattestation",
-    "liveness", "diploma", "chainborn", "nationality",
-    "twitter", "defi",
-    "tezosassociatedaddress", "binanceassociatedaddress", "fantomassociatedaddress",
-    "polygonassociatedaddress", "ethereumassociatedaddress" 
-]
+import requests
+from flask import current_app, jsonify, request
 
-
-def init_app(app, mode):
-    app.add_url_rule('/counter/get',  view_func=counter_get, methods=['GET'])
-    app.add_url_rule('/counter/update',  view_func=counter_update, methods=['POST'], defaults={"mode": mode})
-    app.add_url_rule('/counter/nft/get',  view_func=counter_nft_get, methods=['GET'])
-    app.add_url_rule('/counter/nft/update',  view_func=counter_nft_update, methods=['POST'], defaults={"mode": mode})
-    return
+LOGGER = logging.getLogger(__name__)
+COUNTER_TYPES = {"emailpass", "phonepass"}
+PROCESSED_KEY = "_processed_issuances"
+MAX_PROCESSED_ISSUANCES = 10_000
 
 
-def counter_get():
-    """
-    to get the values 
-    """
-    return json.load(open("counter.json", "r"))
+class CounterStore:
+    def __init__(self, path: Path):
+        self.path = Path(path)
+        self.lock_path = self.path.with_suffix(f"{self.path.suffix}.lock")
+
+    @contextmanager
+    def _locked(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.lock_path.open("a+", encoding="utf-8") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+    def _read(self) -> dict:
+        try:
+            with self.path.open(encoding="utf-8") as stream:
+                data = json.load(stream)
+        except FileNotFoundError:
+            data = {}
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError("Cannot read the counter store") from exc
+
+        if not isinstance(data, dict):
+            raise TypeError("The counter store must contain a JSON object")
+        data.setdefault("total", 0)
+        for counter_type in COUNTER_TYPES:
+            data.setdefault(counter_type, 0)
+        return data
+
+    def _write(self, data: dict) -> None:
+        temporary_path = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=self.path.parent,
+                prefix=f".{self.path.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as stream:
+                temporary_path = Path(stream.name)
+                json.dump(data, stream, ensure_ascii=False, indent=2)
+                stream.write("\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary_path, self.path)
+        finally:
+            if temporary_path and temporary_path.exists():
+                temporary_path.unlink()
+
+    @staticmethod
+    def _public(data: dict) -> dict:
+        return {
+            "total": data["total"],
+            "emailpass": data["emailpass"],
+            "phonepass": data["phonepass"],
+        }
+
+    def snapshot(self) -> dict:
+        with self._locked():
+            return self._public(self._read())
+
+    def increment(
+        self,
+        counter_type: str,
+        *,
+        count: int = 1,
+        issuance_id: str | None = None,
+    ) -> tuple[bool, dict]:
+        if counter_type not in COUNTER_TYPES:
+            raise ValueError("Unsupported counter type")
+        if count <= 0:
+            raise ValueError("Count must be positive")
+
+        with self._locked():
+            data = self._read()
+            processed = data.setdefault(PROCESSED_KEY, {})
+            if not isinstance(processed, dict):
+                processed = {}
+                data[PROCESSED_KEY] = processed
+
+            if issuance_id and issuance_id in processed:
+                return False, self._public(data)
+
+            data[counter_type] = int(data[counter_type]) + count
+            data["total"] = int(data["total"]) + count
+
+            if issuance_id:
+                processed[issuance_id] = int(time.time())
+                while len(processed) > MAX_PROCESSED_ISSUANCES:
+                    processed.pop(next(iter(processed)))
+
+            self._write(data)
+            return True, self._public(data)
 
 
-def counter_update(mode):
-    """
-    this allows the wallet to update the counter json file
+def record_completed_issuance(store, settings, counter_type, issuance_id) -> bool:
+    created, snapshot = store.increment(counter_type, issuance_id=issuance_id)
+    if not created or not settings.slack_url:
+        return created
 
-    with a simple request request 
-    # update counter
-    data = {"vc" : "bloometa" , "count" : "1" }
-    requests.post(mode.server + 'counter/update', data=data)
-    """
-    vc = request.form.get('vc').lower()
-    if vc not in VC_LIST:
-        logging.warning("%s not in VC LIST", vc)
-        return jsonify('Bad request'), 400
-    count = request.form.get('count')
-    if not count or not vc :
-        logging.error("counter error")
-        return jsonify('Bad request'), 400
-    counter = json.load(open("counter.json", "r"))
-    credential_list = list(counter.keys())
-    for credential in credential_list:
-        if credential == vc :
-            counter[credential] += int(count)
-            counter["total"] += int(count)
-            break
-    counter_file = open("counter.json", "w")
-    counter_file.write(json.dumps(counter))
-    counter_file.close()
-
-    # send data to slack
-    url = mode.slack_url
     payload = {
         "channel": "#issuer_counter",
         "username": "issuer",
-        "text": "New " + vc + " has been issued " + json.dumps(counter),
-        "icon_emoji": ":ghost:"
-        }
-    data = {
-        'payload': json.dumps(payload)
+        "text": f"New {counter_type} issued {json.dumps(snapshot)}",
+        "icon_emoji": ":ghost:",
     }
-    r = requests.post(url, data=data)
-    return jsonify('ok')
+    try:
+        requests.post(
+            settings.slack_url,
+            data={"payload": json.dumps(payload)},
+            timeout=settings.hub_request_timeout,
+        ).raise_for_status()
+    except requests.RequestException:
+        LOGGER.warning("Counter updated but Slack notification failed")
+    return created
 
 
-
-"""
-For NFT
-
-"""
-
-def counter_nft_get() :
-    """
-    to get the values 
-    """
-    return json.load(open("counter_defi.json", "r"))
+def init_app(app, settings):
+    app.add_url_rule("/counter/get", view_func=counter_get, methods=["GET"])
+    app.add_url_rule(
+        "/counter/update",
+        view_func=counter_update,
+        methods=["POST"],
+        defaults={"settings": settings},
+    )
 
 
-def counter_nft_update(mode):
-    """
-    this allows the verifier to update the counter json file
+def counter_get():
+    store = current_app.extensions["counter_store"]
+    return jsonify(store.snapshot())
 
-    with a simple request request 
-    # update counter
-    data = {"count" : "1" , "chain" : "binance" }
-    requests.post(mode.server + 'counter/nft/update', data=data)
-    """
-    count = request.form.get('count')
-    that_chain = request.form.get('chain')
-    if not that_chain or not count :
-        return jsonify('update refused'), 404
-    counter = json.load(open("counter_defi.json", "r"))
-    chain_list = list(counter.keys())
-    for chain in chain_list :
-        if chain == that_chain :
-            counter[chain] += int(count)
-            counter["total"] += int(count)
-            break
-    counter_file = open("counter_defi.json", "w")
-    counter_file.write(json.dumps(counter))
-    counter_file.close()
 
-    # send data to slack
-    url = mode.slack_nft_url
-    payload = {
-        "channel": "#defi_nft_counter",
-        "username": "DeFi_verifier",
-        "text": json.dumps(counter),
-        "icon_emoji": ":ghost:"
-        }
-    data = {
-        'payload': json.dumps(payload)
-    }
-    r = requests.post(url, data=data)
-    return jsonify('ok')
+def counter_update(settings):
+    """Compatibility endpoint; internal hub flows do not use this route."""
 
+    supplied_key = request.headers.get("X-API-Key", "")
+    if not settings.counter_api_key or not hmac.compare_digest(
+        supplied_key,
+        settings.counter_api_key,
+    ):
+        return jsonify({"error": "unauthorized"}), 401
+
+    counter_type = request.form.get("vc", "").strip().lower()
+    try:
+        count = int(request.form.get("count", "1"))
+        _, snapshot = current_app.extensions["counter_store"].increment(
+            counter_type,
+            count=count,
+        )
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid_request"}), 400
+    return jsonify(snapshot)

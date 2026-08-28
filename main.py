@@ -1,138 +1,71 @@
-"""
-Python 3.9 ++
-didkit 0.3.0 get_version
-"""
-from flask import Flask, jsonify, session, request, render_template_string, render_template, redirect
-from flask_qrcode import QRcode
-from flask_session import Session
-import didkit
-import redis
-import os
-import sys
-from flask_babel import Babel, _, refresh
-from datetime import timedelta
-import markdown
-import json
-from components import message
-from flask_session import Session
-from flask_mobility import Mobility
-from flask_simple_captcha import CAPTCHA
+"""Flask application factory for Proof of Email and Proof of Phone."""
 
-
-# local dependencies
-from routes import web_emailpass, web_phonepass, yoti, web_new_emailpass, emailpass_openid4vc_hub
-from routes import counter
-import environment
+from __future__ import annotations
 
 import logging
-logging.basicConfig(level=logging.INFO)
-ISSUER_CONFIG = {
-    'SECRET_CAPTCHA_KEY': json.dumps(json.load(open("keys.json", "r"))['talao_Ed25519_private_key']),  # use for JWT encoding/decoding
-    'CAPTCHA_LENGTH': 6,  # Length of the generated CAPTCHA text
-    'CAPTCHA_DIGITS': False,  # Should digits be added to the character pool?
-    'EXPIRE_SECONDS': 60 * 10,
-}
-ISSUER_CAPTCHA = CAPTCHA(config=ISSUER_CONFIG)
 
-LANGUAGES = ['en', 'fr']
+from flask import Flask, jsonify, render_template
 
-# Redis est utilisé pour stocker les données de session
-red = redis.Redis(host='localhost', port=6379, db=0)
-
-logging.info("python version : %s", sys.version)
-logging.info("didkit version = %s", didkit.get_version())
-
-# init
-myenv = os.getenv('MYENV')
-if not myenv:
-	myenv = 'local'
-mode = environment.currentMode(myenv)
-app = Flask(__name__)
-qrcode = QRcode(app)
-app.config['SESSION_TYPE'] = 'redis'
-app.config['SESSION_REDIS'] = red  
-app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_COOKIE_NAME'] = 'altme_issuer'
-app.config['SESSION_TYPE'] = 'redis' # Redis server side session
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60) # session lifetime
-app.config['SESSION_FILE_THRESHOLD'] = 100
-app.config['SECRET_KEY'] = "issuer" + mode.password
-app.jinja_env.globals['Version'] = "2.0.1"
-
-app = ISSUER_CAPTCHA.init_app(app)
-
-# site X
-app.config.update(
-    OIDC_REDIRECT_URI=mode.server + 'callback', # your application redirect uri. Must not be used in your code
-    SECRET_KEY="lkjhlkjh" # your application secret code for session, random
-)
-babel = Babel(app)
-Mobility(app)
-
-sess = Session()
-sess.init_app(app)
-
-# init routes 
-web_emailpass.init_app(app, red, mode)
-web_new_emailpass.init_app(app, red, mode)
-emailpass_openid4vc_hub.init_app(app, red, mode)
-
-web_phonepass.init_app(ISSUER_CAPTCHA, app, red, mode)
-yoti.init_app(app, red, mode)
-counter.init_app(app, mode)
+from components.openid4vc_hub import HubClient
+from environment import Settings, load_settings
+from routes import counter, emailpass_openid4vc_hub, phonepass_openid4vc_hub
 
 
-@app.errorhandler(500)
-def error_500(e):
-	message.message("Error 500 on issuer", 'thierry.thevenet@talao.io', str(e) , mode)
-	return redirect('https://altme.io')
+def create_app(
+    settings: Settings | None = None,
+    *,
+    hub_client=None,
+    counter_store=None,
+) -> Flask:
+    settings = settings or load_settings()
+    app = Flask(__name__)
+    app.config.update(
+        SECRET_KEY=settings.secret_key,
+        MAX_CONTENT_LENGTH=64 * 1024,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=settings.secure_cookies,
+    )
+
+    app.extensions["issuer_settings"] = settings
+    app.extensions["hub_client"] = hub_client or HubClient(
+        settings.hub_url,
+        settings.hub_api_key,
+        settings.hub_request_timeout,
+    )
+    app.extensions["counter_store"] = counter_store or counter.CounterStore(
+        settings.counter_path
+    )
+
+    emailpass_openid4vc_hub.init_app(app)
+    phonepass_openid4vc_hub.init_app(app)
+    counter.init_app(app, settings)
+
+    @app.get("/")
+    def home():
+        return render_template("home.html")
+
+    @app.get("/healthz")
+    def health():
+        return jsonify({"status": "ok"})
+
+    @app.errorhandler(413)
+    def request_too_large(_error):
+        return jsonify({"error": "request_too_large"}), 413
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        app.logger.error("Unhandled application error: %s", type(error).__name__)
+        return jsonify({"error": "internal_server_error"}), 500
+
+    return app
 
 
-@babel.localeselector
-def get_locale():
-	if not session.get('language'):
-		session['language'] = request.accept_languages.best_match(LANGUAGES)
-	else:
-		refresh()
-	return "en"
-
-																													
-@app.route('/language', methods=['GET'], defaults={'mode': mode})
-def user_language(mode):
-    #session['language'] = request.args['lang']
-	session['language'] = "en"
-	return 'en'
-
-
-@app.route('/md_file', methods = ['GET', 'POST'])
-def md_file():
-	"""
-	https://dev.to/mrprofessor/rendering-markdown-from-flask-1l41
-	"""
-	if request.args['file'] == 'privacy' :
-		try:
-			content = open('privacy_'+ session['language'] + '.md', 'r').read()
-		except Exception:
-			content = open('privacy_en.md', 'r').read()
-	
-	elif request.args['file'] == 'terms_and_conditions' :
-		try:
-			content = open('cgu_'+ session['language'] + '.md', 'r').read()
-		except Exception:
-			content = open('cgu_en.md', 'r').read()
-	return render_template_string( markdown.markdown(content, extensions=["fenced_code"]))
-
-
-@app.route('/company/', methods = ['GET', 'POST'])
-def company():
-	return render_template('company.html')
-
-
-@app.route('/', methods=['GET']) 
-def test():
-	return jsonify("Hello")
-
-
-# MAIN entry point. Flask test server
-if __name__ == '__main__':
-    app.run(host=mode.IP, port= mode.port, debug=True)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    runtime_settings = load_settings()
+    create_app(runtime_settings).run(
+        host=runtime_settings.host,
+        port=runtime_settings.port,
+        debug=False,
+    )
