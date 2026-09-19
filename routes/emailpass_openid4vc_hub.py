@@ -14,7 +14,7 @@ from routes.hub_flow import issuance_events, issuance_status
 
 SESSION_KEY = "emailpass_hub_issuance_id"
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
-TX_CODE_LENGTH = 4
+TX_CODE_LENGTH = 6
 
 
 def init_app(app):

@@ -76,6 +76,23 @@ Les deux issuers utilisent la même `OPENID4VC_HUB_API_KEY`. Les valeurs
 téléphone correspondent au tenant hub de production et peuvent être remplacées
 par variables d'environnement sans modifier le code.
 
+Pour le téléphone, il faut distinguer :
+
+- la route publique de l'application : `/phoneproof` ;
+- le slug métier du credential : `phone-proof` ;
+- le slug de l'issuer du hub : `core-phone-proof-issuer` ;
+- l'identifiant technique OpenID4VCI actif : `phone_sd_jwt` ;
+- le claim envoyé : `phone_number`.
+
+`phone-proof` ne doit pas être envoyé dans le champ
+`credential_configuration_id` tant que le hub ne publie pas une configuration
+active portant cet identifiant. Les métadonnées publiques du tenant sont
+disponibles à l'adresse suivante :
+
+```text
+https://openid4vc-hub.com/.well-known/openid-credential-issuer/issuer/core-phone-proof-issuer
+```
+
 Autres variables utiles :
 
 - `MYENV=local|aws` (`local` par défaut) ;
@@ -126,6 +143,19 @@ Les workers `gthread` permettent de maintenir les flux SSE. Le serveur envoie
 aussi un commentaire keep-alive toutes les 15 secondes quand le statut ne
 change pas.
 
+## Affichage de l'offre wallet
+
+Les parcours e-mail et téléphone utilisent le même template
+`templates/proof_offer.html` et suivent la même règle responsive :
+
+- sur desktop, la page affiche uniquement le QR code ;
+- sur mobile ou appareil tactile, elle masque le QR code et affiche uniquement
+  le bouton `Open in wallet`.
+
+La règle est définie dans `static/app.css`. Elle combine la largeur de l'écran
+et les capacités de pointage afin de prendre en charge un téléphone en mode
+paysage.
+
 ## Routes
 
 - `/` : sélection du type de preuve ;
@@ -137,6 +167,21 @@ change pas.
 Les anciennes entrées `/emailproof`, `/emailpass`, `/emailproof-hub`,
 `/phonepass-hub`, `/phonepass` et `/phoneproof-hub` restent disponibles comme
 alias des deux parcours hub.
+
+Les routes e-mail `/emailproof-hub`, `/emailpass-hub` ainsi que leurs routes de
+statut et d'événements sont utilisées en production et doivent rester stables.
+
+## Diagnostic du parcours téléphone
+
+Si le SMS est reçu mais que le formulaire affiche ensuite une erreur, l'envoi
+SMS a réussi : l'échec se situe lors de la création de l'offre dans le hub.
+Consulter le message `Proof of Phone hub creation failed` dans les logs.
+
+Une réponse `404 Unknown or disabled credential configuration` indique que le
+`credential_configuration_id` demandé n'existe pas ou est désactivé pour
+l'issuer. Vérifier alors les métadonnées publiques ci-dessus. Le client conserve
+le champ `error` renvoyé par le hub dans les logs, même lorsque
+`error_description` est absent.
 
 ## Validation
 
