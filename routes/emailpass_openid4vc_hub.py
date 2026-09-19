@@ -30,6 +30,12 @@ def init_app(app):
         view_func=emailpass_hub_start,
         methods=["GET", "POST"],
     )
+    app.add_url_rule(
+        "/emailpass/altme",
+        endpoint="emailpass_altme_start",
+        view_func=emailpass_altme_start,
+        methods=["GET", "POST"],
+    )
     for index, alias in enumerate(("/emailproof", "/emailpass")):
         app.add_url_rule(
             alias,
@@ -62,13 +68,29 @@ def _masked_email(email: str) -> str:
 
 def emailpass_hub_start():
     settings = current_app.extensions["issuer_settings"]
+    return _emailpass_start(
+        settings.email_hub_issuer,
+        "/emailpass-hub",
+    )
+
+
+def emailpass_altme_start():
+    settings = current_app.extensions["issuer_settings"]
+    return _emailpass_start(
+        settings.altme_email_hub_issuer,
+        url_for("emailpass_altme_start"),
+    )
+
+
+def _emailpass_start(hub_issuer: str, submit_url: str):
+    settings = current_app.extensions["issuer_settings"]
     if request.method == "GET":
-        return emailpass_hub_start_form("")
+        return emailpass_hub_start_form("", submit_url)
 
     email = request.form.get("email", "").strip().lower()
     if not EMAIL_PATTERN.fullmatch(email):
         flash("Invalid email address.", "danger")
-        return emailpass_hub_start_form(email), 400
+        return emailpass_hub_start_form(email, submit_url), 400
 
     tx_code = _generate_tx_code()
     try:
@@ -76,10 +98,10 @@ def emailpass_hub_start():
     except Exception:
         current_app.logger.exception("Proof of Email code delivery failed")
         flash("The verification email could not be sent. Please try again.", "danger")
-        return emailpass_hub_start_form(email), 502
+        return emailpass_hub_start_form(email, submit_url), 502
 
     payload = {
-        "issuer": settings.email_hub_issuer,
+        "issuer": hub_issuer,
         "credentials": [
             {
                 "credential_configuration_id": (
@@ -101,14 +123,14 @@ def emailpass_hub_start():
     except HubError as exc:
         current_app.logger.warning("Proof of Email hub creation failed: %s", exc)
         flash("The issuance service is temporarily unavailable.", "danger")
-        return emailpass_hub_start_form(email), 502
+        return emailpass_hub_start_form(email, submit_url), 502
 
     issuance_id = response.get("issuance_id")
     qr_content = response.get("qr_code_content")
     if not isinstance(issuance_id, str) or not isinstance(qr_content, str):
         current_app.logger.error("Proof of Email hub response is incomplete")
         flash("The issuance service returned an incomplete response.", "danger")
-        return emailpass_hub_start_form(email), 502
+        return emailpass_hub_start_form(email, submit_url), 502
 
     session[SESSION_KEY] = issuance_id
     return render_template(
@@ -118,12 +140,12 @@ def emailpass_hub_start():
         qr_code_content=qr_content,
         qr_image=qr_svg_data_uri(qr_content),
         events_url=url_for("emailpass_hub_events", issuance_id=issuance_id),
-        restart_url="/emailpass-hub",
+        restart_url=submit_url,
         expires_in=settings.issuance_expires_in,
     )
 
 
-def emailpass_hub_start_form(email: str):
+def emailpass_hub_start_form(email: str, submit_url: str = "/emailpass-hub"):
     return render_template(
         "proof_form.html",
         proof_name="Proof of Email",
@@ -137,7 +159,7 @@ def emailpass_hub_start_form(email: str):
         input_type="email",
         autocomplete="email",
         value=email,
-        submit_url="/emailpass-hub",
+        submit_url=submit_url,
     )
 
 

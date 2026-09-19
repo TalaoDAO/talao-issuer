@@ -7,7 +7,7 @@
     <h1>Get a {{ proof_name }}</h1>
     <p class="lead">{{ description }}</p>
 
-    <form action="{{ submit_url }}" method="post">
+    <form class="proof-form" action="{{ submit_url }}" method="post">
       <label for="proof-subject">{{ field_label }}</label>
       <input
         id="proof-subject"
@@ -18,9 +18,32 @@
         required
         autofocus
       >
-      <button type="submit">Continue</button>
+      <button class="submit-button" type="submit">
+        <span class="button-label">Continue</span>
+        <span class="button-loading" role="status" aria-live="polite">
+          <span class="button-spinner" aria-hidden="true"></span>
+          Please wait…
+        </span>
+      </button>
     </form>
 
     <p class="hint">The verification code is entered only in your wallet.</p>
   </section>
+
+  <script>
+    const proofForm = document.querySelector(".proof-form");
+    const submitButton = proofForm.querySelector(".submit-button");
+
+    proofForm.addEventListener("submit", () => {
+      submitButton.disabled = true;
+      submitButton.classList.add("is-loading");
+      submitButton.setAttribute("aria-busy", "true");
+    });
+
+    window.addEventListener("pageshow", () => {
+      submitButton.disabled = false;
+      submitButton.classList.remove("is-loading");
+      submitButton.removeAttribute("aria-busy");
+    });
+  </script>
 {% endblock %}

@@ -39,6 +39,12 @@ input { width: 100%; padding: 14px 16px; color: var(--ink); background: white; b
 input:focus { outline: 3px solid #ded2ff; border-color: var(--brand); }
 button, .primary-link { display: block; width: 100%; margin-top: 16px; padding: 14px 18px; color: white; background: var(--brand); border: 0; border-radius: 10px; font: inherit; font-weight: 750; text-align: center; text-decoration: none; cursor: pointer; }
 button:hover, .primary-link:hover { background: var(--brand-dark); }
+button:disabled { cursor: wait; opacity: .82; }
+.button-loading { display: none; align-items: center; justify-content: center; gap: 10px; }
+.submit-button.is-loading .button-label { display: none; }
+.submit-button.is-loading .button-loading { display: flex; }
+.button-spinner { width: 19px; height: 19px; border: 2px solid rgba(255, 255, 255, .45); border-top-color: white; border-radius: 50%; animation: button-spin .7s linear infinite; }
+@keyframes button-spin { to { transform: rotate(360deg); } }
 .hint { margin: 22px 0 0; color: var(--muted); font-size: .9rem; }
 .alert { max-width: 600px; margin: 0 auto 18px; padding: 14px 16px; border-radius: 10px; }
 .alert-danger { color: #851d2d; background: #ffe8ec; }

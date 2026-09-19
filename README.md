@@ -66,6 +66,7 @@ Configuration du hub :
 |---|---|
 | `OPENID4VC_HUB_URL` | `https://openid4vc-hub.com` |
 | `EMAIL_HUB_ISSUER` | `core-email-proof-issuer` |
+| `ALTME_EMAIL_HUB_ISSUER` | `altme-email-proof-issuer` |
 | `EMAIL_CREDENTIAL_CONFIGURATION_ID` | `email_proof_sd_jwt` |
 | `EMAIL_CREDENTIAL_CLAIM` | `email` |
 | `PHONE_HUB_ISSUER` | `core-phone-proof-issuer` |
@@ -160,6 +161,7 @@ paysage.
 
 - `/` : sélection du type de preuve ;
 - `/emailpass-hub` : Proof of Email ;
+- `/emailpass/altme` : Proof of Email dédiée au wallet Altme ;
 - `/phoneproof` : Proof of Phone ;
 - `/counter/get` : compteurs publics ;
 - `/healthz` : sonde de vie.
@@ -170,6 +172,8 @@ alias des deux parcours hub.
 
 Les routes e-mail `/emailproof-hub`, `/emailpass-hub` ainsi que leurs routes de
 statut et d'événements sont utilisées en production et doivent rester stables.
+L'alias `/emailpass` conserve l'issuer `core-email-proof-issuer`, tandis que
+`/emailpass/altme` utilise `altme-email-proof-issuer`.
 
 ## Diagnostic du parcours téléphone
 

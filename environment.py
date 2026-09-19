@@ -42,6 +42,7 @@ class Settings:
     issuance_expires_in: int
     event_poll_interval: float
     email_hub_issuer: str
+    altme_email_hub_issuer: str
     email_credential_configuration_id: str
     email_claim: str
     phone_hub_issuer: str
@@ -92,6 +93,9 @@ def load_settings(environment: str | None = None) -> Settings:
         issuance_expires_in=int(os.getenv("ISSUANCE_EXPIRES_IN", "600")),
         event_poll_interval=float(os.getenv("EVENT_POLL_INTERVAL", "1.5")),
         email_hub_issuer=os.getenv("EMAIL_HUB_ISSUER", "core-email-proof-issuer"),
+        altme_email_hub_issuer=os.getenv(
+            "ALTME_EMAIL_HUB_ISSUER", "altme-email-proof-issuer"
+        ),
         email_credential_configuration_id=os.getenv(
             "EMAIL_CREDENTIAL_CONFIGURATION_ID", "email_proof_sd_jwt"
         ),
