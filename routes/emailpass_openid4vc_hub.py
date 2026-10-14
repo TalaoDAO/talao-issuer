@@ -14,7 +14,7 @@ from routes.hub_flow import issuance_events, issuance_status
 
 SESSION_KEY = "emailpass_hub_issuance_id"
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
-TX_CODE_LENGTH = 6
+TX_CODE_LENGTH = 4
 
 
 def init_app(app):
@@ -36,6 +36,13 @@ def init_app(app):
         view_func=emailpass_altme_start,
         methods=["GET", "POST"],
     )
+    app.add_url_rule(
+            "/emailpass/generic",
+            endpoint="emailpass_generic_start",
+            view_func=emailpass_generic_start,
+            methods=["GET", "POST"],
+        )
+    
     for index, alias in enumerate(("/emailproof", "/emailpass")):
         app.add_url_rule(
             alias,
@@ -79,6 +86,14 @@ def emailpass_altme_start():
     return _emailpass_start(
         settings.altme_email_hub_issuer,
         url_for("emailpass_altme_start"),
+    )
+
+
+def emailpass_generic_start():
+    settings = current_app.extensions["issuer_settings"]
+    return _emailpass_start(
+        settings.generic_email_hub_issuer,
+        url_for("emailpass_generic_start"),
     )
 
 

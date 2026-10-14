@@ -43,6 +43,7 @@ class Settings:
     event_poll_interval: float
     email_hub_issuer: str
     altme_email_hub_issuer: str
+    generic_email_hub_issuer: str
     email_credential_configuration_id: str
     email_claim: str
     phone_hub_issuer: str
@@ -96,6 +97,9 @@ def load_settings(environment: str | None = None) -> Settings:
         altme_email_hub_issuer=os.getenv(
             "ALTME_EMAIL_HUB_ISSUER", "altme-email-proof-issuer"
         ),
+        generic_email_hub_issuer=os.getenv(
+                    "GENERIC_EMAIL_HUB_ISSUER", "core-generic-email-issuer"
+                ),
         email_credential_configuration_id=os.getenv(
             "EMAIL_CREDENTIAL_CONFIGURATION_ID", "email_proof_sd_jwt"
         ),
