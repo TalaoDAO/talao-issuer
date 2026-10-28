@@ -1,0 +1,23 @@
+<div class="desktop-delivery" data-email-delivery>
+  <div class="delivery-tabs" role="tablist" aria-label="How to receive this credential">
+    <button type="button" role="tab" id="qr-tab" aria-selected="true" aria-controls="qr-delivery-panel" data-delivery-tab="qr-delivery-panel">QR code</button>
+    <button type="button" role="tab" id="cloud-tab" aria-selected="false" aria-controls="cloud-delivery-panel" tabindex="-1" data-delivery-tab="cloud-delivery-panel">Send to a cloud wallet</button>
+  </div>
+  <div id="qr-delivery-panel" role="tabpanel" aria-labelledby="qr-tab">
+    <div class="qr-box"><img src="{{ qr_image }}" alt="Wallet offer QR code"></div>
+    <button type="button" class="copy-offer-button" data-copy-offer>Copy offer</button>
+    <textarea hidden data-offer-value>{{ qr_code_content }}</textarea>
+    <p class="hint" data-copy-message role="status">Using a personal web wallet? Copy this offer and paste it into your wallet.</p>
+  </div>
+  <div id="cloud-delivery-panel" role="tabpanel" aria-labelledby="cloud-tab" hidden>
+    <p class="lead">Copy the receiving address from your Business or Agent wallet and paste it below.</p>
+    <form method="post" action="{{ delivery_url }}" data-delivery-form>
+      <input type="hidden" name="delivery_context" value="{{ delivery_context }}">
+      <label for="wallet-address">Wallet receiving address</label>
+      <input id="wallet-address" name="wallet_address" type="url" required autocomplete="off" spellcheck="false" placeholder="Paste your wallet receiving address">
+      <button type="submit">Send offer</button>
+    </form>
+    <p class="hint" data-delivery-message role="status" aria-live="polite">The offer will wait in your wallet's inbox. You confirm reception there.</p>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='email_delivery.js') }}" defer></script>

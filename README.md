@@ -6,8 +6,8 @@ Application Flask dédiée à deux Verifiable Credentials :
 - **Proof of Phone** : vérification par code envoyé par SMS.
 
 Les deux parcours délèguent l'émission OIDC4VCI à
-[openid4vc-hub](https://openid4vc-hub.com). Le code de vérification est saisi
-uniquement dans le wallet. Une émission n'est ajoutée au compteur local que
+[openid4vc-hub](https://openid4vc-hub.com). Pour les deux parcours, le code à six chiffres est vérifié sur le site avant
+la création de l’offre, sans code de transaction dans le wallet. Une émission n'est ajoutée au compteur local que
 lorsque le hub retourne le statut `completed`.
 
 ## Architecture
@@ -177,9 +177,10 @@ L'alias `/emailpass` conserve l'issuer `core-email-proof-issuer`, tandis que
 
 ## Diagnostic du parcours téléphone
 
-Si le SMS est reçu mais que le formulaire affiche ensuite une erreur, l'envoi
-SMS a réussi : l'échec se situe lors de la création de l'offre dans le hub.
-Consulter le message `Proof of Phone hub creation failed` dans les logs.
+Après réception du SMS, le code doit être validé sur le site. Aucune offre
+hub n’est créée avant cette validation. Si la validation réussit mais que
+l’offre ne s’affiche pas, consulter le message
+`Proof of Phone hub creation failed` dans les logs.
 
 Une réponse `404 Unknown or disabled credential configuration` indique que le
 `credential_configuration_id` demandé n'existe pas ou est désactivé pour
@@ -200,3 +201,40 @@ git diff --check
 
 Les tests remplacent le hub, SMTP et SMS par des fakes : ils n'envoient aucun
 message et n'appellent aucun service externe.
+
+## Vérification EmailPass sur le site
+
+Après la saisie de l’adresse, le site affiche six cases pour le code envoyé par
+SMTP. Le collage du code complet est pris en charge. Le code expire après cinq
+minutes, autorise cinq tentatives et ne peut être utilisé qu’une fois. Un renvoi
+est possible après 60 secondes et invalide le challenge précédent.
+
+Les variantes principale, Altme et `/emailpass/generic` utilisent ce parcours.
+L’offre hub n’est créée qu’après validation, sans `tx_code`, avec une durée de
+vie maximale de cinq minutes. Le QR code, le bouton mobile et la livraison vers
+un cloud wallet restent disponibles. Le compteur attend toujours `completed`.
+
+Les challenges sont conservés côté serveur dans `email_verifications.json`, à
+côté du fichier configuré par `COUNTER_PATH`. Ce stockage runtime contient
+l’adresse et une empreinte HMAC du code, avec permissions `0600`, verrou fichier
+et remplacement atomique. Il doit rester privé et partagé par les workers du
+même déploiement. Les entrées expirées sont purgées au prochain accès au
+stockage. Le cookie ne contient qu’un identifiant aléatoire de challenge.
+Après un échec de création de l’offre hub, une nouvelle vérification est requise.
+
+## Vérification PhonePass sur le site
+
+PhonePass utilise les mêmes six cases, règles de vérification et stockage
+atomique qu’EmailPass : code SMS valable cinq minutes, cinq tentatives,
+utilisation unique et renvoi après 60 secondes avec invalidation du précédent
+challenge. Le numéro est normalisé en E.164 avant l’envoi et conservé côté
+serveur : le numéro du claim provient du challenge vérifié, jamais d’un champ
+renvoyé par le navigateur à l’étape de validation.
+
+Les challenges téléphone sont isolés dans `phone_verifications.json`, à côté
+de `COUNTER_PATH`, avec les mêmes permissions `0600` et purge à l’accès que les
+challenges e-mail. Les sessions e-mail et téléphone restent indépendantes.
+L’offre est créée après vérification, sans `tx_code`, pour au plus cinq minutes.
+Les routes et alias, l’issuer `core-phone-proof-issuer`, la configuration
+`phone_sd_jwt`, le claim `phone_number` et le comptage sur `completed` sont
+conservés. Une erreur de création hub nécessite une nouvelle vérification SMS.

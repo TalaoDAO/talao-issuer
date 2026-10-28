@@ -59,6 +59,7 @@ class Settings:
     counter_path: Path
     counter_api_key: str
     slack_url: str
+    wallet_delivery_origins: tuple[str, ...] = ()
 
 
 def load_settings(environment: str | None = None) -> Settings:
@@ -121,4 +122,8 @@ def load_settings(environment: str | None = None) -> Settings:
         ).resolve(),
         counter_api_key=os.getenv("COUNTER_API_KEY", ""),
         slack_url=_value("COUNTER_SLACK_URL", passwords, "slack_url"),
+        wallet_delivery_origins=tuple(value.strip() for value in os.getenv(
+            "WALLET_DELIVERY_ORIGINS",
+            "http://127.0.0.1:5102" if selected_environment == "local" else "https://wallet4agent.com",
+        ).split(",") if value.strip()),
     )

@@ -13,7 +13,7 @@ def send_verification_code(email: str, code: str, settings) -> None:
     message["From"] = settings.smtp_from
     message["To"] = email
     message["Subject"] = "Your Proof of Email verification code"
-    message.set_content(f"Your verification code is: {code}")
+    message.set_content(f"Your verification code is: {code}. Enter it on the issuer website. It expires in five minutes.")
     message.add_alternative(
         f"""
         <!doctype html>
@@ -21,7 +21,7 @@ def send_verification_code(email: str, code: str, settings) -> None:
           <body style="font-family:Arial,sans-serif;text-align:center;padding:32px">
             <h1 style="font-size:24px">Your verification code</h1>
             <p style="font-size:42px;font-weight:700;letter-spacing:6px">{html.escape(code)}</p>
-            <p>Enter this code only in your wallet.</p>
+            <p>Enter this code on the issuer website. It expires in five minutes.</p>
           </body>
         </html>
         """,

@@ -6,6 +6,7 @@ import logging
 
 from flask import Flask, jsonify, render_template
 
+from components.email_verification import ContactVerificationStore
 from components.openid4vc_hub import HubClient
 from environment import Settings, load_settings
 from routes import counter, emailpass_openid4vc_hub, phonepass_openid4vc_hub
@@ -23,6 +24,7 @@ def create_app(
         SECRET_KEY=settings.secret_key,
         MAX_CONTENT_LENGTH=64 * 1024,
         SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_NAME="talao_issuer_local_session" if settings.environment == "local" else "session",
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=settings.secure_cookies,
     )
@@ -37,6 +39,12 @@ def create_app(
         settings.counter_path
     )
 
+    app.extensions["email_verification_store"] = ContactVerificationStore(
+        settings.counter_path.parent / "email_verifications.json", settings.secret_key
+    )
+    app.extensions["phone_verification_store"] = ContactVerificationStore(
+        settings.counter_path.parent / "phone_verifications.json", settings.secret_key
+    )
     emailpass_openid4vc_hub.init_app(app)
     phonepass_openid4vc_hub.init_app(app)
     counter.init_app(app, settings)

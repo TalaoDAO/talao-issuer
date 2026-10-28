@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Verify your {{ contact_name }}{% endblock %}
+{% block content %}
+<section class="card form-card">
+  <div class="proof-icon" aria-hidden="true">{{ icon }}</div>
+  <p class="eyebrow">Contact verification</p>
+  <h1>{% if contact_name == "email" %}Check your email{% else %}Check your SMS{% endif %}</h1>
+  <p class="lead">Enter the six-digit code sent to</p>
+  <p class="subject-value">{{ masked_subject }}</p>
+  <form method="post" action="{{ submit_url }}" data-code-form>
+    <input type="hidden" name="action" value="verify">
+    <input type="hidden" name="challenge_token" value="{{ challenge_token }}">
+    <fieldset class="code-fieldset">
+      <legend>Verification code</legend>
+      <div class="code-inputs">
+      {% for index in range(6) %}
+        <input class="code-digit" name="digit" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" required aria-label="Digit {{ index + 1 }} of 6" {% if index == 0 %}autocomplete="one-time-code" autofocus{% else %}autocomplete="off"{% endif %}>
+      {% endfor %}
+      </div>
+    </fieldset>
+    <button type="submit">Verify {{ contact_name }}</button>
+  </form>
+  <p class="hint">The code expires in five minutes. Enter it here to continue to your wallet.</p>
+  <form method="post" action="{{ submit_url }}">
+    <input type="hidden" name="action" value="resend">
+    <input type="hidden" name="challenge_token" value="{{ challenge_token }}">
+    <button type="submit">Send a new code</button>
+  </form>
+  <p class="hint">You can request another code after 60 seconds.</p>
+  <a href="{{ submit_url }}">Use another {{ contact_name }}</a>
+</section>
+<script src="{{ url_for('static', filename='email_verify.js') }}" defer></script>
+{% endblock %}

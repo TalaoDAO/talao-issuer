@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 
-from flask import Response, current_app, jsonify, session
+from flask import Response, current_app, flash, jsonify, render_template, request, session
 
 from components.openid4vc_hub import HubError
 from routes.counter import record_completed_issuance
@@ -111,3 +112,67 @@ def issuance_events(session_key: str, counter_type: str, issuance_id: str):
             "Connection": "keep-alive",
         },
     )
+
+
+def verify_contact_on_site(*, store_key, session_key, issuer, submit_url,
+                           field_name, normalize, mask, send_code, start_form,
+                           invalid_message, delivery_error, proof_name, contact_name, icon):
+    """Return (verified subject, response); consume a challenge before creating an offer."""
+    settings = current_app.extensions["issuer_settings"]
+    store = current_app.extensions[store_key]
+    token = session.get(session_key)
+    action = request.form.get("action", "start")
+
+    def form(pending, challenge):
+        return render_template(
+            "email_verify.html", masked_subject=mask(pending["subject"]),
+            submit_url=pending["submit_url"], challenge_token=challenge,
+            contact_name=contact_name, icon=icon,
+        )
+
+    def reject(message, status=400):
+        flash(message, "danger")
+        return None, (start_form(), status)
+
+    if action in {"verify", "resend"} and (
+        not token or request.form.get("challenge_token") != token
+    ):
+        return None, (start_form(), 403)
+    pending = store.get(token)
+    if action in {"verify", "resend"} and (not pending or pending["issuer"] != issuer):
+        return reject("This verification has expired. Request a new code.")
+    if action == "verify":
+        digits = request.form.getlist("digit")
+        code = "".join(digits)
+        if len(digits) != 6 or any(not re.fullmatch(r"[0-9]", digit) for digit in digits):
+            code = "invalid"
+        result, verified = store.verify(token, code)
+        if result == "verified":
+            session.pop(session_key, None)
+            return verified["subject"], None
+        if result == "invalid":
+            flash("Incorrect code. Please try again.", "danger")
+            return None, (form(pending, token), 400)
+        session.pop(session_key, None)
+        return reject("The code has expired or too many attempts were made. Request a new code.")
+    if action not in {"start", "resend"}:
+        return None, (start_form(), 400)
+    subject = pending["subject"] if action == "resend" else normalize(request.form.get(field_name, ""))
+    if not subject:
+        return reject(invalid_message)
+    challenge = store.start(token, subject, issuer, submit_url)
+    if challenge is None:
+        flash("Please wait 60 seconds before requesting another code.", "danger")
+        return None, (form(pending, token), 429)
+    token, code = challenge
+    session[session_key] = token
+    try:
+        if send_code(subject, code, settings) is False:
+            raise RuntimeError("Code delivery failed")
+    except Exception:
+        store.discard(token)
+        session.pop(session_key, None)
+        current_app.logger.warning("%s code delivery failed", proof_name)
+        return reject(delivery_error, 502)
+    # Use a local record for rendering; a concurrent resend can invalidate the stored one.
+    return None, form({"subject": subject, "submit_url": submit_url}, token)

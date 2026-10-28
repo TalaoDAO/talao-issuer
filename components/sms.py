@@ -1,4 +1,4 @@
-"""SMS delivery for the Proof of Phone transaction code."""
+"""SMS delivery for the Proof of Phone website verification code."""
 
 import logging
 
@@ -21,10 +21,11 @@ def send_verification_code(phone_number: str, code: str, settings) -> bool:
         client = SmsApiComClient(access_token=settings.sms_token)
         results = client.sms.send(
             to=destination,
-            message=f"Your Proof of Phone verification code is: {code}",
+            timeout=settings.hub_request_timeout,
+            message=f"Your Proof of Phone verification code is: {code}. Enter it on the issuer website. Valid for 5 minutes.",
         )
-    except SmsApiException as exc:
-        LOGGER.warning("SMS delivery failed: %s", exc)
+    except SmsApiException:
+        LOGGER.warning("SMS delivery failed")
         return False
 
     return any(result.error is None for result in results)

@@ -3,18 +3,17 @@
 from __future__ import annotations
 
 import re
-import secrets
 import uuid
 
 from flask import current_app, flash, render_template, request, session, url_for
 
 from components import sms
 from components.openid4vc_hub import HubError, qr_svg_data_uri
-from routes.hub_flow import issuance_events, issuance_status
+from routes.hub_flow import issuance_events, issuance_status, verify_contact_on_site
 
 SESSION_KEY = "phonepass_hub_issuance_id"
 PHONE_PATTERN = re.compile(r"^\+[1-9]\d{7,14}$")
-TX_CODE_LENGTH = 4
+CHALLENGE_KEY = "phonepass_verification"
 
 
 def init_app(app):
@@ -57,11 +56,6 @@ def init_app(app):
     )
 
 
-def _generate_tx_code() -> str:
-    lower = 10 ** (TX_CODE_LENGTH - 1)
-    return str(lower + secrets.randbelow(9 * lower))
-
-
 def normalize_phone_number(value: str) -> str | None:
     compact = re.sub(r"[\s().-]", "", value.strip())
     if compact.startswith("00"):
@@ -80,24 +74,17 @@ def phone_proof_start():
     if request.method == "GET":
         return phone_proof_start_form("")
 
-    raw_phone = request.form.get("phone", "")
-    phone_number = normalize_phone_number(raw_phone)
-    if phone_number is None:
-        flash(
-            "Enter a valid international phone number, for example +33612345678.",
-            "danger",
-        )
-        return phone_proof_start_form(raw_phone), 400
-
-    tx_code = _generate_tx_code()
-    try:
-        sent = sms.send_verification_code(phone_number, tx_code, settings)
-    except Exception:
-        current_app.logger.exception("Proof of Phone code delivery failed")
-        sent = False
-    if not sent:
-        flash("The verification SMS could not be sent. Please try again.", "danger")
-        return phone_proof_start_form(raw_phone), 502
+    phone_number, response = verify_contact_on_site(
+        store_key="phone_verification_store", session_key=CHALLENGE_KEY,
+        issuer=settings.phone_hub_issuer, submit_url=url_for("phone_proof_start"),
+        field_name="phone", normalize=normalize_phone_number, mask=_masked_phone,
+        send_code=sms.send_verification_code, start_form=lambda: phone_proof_start_form(""),
+        invalid_message="Enter a valid international phone number, for example +33612345678.",
+        delivery_error="The verification SMS could not be sent. Please try again.",
+        proof_name="Proof of Phone", contact_name="phone number", icon="+",
+    )
+    if response is not None:
+        return response
 
     payload = {
         "issuer": settings.phone_hub_issuer,
@@ -110,26 +97,21 @@ def phone_proof_start():
             }
         ],
         "reference": f"phonepass-{uuid.uuid4()}",
-        "tx_code": {
-            "value": tx_code,
-            "input_mode": "numeric",
-            "description": "Enter the verification code sent by SMS.",
-        },
-        "expires_in": settings.issuance_expires_in,
+        "expires_in": min(settings.issuance_expires_in, 300),
     }
     try:
         response = current_app.extensions["hub_client"].create_issuance(payload)
     except HubError as exc:
         current_app.logger.warning("Proof of Phone hub creation failed: %s", exc)
         flash("The issuance service is temporarily unavailable.", "danger")
-        return phone_proof_start_form(raw_phone), 502
+        return phone_proof_start_form(""), 502
 
     issuance_id = response.get("issuance_id")
     qr_content = response.get("qr_code_content")
     if not isinstance(issuance_id, str) or not isinstance(qr_content, str):
         current_app.logger.error("Proof of Phone hub response is incomplete")
         flash("The issuance service returned an incomplete response.", "danger")
-        return phone_proof_start_form(raw_phone), 502
+        return phone_proof_start_form(""), 502
 
     session[SESSION_KEY] = issuance_id
     return render_template(
@@ -140,7 +122,8 @@ def phone_proof_start():
         qr_image=qr_svg_data_uri(qr_content),
         events_url=url_for("phone_proof_events", issuance_id=issuance_id),
         restart_url=url_for("phone_proof_start"),
-        expires_in=settings.issuance_expires_in,
+        expires_in=min(settings.issuance_expires_in, 300),
+        verified_contact="phone number",
     )
 
 
@@ -150,9 +133,10 @@ def phone_proof_start_form(value: str):
         proof_name="Proof of Phone",
         icon="+",
         description=(
-            "Enter your phone number in international format. The verification "
-            "code will be entered directly in your wallet."
+            "Enter your phone number in international format. Then enter the "
+            "six-digit SMS code on this site before opening your wallet."
         ),
+        contact_name="phone number",
         field_name="phone",
         field_label="Phone number",
         input_type="tel",

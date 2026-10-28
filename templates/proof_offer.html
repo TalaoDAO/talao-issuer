@@ -7,12 +7,16 @@
       <h1>Your {{ proof_name }} is ready</h1>
       <p class="subject-value">{{ masked_subject }}</p>
       <p class="lead">
-        Open the offer in your wallet, then enter the verification code sent to you.
+        Your {{ verified_contact }} is verified. Open the offer in your wallet to receive your proof.
       </p>
 
+      {% if desktop_delivery %}
+        {% include '_email_delivery_desktop.html' %}
+      {% else %}
       <div class="qr-box">
         <img src="{{ qr_image }}" alt="Wallet offer QR code">
       </div>
+      {% endif %}
       <a class="primary-link wallet-open-link" href="{{ qr_code_content }}">
         Open in wallet
       </a>

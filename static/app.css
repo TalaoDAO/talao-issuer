@@ -70,3 +70,12 @@ button:disabled { cursor: wait; opacity: .82; }
   .qr-box { display: none; }
   .wallet-open-link { display: block; }
 }
+
+/* EmailPass-only delivery choices; PhonePass keeps its existing layout. */
+.desktop-delivery [hidden]{display:none!important}.delivery-tabs{display:flex;gap:8px;margin:24px 0}.delivery-tabs button{flex:1;margin:0;font-size:.9rem;background:var(--background);color:var(--ink);border:1px solid var(--line)}.delivery-tabs button[aria-selected=true]{background:var(--brand);color:white;border-color:var(--brand)}.copy-offer-button{background:var(--background);color:var(--brand);border:1px solid var(--line)}.copy-offer-button:hover{color:white}.desktop-delivery textarea{width:100%;height:100px;padding:12px;resize:vertical;overflow-wrap:anywhere}.desktop-delivery .hint{overflow-wrap:anywhere}
+@media (max-width:720px), (hover:none) and (pointer:coarse){.desktop-delivery{display:none}}
+
+.code-fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.code-fieldset legend { margin-bottom: 12px; font-weight: 700; }
+.code-inputs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(5px, 2vw, 10px); }
+.code-digit { min-width: 0; padding: 14px 0; text-align: center; font-size: clamp(1.2rem, 5vw, 1.8rem); font-weight: 700; }
